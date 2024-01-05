@@ -1,0 +1,69 @@
+// SPDX-FileCopyrightText: Copyright (c) 2024 Raphaël Van Dyck
+// SPDX-License-Identifier: BSD-3-Clause
+
+@top TopLevel {
+  (whitespace? (EVLObject | XMLMixedElement | XMLPureElement | XMLComment))* whitespace?
+}
+
+EVLObject {
+  Void | Boolean | Number | Character | String | Symbol | LanguageKeyword | Abbreviation | ReadTimeConditional | List | Vector
+}
+
+Abbreviation {
+  (Quote | Quasiquote | Unquote | UnquoteSplicing) (whitespace? (XMLPureElement | XMLComment))* whitespace? EVLObject
+}
+
+ReadTimeConditional {
+  (HashPlus | HashMinus)
+  (whitespace? (XMLPureElement | XMLComment))* whitespace? EVLObject
+  (whitespace? (XMLPureElement | XMLComment))* whitespace? EVLObject
+}
+
+List {
+  OpeningParenthesis (whitespace? (EVLObject | XMLPureElement | XMLComment))* whitespace? ClosingParenthesis
+}
+
+Vector {
+  HashOpeningParenthesis (whitespace? (EVLObject | XMLPureElement | XMLComment))* whitespace? ClosingParenthesis
+}
+
+XMLMixedElement {
+  XMLMixedElementStartTag (whitespace? (EVLObject | XMLMixedElement | XMLPureElement | XMLComment))* whitespace? XMLMixedElementEndTag
+}
+
+XMLPureElement {
+  XMLPureElementStartTag (XMLCharacterData? (XMLPureElement | XMLComment))* XMLCharacterData? XMLPureElementEndTag | XMLEmptyElementTag
+}
+
+@tokens {
+  Quote { '\'' }
+  Quasiquote { '`' }
+  Unquote { ',' }
+  UnquoteSplicing { ',@' }
+  String { '"' (!["\\] | '\\' _)* '"' }
+  OpeningParenthesis[closedBy='ClosingParenthesis'] { '(' }
+  ClosingParenthesis[openedBy='OpeningParenthesis HashOpeningParenthesis'] { ')' }
+  HashOpeningParenthesis[closedBy='ClosingParenthesis'] { '#(' }
+  HashPlus { '#+' }
+  HashMinus { '#-' }
+  Void { '#v' }
+  Boolean { '#t' | '#f' }
+  Character { '#\\' _ (![ \t\r\n\'`,"()#\\] | '\\' _)* }
+  XMLMixedElementStartTag { '<chapter>' | '<section>' }
+  XMLPureElementStartTag { '<' $[a-z]+ '>' }
+  XMLMixedElementEndTag { '</chapter>' | '</section>' }
+  XMLPureElementEndTag { '</' $[a-z]+ '>' }
+  XMLEmptyElementTag { '<' $[a-z]+ '/>' }
+  XMLComment { '<!--' (![-] | '-' ![-])* '-->' }
+  Number { $[+-]? $[0-9]+ ('.' $[0-9]+)? }
+  Symbol { (![ \t\r\n\'`,"()#\\] | '\\' _)+ }
+  @precedence { XMLMixedElementStartTag, XMLPureElementStartTag, Symbol }
+  @precedence { XMLMixedElementEndTag, XMLPureElementEndTag, Symbol }
+  @precedence { XMLEmptyElementTag, Symbol }
+  @precedence { XMLComment, Symbol }
+  @precedence { Number, Symbol }
+  whitespace { $[ \t\r\n]+ }
+  XMLCharacterData { ![<]+ }
+}
+
+@external specialize { Symbol } specializeSymbol from "./tokens.js" { LanguageKeyword }

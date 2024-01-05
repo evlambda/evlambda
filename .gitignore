@@ -1,0 +1,4 @@
+/ide/
+/node_modules/
+/src/lezer/evlambda.js
+/src/lezer/evlambda.terms.js

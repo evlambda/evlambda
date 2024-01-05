@@ -1,0 +1,60 @@
+How to install EVLambda
+=======================
+
+Install Git and Node.js if they are not already installed.
+
+Clone EVLambda from its official Git repository or from one of its mirrors.
+
+To clone EVLambda from its official Git repository, execute the following command:
+git clone https://evlambda.org/git/evlambda.git
+
+To clone EVLambda from its GitHub mirror, execute the following command:
+git clone https://github.com/evlambda/evlambda.git
+
+To clone EVLambda from its GitLab mirror, execute the following command:
+git clone https://gitlab.com/evlambda/evlambda.git
+
+The clone command creates a directory that will be referred to as <EVLAMBDA_HOME>.
+
+Execute the following commands from <EVLAMBDA_HOME>:
+npm install
+npm run build
+
+How to update EVLambda
+======================
+
+Execute the following commands from <EVLAMBDA_HOME>:
+git pull
+npm install
+npm run build
+
+How to configure EVLambda
+=========================
+
+The file '<EVLAMBDA_HOME>/.env' contains the default configuration:
+EVLAMBDA_PORT=8080 # port used by the local web server
+
+Follow the steps below to override the default configuration:
+Copy the file '<EVLAMBDA_HOME>/.env' to '<EVLAMBDA_HOME>/.env.local'.
+Edit the file '<EVLAMBDA_HOME>/.env.local'.
+
+How to run the IDE
+==================
+
+Start the local web server by executing the following command from <EVLAMBDA_HOME>:
+node app.js
+
+Open the IDE web page by visiting the following url in the web browser of your choice:
+http://localhost:<EVLAMBDA_PORT>/ide/ide.html
+(= http://localhost:8080/ide/ide.html by default)
+
+When you are done, close the IDE web page and type Ctrl-c in the terminal to stop the local web server.
+
+How to run the evaluator from the terminal
+==========================================
+
+Execute the following command from <EVLAMBDA_HOME>:
+node system-files/core.js { -l <file> | -e <form> }*
+
+Example:
+node system-files/core.js -l system-files/mantle.evl -e '(test-loop 1000000)'

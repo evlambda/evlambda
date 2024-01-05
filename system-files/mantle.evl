@@ -1,0 +1,1172 @@
+<!-- SPDX-FileCopyrightText: Copyright (c) 2024 Raphaël Van Dyck -->
+<!-- SPDX-License-Identifier: BSD-3-Clause -->
+<chapter>
+<title>Mantle</title>
+<section>
+<title>Bootstrapping</title>
+<section>
+<title>Targets: <code>not</code>, <code>and</code>, and <code>or</code></title>
+(fset! list
+       (_vlambda list list))
+
+(fset! not
+       (_vlambda (boolean)
+         (if boolean #f #t)))
+
+(fset! and
+       (_mlambda test-forms
+         (and/fn test-forms)))
+
+(fset! and/fn
+       (_vlambda (test-forms)
+         (if (cons? test-forms)
+             (list 'if (car test-forms) (and/fn (cdr test-forms)) #f)
+           (if (empty-list? test-forms)
+               #t
+             (error "Error expanding and form.")))))
+
+(fset! or
+       (_mlambda test-forms
+         (or/fn test-forms)))
+
+(fset! or/fn
+       (_vlambda (test-forms)
+         (if (cons? test-forms)
+             (list 'if (car test-forms) #t (or/fn (cdr test-forms)))
+           (if (empty-list? test-forms)
+               #f
+             (error "Error expanding or form.")))))
+</section>
+<section>
+<title>Targets: <code>vlambda</code>, <code>mlambda</code>, <code>flambda</code>, and <code>dlambda</code></title>
+(fset! list-reverse
+       (_vlambda (list)
+         (list-reverse/2 list '())))
+
+(fset! list-reverse/2
+       (_vlambda (list acc)
+         (if (cons? list)
+             (list-reverse/2 (cdr list) (cons (car list) acc))
+           acc)))
+
+(fset! caar (_vlambda (x) (car (car x))))
+(fset! cdar (_vlambda (x) (cdr (car x))))
+(fset! cadr (_vlambda (x) (car (cdr x))))
+(fset! cddr (_vlambda (x) (cdr (cdr x))))
+(fset! caaar (_vlambda (x) (car (car (car x)))))
+(fset! cdaar (_vlambda (x) (cdr (car (car x)))))
+(fset! cadar (_vlambda (x) (car (cdr (car x)))))
+(fset! cddar (_vlambda (x) (cdr (cdr (car x)))))
+(fset! caadr (_vlambda (x) (car (car (cdr x)))))
+(fset! cdadr (_vlambda (x) (cdr (car (cdr x)))))
+(fset! caddr (_vlambda (x) (car (cdr (cdr x)))))
+(fset! cdddr (_vlambda (x) (cdr (cdr (cdr x)))))
+(fset! caaaar (_vlambda (x) (car (car (car (car x))))))
+(fset! cdaaar (_vlambda (x) (cdr (car (car (car x))))))
+(fset! cadaar (_vlambda (x) (car (cdr (car (car x))))))
+(fset! cddaar (_vlambda (x) (cdr (cdr (car (car x))))))
+(fset! caadar (_vlambda (x) (car (car (cdr (car x))))))
+(fset! cdadar (_vlambda (x) (cdr (car (cdr (car x))))))
+(fset! caddar (_vlambda (x) (car (cdr (cdr (car x))))))
+(fset! cdddar (_vlambda (x) (cdr (cdr (cdr (car x))))))
+(fset! caaadr (_vlambda (x) (car (car (car (cdr x))))))
+(fset! cdaadr (_vlambda (x) (cdr (car (car (cdr x))))))
+(fset! cadadr (_vlambda (x) (car (cdr (car (cdr x))))))
+(fset! cddadr (_vlambda (x) (cdr (cdr (car (cdr x))))))
+(fset! caaddr (_vlambda (x) (car (car (cdr (cdr x))))))
+(fset! cdaddr (_vlambda (x) (cdr (car (cdr (cdr x))))))
+(fset! cadddr (_vlambda (x) (car (cdr (cdr (cdr x))))))
+(fset! cddddr (_vlambda (x) (cdr (cdr (cdr (cdr x))))))
+
+(fset! vlambda
+       (_mlambda (parameter-list . forms)
+         (lambda/fn '_vlambda parameter-list forms)))
+
+(fset! mlambda
+       (_mlambda (parameter-list . forms)
+         (lambda/fn '_mlambda parameter-list forms)))
+
+(fset! flambda
+       (_mlambda (parameter-list . forms)
+         (lambda/fn '_flambda parameter-list forms)))
+
+(fset! dlambda
+       (_mlambda (parameter-list . forms)
+         (lambda/fn '_dlambda parameter-list forms)))
+
+(fset! lambda/fn
+       (_vlambda (kind parameter-list forms)
+         (cons kind (cons (cl2scm-parameter-list parameter-list '()) forms))))
+
+(fset! cl2scm-parameter-list
+       (_vlambda (parameter-list required-parameters)
+         (if (rest-parameter? parameter-list)
+             (make-scm-parameter-list
+              (list-reverse required-parameters)
+              (cadr parameter-list))
+           (if (cons? parameter-list)
+               (if (variable? (car parameter-list))
+                   (cl2scm-parameter-list
+                    (cdr parameter-list)
+                    (cons (car parameter-list) required-parameters))
+                 (error "Error expanding lambda form."))
+             (if (empty-list? parameter-list)
+                 (make-scm-parameter-list
+                  (list-reverse required-parameters)
+                  '())
+               (error "Error expanding lambda form."))))))
+
+(fset! rest-parameter?
+       (_vlambda (parameter-list)
+         (and
+          (cons? parameter-list)
+          (eq? (car parameter-list) '&rest)
+          (cons? (cdr parameter-list))
+          (variable? (cadr parameter-list))
+          (empty-list? (cddr parameter-list)))))
+
+(fset! make-scm-parameter-list
+       (_vlambda (required-parameters rest-parameter)
+         (if (cons? required-parameters)
+             (cons
+              (car required-parameters)
+              (make-scm-parameter-list
+               (cdr required-parameters)
+               rest-parameter))
+           rest-parameter)))
+</section>
+<section>
+<title>Targets: <code>vdef</code>, <code>fdef</code>, and <code>mdef</code></title>
+(fset! vdef
+       (mlambda (variable form)
+         (list
+          'progn
+          (list
+           'variable-set-value!
+           (list 'quote variable)
+           form)
+          (list 'quote variable))))
+
+(fset! fdef
+       (mlambda (variable parameter-list &rest forms)
+         (list
+          'progn
+          (list
+           'variable-set-function!
+           (list 'quote variable)
+           (cons 'vlambda (cons parameter-list forms)))
+          (list 'quote variable))))
+
+(fset! mdef
+       (mlambda (variable parameter-list &rest forms)
+         (list
+          'progn
+          (list
+           'variable-set-function!
+           (list 'quote variable)
+           (cons 'mlambda (cons parameter-list forms)))
+          (list 'quote variable))))
+</section>
+<section>
+<title>Targets: <code>cond</code> and <code>econd</code></title>
+(fdef proper-list? (object)
+  (or
+   (and
+    (cons? object)
+    (proper-list? (cdr object)))
+   (empty-list? object)))
+
+(mdef cond (&rest clauses)
+  (cond/fn clauses #f))
+
+(mdef econd (&rest clauses)
+  (cond/fn clauses #t))
+
+(fdef cond/fn (clauses error?)
+  (if (else-clause? clauses)
+      (if (proper-list? (cdar clauses))
+          (cons 'progn (cdar clauses))
+        (error "Error expanding cond form."))
+    (if (cons? clauses)
+        (if (and
+             (cons? (car clauses))
+             (proper-list? (cdar clauses)))
+            (list
+             'if
+             (caar clauses)
+             (cons 'progn (cdar clauses))
+             (cond/fn (cdr clauses) error?))
+          (error "Error expanding cond form."))
+      (if (empty-list? clauses)
+          (if error?
+              (list 'error "Fell through econd.")
+            #v)
+        (error "Error expanding cond form.")))))
+
+(fdef else-clause? (clauses)
+  (and
+   (cons? clauses)
+   (cons? (car clauses))
+   (eq? (caar clauses) 'else)
+   (empty-list? (cdr clauses))))
+</section>
+<section>
+<title>Targets: <code>vlet</code>, <code>flet</code>, <code>mlet</code>, <code>dlet</code>, <code>vlet*</code>, <code>flet*</code>, <code>dlet*</code>, and <code>fletrec</code></title>
+(mdef vlet (bindings &rest forms) (let/fn 'vlet bindings forms '() '()))
+(mdef flet (bindings &rest forms) (let/fn 'flet bindings forms '() '()))
+(mdef mlet (bindings &rest forms) (let/fn 'mlet bindings forms '() '()))
+(mdef dlet (bindings &rest forms) (let/fn 'dlet bindings forms '() '()))
+
+(mdef vlet* (bindings &rest forms) (let*/fn 'vlet bindings forms))
+(mdef flet* (bindings &rest forms) (let*/fn 'flet bindings forms))
+(mdef dlet* (bindings &rest forms) (let*/fn 'dlet bindings forms))
+
+(mdef fletrec (bindings &rest forms) (fletrec/fn bindings forms '() '() '()))
+
+(fdef let/fn (kind bindings forms binding-variables binding-forms)
+  (cond ((cons? bindings)
+         (cond ((let-binding? kind (car bindings))
+                (let/fn kind
+                        (cdr bindings)
+                        forms
+                        (cons
+                         (let-binding-variable (car bindings))
+                         binding-variables)
+                        (cons
+                         (let-binding-form kind (car bindings))
+                         binding-forms)))
+               (else
+                (error "Error expanding let form."))))
+        ((empty-list? bindings)
+         (cons
+          (cons
+           (let-lambda kind)
+           (cons
+            (list-reverse binding-variables)
+            forms))
+          (list-reverse binding-forms)))
+        (else
+         (error "Error expanding let form."))))
+
+(fdef let*/fn (kind bindings forms)
+  (cond ((cons? bindings)
+         (cond ((let-binding? kind (car bindings))
+                (list
+                 (list
+                  (let-lambda kind)
+                  (list (let-binding-variable (car bindings)))
+                  (let*/fn kind (cdr bindings) forms))
+                 (let-binding-form kind (car bindings))))
+               (let
+                (error "Error expanding let* form."))))
+        ((empty-list? bindings)
+         (cons 'progn forms))
+        (else
+         (error "Error expanding let* form."))))
+
+(fdef fletrec/fn (bindings forms binding-variables binding-forms set-forms)
+  (cond ((cons? bindings)
+         (cond ((let-binding? 'flet (car bindings))
+                (fletrec/fn (cdr bindings)
+                            forms
+                            (cons
+                             (let-binding-variable (car bindings))
+                             binding-variables)
+                            (cons
+                             #v <comment>dummy value</comment>
+                             binding-forms)
+                            (cons
+                             (list
+                              'fset!
+                              (let-binding-variable (car bindings))
+                              (let-binding-form 'flet (car bindings)))
+                             set-forms)))
+               (else
+                (error "Error expanding fletrec form."))))
+        ((empty-list? bindings)
+         (cons
+          (cons
+           (let-lambda 'flet)
+           (cons
+            (list-reverse binding-variables)
+            (cons (cons 'progn set-forms) forms)))
+          (list-reverse binding-forms)))
+        (else
+         (error "Error expanding fletrec form."))))
+
+(fdef let-lambda (kind)
+  (econd ((eq? kind 'vlet)
+          '_vlambda)
+         ((eq? kind 'flet)
+          '_flambda)
+         ((eq? kind 'mlet)
+          '_flambda)
+         ((eq? kind 'dlet)
+          '_dlambda)))
+
+(fdef let-binding? (kind binding)
+  (econd ((or
+           (eq? kind 'vlet)
+           (eq? kind 'dlet))
+          (and
+           (cons? binding)
+           (variable? (car binding))
+           (cons? (cdr binding))
+           (empty-list? (cddr binding))))
+         ((or
+           (eq? kind 'flet)
+           (eq? kind 'mlet))
+          (and
+           (cons? binding)
+           (variable? (car binding))
+           (cons? (cdr binding))
+           (parameter-list? (cadr binding))
+           (proper-list? (cddr binding))))))
+
+(fdef parameter-list? (parameter-list)
+  (cond ((rest-parameter? parameter-list)
+         #t)
+        ((cons? parameter-list)
+         (cond ((variable? (car parameter-list))
+                (parameter-list? (cdr parameter-list)))
+               (else
+                #f)))
+        ((empty-list? parameter-list)
+         #t)
+        (else
+         #f)))
+
+(fdef let-binding-variable (binding)
+  (car binding))
+
+(fdef let-binding-form (kind binding)
+  (econd ((eq? kind 'vlet)
+          (cadr binding))
+         ((eq? kind 'flet)
+          (cons 'vlambda (cdr binding)))
+         ((eq? kind 'mlet)
+          (cons 'mlambda (cdr binding)))
+         ((eq? kind 'dlet)
+          (cadr binding))))
+</section>
+</section>
+<section>
+<title>Testing</title>
+(vdef *tests* '())
+<macro>(test &lt;expected-value-form&gt; &lt;form&gt;)</macro>
+<macro>(test-mv &lt;expected-values-form&gt; &lt;form&gt;)</macro>
+<macro>(test-error &lt;form&gt;)</macro>
+(mdef test (expected-value-form form)
+  (test/fn expected-value-form form))
+
+(mdef test-mv (expected-values-form form)
+  (test/fn expected-values-form (list 'multiple-value-call '(fref list) form)))
+
+(mdef test-error (form)
+  (test/fn #t (list 'string? (list '_catch-errors form))))
+
+(fdef test/fn (expected-result-form form)
+  (list
+   'progn
+   (list
+    'vset!
+    '*tests*
+    (list
+     'cons
+     (list 'vlambda '() (list 'list (list 'quote form) form expected-result-form))
+     '*tests*))
+   #v))
+
+(fdef run-test (test)
+  (vlet ((form-result-expected-result
+          ((vref test))))
+    (vlet ((form
+            (car form-result-expected-result))
+           (result
+            (cadr form-result-expected-result))
+           (expected-result
+            (caddr form-result-expected-result)))
+      (cond ((equal? result expected-result)
+             (list 'PASSED))
+            (else
+             (list 'FAILED form result expected-result))))))
+
+(fdef run-tests/rec ()
+  (vlet ((passed 0)
+         (failed '())
+         (start-time (now)))
+    (fletrec ((rec (tests)
+                (cond ((cons? tests)
+                       (vlet ((outcome
+                               (run-test (car tests))))
+                         (econd ((eq? (car outcome) 'PASSED)
+                                 (vset! passed (+ passed 1)))
+                                ((eq? (car outcome) 'FAILED)
+                                 (vset! failed (cons outcome failed)))))
+                       (rec (cdr tests)))
+                      (else
+                       #v))))
+      (rec *tests*))
+    (cond ((empty-list? failed)
+           (values passed (- (now) start-time)))
+          (else
+           (list-reverse failed)))))
+
+(fdef run-tests/iter ()
+  (vlet ((passed 0)
+         (failed '())
+         (start-time (now)))
+    (_for-each
+     (vlambda (test)
+       (vlet ((outcome
+               (run-test test)))
+         (econd ((eq? (car outcome) 'PASSED)
+                 (vset! passed (+ passed 1)))
+                ((eq? (car outcome) 'FAILED)
+                 (vset! failed (cons outcome failed))))))
+     *tests*)
+    (cond ((empty-list? failed)
+           (values passed (- (now) start-time)))
+          (else
+           (list-reverse failed)))))
+
+#+plainrec
+(fdef run-tests ()
+  (run-tests/rec))
+
+#+cps
+(fdef run-tests ()
+  (run-tests/iter))
+
+#+oocps
+(fdef run-tests ()
+  (run-tests/iter))
+
+#+sboocps
+(fdef run-tests ()
+  (run-tests/iter))
+
+#+trampoline
+(fdef run-tests ()
+  (run-tests/rec))
+
+#+trampolinepp
+(fdef run-tests ()
+  (run-tests/rec))
+</section>
+<section>
+<title>Defining</title>
+<macro>(vdef &lt;variable&gt; &lt;form&gt;)</macro>
+<macro>(fdef &lt;variable&gt; &lt;common-lisp-parameter-list&gt; &lt;form&gt;*)</macro>
+<macro>(mdef &lt;variable&gt; &lt;common-lisp-parameter-list&gt; &lt;form&gt;*)</macro>
+<para><code>&lt;common-lisp-parameter-list&gt; ::= (&lt;variable&gt;* [&amp;rest &lt;variable&gt;])</code></para>
+<para>The macros <code>vdef</code>, <code>fdef</code>, and <code>mdef</code> are defined in the bootstrapping section.</para>
+</section>
+<section>
+<title>Binding</title>
+<macro>(vlet (&lt;value-binding&gt;*) &lt;form&gt;*)</macro>
+<macro>(flet (&lt;function-binding&gt;*) &lt;form&gt;*)</macro>
+<macro>(mlet (&lt;function-binding&gt;*) &lt;form&gt;*)</macro>
+<macro>(dlet (&lt;value-binding&gt;*) &lt;form&gt;*)</macro>
+<macro>(vlet* (&lt;value-binding&gt;*) &lt;form&gt;*)</macro>
+<macro>(flet* (&lt;function-binding&gt;*) &lt;form&gt;*)</macro>
+<macro>(dlet* (&lt;value-binding&gt;*) &lt;form&gt;*)</macro>
+<macro>(fletrec (&lt;function-binding&gt;*) &lt;form&gt;*)</macro>
+<para><code>&lt;value-binding&gt; ::= (&lt;variable&gt; &lt;form&gt;)</code></para>
+<para><code>&lt;function-binding&gt; ::= (&lt;variable&gt; &lt;common-lisp-parameter-list&gt; &lt;form&gt;*)</code></para>
+<para><code>&lt;common-lisp-parameter-list&gt; ::= (&lt;variable&gt;* [&amp;rest &lt;variable&gt;])</code></para>
+<para>The macros <code>vlet</code>, <code>flet</code>, <code>mlet</code>, <code>dlet</code>, <code>vlet*</code>, <code>flet*</code>, <code>dlet*</code>, and <code>fletrec</code> are defined in the bootstrapping section.</para>
+(test 1 (vlet ((x 1)) (vlet ((x 2) (y (vref x))) (vref y))))
+(test 2 (vlet ((x 1)) (vlet* ((x 2) (y (vref x))) (vref y))))
+
+(test 1 (flet ((x () 1)) (flet ((x () 2) (y () ((fref x)))) ((fref y)))))
+(test 2 (flet ((x () 1)) (flet* ((x () 2) (y () ((fref x)))) ((fref y)))))
+
+(test '(error "bar") (mlet ((foo (x) (list 'quote x))) (foo (error "bar"))))
+
+(test 1 (dlet ((x 1)) (dlet ((x 2) (y (dref x))) (dref y))))
+(test 2 (dlet ((x 1)) (dlet* ((x 2) (y (dref x))) (dref y))))
+
+(test 720 (fletrec ((fact (n) (if (= n 0) 1 (* n (fact (- n 1)))))) (fact 6)))
+
+(test
+ '(#t #f #f #t)
+ (fletrec ((even? (x)
+             (cond ((= x 0)
+                    #t)
+                   (else
+                    (odd? (- x 1)))))
+           (odd? (x)
+             (cond ((= x 0)
+                    #f)
+                   (else
+                    (even? (- x 1))))))
+   (list
+    (even? 2)
+    (odd? 2)
+    (even? 3)
+    (odd? 3))))
+</section>
+<section>
+<title>Abstracting</title>
+<syntax>(_vlambda &lt;scheme-parameter-list&gt; &lt;form&gt;*)</syntax>
+<syntax>(_mlambda &lt;scheme-parameter-list&gt; &lt;form&gt;*)</syntax>
+<syntax>(_flambda &lt;scheme-parameter-list&gt; &lt;form&gt;*)</syntax>
+<syntax>(_dlambda &lt;scheme-parameter-list&gt; &lt;form&gt;*)</syntax>
+<para><code>&lt;scheme-parameter-list&gt; ::= &lt;variable&gt;</code></para>
+<para><code>&lt;scheme-parameter-list&gt; ::= (&lt;variable&gt;*)</code></para>
+<para><code>&lt;scheme-parameter-list&gt; ::= (&lt;variable&gt;+ . &lt;variable&gt;)</code></para>
+(test '(1 2) ((_vlambda x (vref x)) 1 2))
+(test '(1 2) ((_vlambda (x y) (list (vref x) (vref y))) 1 2))
+(test '(1 (2)) ((_vlambda (x . y) (list (vref x) (vref y))) 1 2))
+
+(test '(1 2) ((_mlambda x (vref x)) 1 2))
+(test '(1 2) ((_mlambda (x y) (list (vref x) (vref y))) 1 2))
+(test '(1 (2)) ((_mlambda (x . y) (list (vref x) (vref y))) 1 2))
+
+(test '(1 2) ((_flambda x (fref x)) 1 2))
+(test '(1 2) ((_flambda (x y) (list (fref x) (fref y))) 1 2))
+(test '(1 (2)) ((_flambda (x . y) (list (fref x) (fref y))) 1 2))
+
+(test '(1 2) ((_dlambda x (dref x)) 1 2))
+(test '(1 2) ((_dlambda (x y) (list (dref x) (dref y))) 1 2))
+(test '(1 (2)) ((_dlambda (x . y) (list (dref x) (dref y))) 1 2))
+<macro>(vlambda &lt;common-lisp-parameter-list&gt; &lt;form&gt;*)</macro>
+<macro>(mlambda &lt;common-lisp-parameter-list&gt; &lt;form&gt;*)</macro>
+<macro>(flambda &lt;common-lisp-parameter-list&gt; &lt;form&gt;*)</macro>
+<macro>(dlambda &lt;common-lisp-parameter-list&gt; &lt;form&gt;*)</macro>
+<para><code>&lt;common-lisp-parameter-list&gt; ::= (&lt;variable&gt;* [&amp;rest &lt;variable&gt;])</code></para>
+<para>The macros <code>vlambda</code>, <code>mlambda</code>, <code>flambda</code> and <code>dlambda</code> are defined in the bootstrapping section.</para>
+(test '(1 2) ((vlambda (&rest x) (vref x)) 1 2))
+(test '(1 2) ((vlambda (x y) (list (vref x) (vref y))) 1 2))
+(test '(1 (2)) ((vlambda (x &rest y) (list (vref x) (vref y))) 1 2))
+
+(test '(1 2) ((mlambda (&rest x) (vref x)) 1 2))
+(test '(1 2) ((mlambda (x y) (list (vref x) (vref y))) 1 2))
+(test '(1 (2)) ((mlambda (x &rest y) (list (vref x) (vref y))) 1 2))
+
+(test '(1 2) ((flambda (&rest x) (fref x)) 1 2))
+(test '(1 2) ((flambda (x y) (list (fref x) (fref y))) 1 2))
+(test '(1 (2)) ((flambda (x &rest y) (list (fref x) (fref y))) 1 2))
+
+(test '(1 2) ((dlambda (&rest x) (dref x)) 1 2))
+(test '(1 2) ((dlambda (x y) (list (dref x) (dref y))) 1 2))
+(test '(1 (2)) ((dlambda (x &rest y) (list (dref x) (dref y))) 1 2))
+</section>
+<section>
+<title>Calling and Applying</title>
+<syntax>(&lt;operator&gt; &lt;operand&gt;*)</syntax>
+<syntax>(apply &lt;operator&gt; &lt;operand&gt;*)</syntax>
+<syntax>(multiple-value-call &lt;operator&gt; &lt;operand&gt;*)</syntax>
+<syntax>(multiple-value-apply &lt;operator&gt; &lt;operand&gt;*)</syntax>
+(test
+ '(#v 1 2 3)
+ ((_vlambda x x) (values) 1 (values 2) (values 3 4)))
+
+(test
+ '(#v 1 2 3)
+ (apply (_vlambda x x) (values) 1 (values 2) (values 3 4) '()))
+
+(test
+ '(1 2 3 4)
+ (multiple-value-call (_vlambda x x) (values) 1 (values 2) (values 3 4)))
+
+(test
+ '(1 2 3 4)
+ (multiple-value-apply (_vlambda x x) (values) 1 (values 2) (values 3 4) '()))
+
+(test 3 (+ 1 2))
+
+(test 3 (apply (fref +) 1 2 '()))
+(test 3 (apply (fref +) 1 '(2)))
+(test 3 (apply (fref +) '(1 2)))
+
+(test '(1 2) ((_vlambda (x y) (list x y)) 1 2))
+
+(test '(1 ()) ((_vlambda (x . y) (list x y)) 1))
+(test '(1 (2)) ((_vlambda (x . y) (list x y)) 1 2))
+(test '(1 (2 3)) ((_vlambda (x . y) (list x y)) 1 2 3))
+
+(test '(1 2) (apply (_vlambda (x y) (list x y)) 1 2 '()))
+(test '(1 2) (apply (_vlambda (x y) (list x y)) 1 '(2)))
+(test '(1 2) (apply (_vlambda (x y) (list x y)) '(1 2)))
+
+(test '(1 ()) (apply (_vlambda (x . y) (list x y)) 1 '()))
+(test '(1 ()) (apply (_vlambda (x . y) (list x y)) '(1)))
+(test '(1 (2)) (apply (_vlambda (x . y) (list x y)) 1 2 '()))
+(test '(1 (2)) (apply (_vlambda (x . y) (list x y)) 1 '(2)))
+(test '(1 (2)) (apply (_vlambda (x . y) (list x y)) '(1 2)))
+(test '(1 (2 3)) (apply (_vlambda (x . y) (list x y)) 1 2 3 '()))
+(test '(1 (2 3)) (apply (_vlambda (x . y) (list x y)) 1 2 '(3)))
+(test '(1 (2 3)) (apply (_vlambda (x . y) (list x y)) 1 '(2 3)))
+(test '(1 (2 3)) (apply (_vlambda (x . y) (list x y)) '(1 2 3)))
+
+(test-mv '(#v) ((_vlambda ())))
+(test-mv '() ((_vlambda () (values))))
+(test-mv '(1) ((_vlambda () 1)))
+(test-mv '(1) ((_vlambda () (values 1))))
+(test-mv '(1 2) ((_vlambda () (values 1 2))))
+(test-mv '() ((_vlambda () #v (values))))
+(test-mv '(1) ((_vlambda () #v 1)))
+(test-mv '(1) ((_vlambda () #v (values 1))))
+(test-mv '(1 2) ((_vlambda () #v (values 1 2))))
+
+(test #t (vlet ((list (list 1 2 3))) (eq? list (apply (_vlambda x x) list))))
+</section>
+<section>
+<title>Quoting</title>
+<syntax>(quote &lt;object&gt;)</syntax>
+(test '() '())
+<para>All objects but lists and variables are self-evaluating.</para>
+</section>
+<section>
+<title>Referencing and Assigning Variables</title>
+<syntax>(vref &lt;variable&gt;)</syntax>
+<syntax>(vset! &lt;variable&gt; &lt;value-form&gt;)</syntax>
+<syntax>(fref &lt;variable&gt;)</syntax>
+<syntax>(fset! &lt;variable&gt; &lt;value-form&gt;)</syntax>
+<syntax>(dref &lt;variable&gt;)</syntax>
+<syntax>(dset! &lt;variable&gt; &lt;value-form&gt;)</syntax>
+<syntax>&lt;variable&gt;</syntax>
+<para>A <code>&lt;variable&gt;</code> not in operator position is equivalent to <code>(vref &lt;variable&gt;)</code>.</para>
+<para>A <code>&lt;variable&gt;</code> in operator position is equivalent to <code>(fref &lt;variable&gt;)</code>.</para>
+(test '(1 2 2) ((vlambda (x) (list (vref x) (vset! x 2) (vref x))) 1))
+(test '(1 2 2) ((vlambda (x) (list (vref x) (vset! x (values 2)) (vref x))) 1))
+(test '(1 2 2) ((flambda (x) (list (fref x) (fset! x 2) (fref x))) 1))
+(test '(1 2 2) ((flambda (x) (list (fref x) (fset! x (values 2)) (fref x))) 1))
+(test '(1 2 2) ((dlambda (x) (list (dref x) (dset! x 2) (dref x))) 1))
+(test '(1 2 2) ((dlambda (x) (list (dref x) (dset! x (values 2)) (dref x))) 1))
+
+(test 3 (vlet ((counter 0))
+          (flet ((counter++ ()
+                   (vset! counter (+ counter 1))))
+            (counter++)
+            (counter++)
+            (counter++)
+            counter)))
+
+(test 3 (flet ((counter++ ()
+                 (dset! counter (+ (dref counter) 1))))
+          (dlet ((counter 0))
+            (counter++)
+            (counter++)
+            (counter++)
+            (dref counter))))
+</section>
+<section>
+<title>Sequencing</title>
+<syntax>(progn &lt;form&gt;*)</syntax>
+(test-mv '(#v) (progn))
+(test-mv '() (progn (values)))
+(test-mv '(1) (progn 1))
+(test-mv '(1) (progn (values 1)))
+(test-mv '(1 2) (progn (values 1 2)))
+(test-mv '() (progn #v (values)))
+(test-mv '(1) (progn #v 1))
+(test-mv '(1) (progn #v (values 1)))
+(test-mv '(1 2) (progn #v (values 1 2)))
+</section>
+<section>
+<title>Branching</title>
+<syntax>(if &lt;test-form&gt; &lt;then-form&gt; &lt;else-form&gt;)</syntax>
+(test-mv '() (if #t (values) #v))
+(test-mv '(1) (if #t 1 #v))
+(test-mv '(1) (if #t (values 1) #v))
+(test-mv '(1 2) (if #t (values 1 2) #v))
+(test-mv '() (if #f #v (values)))
+(test-mv '(1) (if #f #v 1))
+(test-mv '(1) (if #f #v (values 1)))
+(test-mv '(1 2) (if #f #v (values 1 2)))
+(test 1 (if (values #t) 1 2))
+(test 2 (if (values #f) 1 2))
+<macro>(cond &lt;clause&gt;* [&lt;else-clause&gt;])</macro>
+<macro>(econd &lt;clause&gt;* [&lt;else-clause&gt;])</macro>
+<para><code>&lt;clause&gt; ::= (&lt;test-form&gt; &lt;form&gt;*)</code></para>
+<para><code>&lt;else-clause&gt; ::= (else &lt;form&gt;*)</code></para>
+<para>The macros <code>cond</code> and <code>econd</code> are defined in the bootstrapping section.</para>
+(test #v (cond))
+(test 0 (cond (else 0)))
+(test 1 (cond (#t 1)))
+(test #v (cond (#f 1)))
+(test 1 (cond (#t 1) (else 0)))
+(test 0 (cond (#f 1) (else 0)))
+(test 1 (cond (#t 1) (#t 2)))
+(test 1 (cond (#t 1) (#f 2)))
+(test 2 (cond (#f 1) (#t 2)))
+(test #v (cond (#f 1) (#f 2)))
+(test 1 (cond (#t 1) (#t 2) (else 0)))
+(test 1 (cond (#t 1) (#f 2) (else 0)))
+(test 2 (cond (#f 1) (#t 2) (else 0)))
+(test 0 (cond (#f 1) (#f 2) (else 0)))
+
+(test-error (econd))
+(test 0 (econd (else 0)))
+(test 1 (econd (#t 1)))
+(test-error (econd (#f 1)))
+(test 1 (econd (#t 1) (else 0)))
+(test 0 (econd (#f 1) (else 0)))
+(test 1 (econd (#t 1) (#t 2)))
+(test 1 (econd (#t 1) (#f 2)))
+(test 2 (econd (#f 1) (#t 2)))
+(test-error  (econd (#f 1) (#f 2)))
+(test 1 (econd (#t 1) (#t 2) (else 0)))
+(test 1 (econd (#t 1) (#f 2) (else 0)))
+(test 2 (econd (#f 1) (#t 2) (else 0)))
+(test 0 (econd (#f 1) (#f 2) (else 0)))
+</section>
+<section>
+<title>Iterating</title>
+(fdef loop ()
+  (loop))
+
+(fdef test-loop (n)
+  (vlet ((start-time (now)))
+    (fletrec ((rec (n)
+                (if (> n 0) (rec (- n 1)) #v)))
+      (rec n))
+    (- (now) start-time)))
+</section>
+<section>
+<title>Returning Multiple Values</title>
+<primitivefunction>(values &lt;object&gt;*)</primitivefunction>
+(test-mv '() (values))
+(test-mv '(1) (values 1))
+(test-mv '(1 2) (values 1 2))
+</section>
+<section>
+<title>Signaling and Handling Conditions</title>
+<primitivefunction>(error &lt;string&gt;)</primitivefunction>
+(test-error (error "foo"))
+<syntax>(_catch-errors &lt;form&gt;)</syntax>
+(test #v (_catch-errors :no-error))
+(test "Error" (_catch-errors (error "foo")))
+</section>
+<section>
+<title>Interacting with the Environment</title>
+<primitivefunction>(now)</primitivefunction>
+(test #t (number? (now)))
+</section>
+<section>
+<title>Primitive Datatype <code>object</code></title>
+<primitivefunction>(object? &lt;object&gt;)</primitivefunction>
+(test #t (object? #v))
+(test #t (object? #t))
+(test #t (object? #f))
+(test #t (object? 0))
+(test #t (object? #\_))
+(test #t (object? "foo"))
+(test #t (object? :foo))
+(test #t (object? 'foo))
+(test #t (object? '()))
+(test #t (object? '(1 2 3)))
+(test #t (object? #(1 2 3)))
+(test #t (object? (fref eq?)))
+(test #t (object? (fref equal?)))
+<primitivefunction>(eq? &lt;object&gt; &lt;object&gt;)</primitivefunction>
+<primitivefunction>(eql? &lt;object&gt; &lt;object&gt;)</primitivefunction>
+<function>(equal? &lt;object&gt; &lt;object&gt;)</function>
+(fdef equal? (x y)
+  (cond ((eql? x y)
+         #t)
+        ((and
+          (cons? x)
+          (cons? y))
+         (and
+          (equal? (car x) (car y))
+          (equal? (cdr x) (cdr y))))
+        (else
+         #f)))
+
+(test #t (eq? #v #v))
+(test #t (eql? #v #v))
+(test #t (equal? #v #v))
+
+(test #t (eq? #t #t))
+(test #t (eql? #t #t))
+(test #t (equal? #t #t))
+
+(test #t (eq? #f #f))
+(test #t (eql? #f #f))
+(test #t (equal? #f #f))
+
+(test #f (eq? 0 0))
+(test #t (eql? 0 0))
+(test #t (equal? 0 0))
+
+(test #f (eq? #\_ #\_))
+(test #t (eql? #\_ #\_))
+(test #t (equal? #\_ #\_))
+
+(test #f (eq? "foo" "foo"))
+(test #t (eql? "foo" "foo"))
+(test #t (equal? "foo" "foo"))
+
+(test #t (eq? :foo :foo))
+(test #t (eql? :foo :foo))
+(test #t (equal? :foo :foo))
+
+(test #t (eq? 'foo 'foo))
+(test #t (eql? 'foo 'foo))
+(test #t (equal? 'foo 'foo))
+
+(test #t (eq? '() '()))
+(test #t (eql? '() '()))
+(test #t (equal? '() '()))
+
+(test #f (eq? '(1 2 3) '(1 2 3)))
+(test #f (eql? '(1 2 3) '(1 2 3)))
+(test #t (equal? '(1 2 3) '(1 2 3)))
+
+(test #f (eq? #(1 2 3) #(1 2 3)))
+(test #f (eql? #(1 2 3) #(1 2 3)))
+(test #f (equal? #(1 2 3) #(1 2 3))) <comment>FIXME</comment>
+</section>
+<section>
+<title>Primitive Datatype <code>void</code></title>
+<primitivefunction>(void? &lt;object&gt;)</primitivefunction>
+(test #t (void? #v))
+<function>(value? &lt;object&gt;)</function>
+(fdef value? (object)
+  (not (void? object)))
+
+(test #f (value? #v))
+</section>
+<section>
+<title>Primitive Datatype <code>boolean</code></title>
+<primitivefunction>(boolean? &lt;object&gt;)</primitivefunction>
+(test #t (boolean? #t))
+(test #t (boolean? #f))
+<function>(not &lt;boolean&gt;)</function>
+<para>The function <code>not</code> is defined in the bootstrapping section.</para>
+(test #f (not #t))
+(test #t (not #f))
+<macro>(and &lt;test-form&gt;*)</macro>
+<para>The macro <code>and</code> is defined in the bootstrapping section.</para>
+(test #t (and))
+(test #t (and #t))
+(test #f (and #f))
+(test #t (and #t #t))
+(test #f (and #t #f))
+(test #f (and #f #t))
+(test #f (and #f #f))
+<macro>(or &lt;test-form&gt;*)</macro>
+<para>The macro <code>or</code> is defined in the bootstrapping section.</para>
+(test #f (or))
+(test #t (or #t))
+(test #f (or #f))
+(test #t (or #t #t))
+(test #t (or #t #f))
+(test #t (or #f #t))
+(test #f (or #f #f))
+</section>
+<section>
+<title>Primitive Datatype <code>number</code></title>
+<primitivefunction>(number? &lt;object&gt;)</primitivefunction>
+(test #t (number? 0))
+<primitivefunction>(+ &lt;number&gt; &lt;number&gt;)</primitivefunction>
+<primitivefunction>(- &lt;number&gt; &lt;number&gt;)</primitivefunction>
+<primitivefunction>(* &lt;number&gt; &lt;number&gt;)</primitivefunction>
+<primitivefunction>(/ &lt;number&gt; &lt;number&gt;)</primitivefunction>
+<primitivefunction>(% &lt;number&gt; &lt;number&gt;)</primitivefunction>
+(test 8 (+ 6 2))
+(test 4 (- 6 2))
+(test 12 (* 6 2))
+(test 3 (/ 6 2))
+(test 0 (% 6 2))
+<primitivefunction>(= &lt;number&gt; &lt;number&gt;)</primitivefunction>
+<primitivefunction>(/= &lt;number&gt; &lt;number&gt;)</primitivefunction>
+<primitivefunction>(&lt; &lt;number&gt; &lt;number&gt;)</primitivefunction>
+<primitivefunction>(&lt;= &lt;number&gt; &lt;number&gt;)</primitivefunction>
+<primitivefunction>(&gt; &lt;number&gt; &lt;number&gt;)</primitivefunction>
+<primitivefunction>(&gt;= &lt;number&gt; &lt;number&gt;)</primitivefunction>
+(test #t (= 0 0))
+(test #f (/= 0 0))
+(test #f (< 0 0))
+(test #t (<= 0 0))
+(test #f (> 0 0))
+(test #t (>= 0 0))
+</section>
+<section>
+<title>Primitive Datatype <code>character</code></title>
+<primitivefunction>(character? &lt;object&gt;)</primitivefunction>
+(test #t (character? #\_))
+</section>
+<section>
+<title>Primitive Datatype <code>string</code></title>
+<primitivefunction>(string? &lt;object&gt;)</primitivefunction>
+(test #t (string? "foo"))
+</section>
+<section>
+<title>Primitive Datatype <code>symbol</code></title>
+<primitivefunction>(symbol? &lt;object&gt;)</primitivefunction>
+(test #t (symbol? :foo))
+(test #t (symbol? 'foo))
+</section>
+<section>
+<title>Primitive Datatype <code>keyword</code></title>
+<primitivefunction>(keyword? &lt;object&gt;)</primitivefunction>
+(test #t (keyword? :foo))
+<primitivefunction>(make-keyword &lt;string&gt;)</primitivefunction>
+(test #f (eq? (make-keyword "foo") (make-keyword "foo")))
+<function>(fresh-keyword)</function>
+(fdef fresh-keyword ()
+  (make-keyword "fresh"))
+
+(test #t (keyword? (fresh-keyword)))
+</section>
+<section>
+<title>Primitive Datatype <code>variable</code></title>
+<primitivefunction>(variable? &lt;object&gt;)</primitivefunction>
+(test #t (variable? 'foo))
+<primitivefunction>(make-variable &lt;string&gt;)</primitivefunction>
+(test #f (eq? (make-variable "foo") (make-variable "foo")))
+<function>(fresh-variable)</function>
+(fdef fresh-variable ()
+  (make-variable "fresh"))
+
+(test #t (variable? (fresh-variable)))
+<primitivefunction>(variable-value &lt;variable&gt;)</primitivefunction>
+<primitivefunction>(variable-set-value! &lt;variable&gt; &lt;object&gt;)</primitivefunction>
+<primitivefunction>(variable-value-bound? &lt;variable&gt;)</primitivefunction>
+<primitivefunction>(variable-unbind-value! &lt;variable&gt;)</primitivefunction>
+(test
+ '(#f #v :foo #t :foo #v #f #v)
+ (vlet ((variable
+         (make-variable "foo")))
+   (list
+    (variable-value-bound? variable)
+    (variable-value variable)
+    (variable-set-value! variable :foo)
+    (variable-value-bound? variable)
+    (variable-value variable)
+    (variable-unbind-value! variable)
+    (variable-value-bound? variable)
+    (variable-value variable))))
+<primitivefunction>(variable-function &lt;variable&gt;)</primitivefunction>
+<primitivefunction>(variable-set-function! &lt;variable&gt; &lt;object&gt;)</primitivefunction>
+<primitivefunction>(variable-function-bound? &lt;variable&gt;)</primitivefunction>
+<primitivefunction>(variable-unbind-function! &lt;variable&gt;)</primitivefunction>
+(test
+ '(#f #v :foo #t :foo #v #f #v)
+ (vlet ((variable
+         (make-variable "foo")))
+   (list
+    (variable-function-bound? variable)
+    (variable-function variable)
+    (variable-set-function! variable :foo)
+    (variable-function-bound? variable)
+    (variable-function variable)
+    (variable-unbind-function! variable)
+    (variable-function-bound? variable)
+    (variable-function variable))))
+</section>
+<section>
+<title>Primitive Datatype <code>list</code></title>
+<primitivefunction>(list? &lt;object&gt;)</primitivefunction>
+(test #t (list? '()))
+(test #t (list? '(1 2 3)))
+(test #t (list? '(1 2 3 . 4)))
+<function>(proper-list? &lt;object&gt;)</function>
+<para>The function <code>proper-list?</code> is defined in the bootstrapping section.</para>
+(test #t (proper-list? '()))
+(test #t (proper-list? '(1 2 3)))
+(test #f (proper-list? '(1 2 3 . 4)))
+<function>(list &lt;object&gt;*)</function>
+<para>The function <code>list</code> is defined in the bootstrapping section.</para>
+(test '() (list))
+(test '(1 2 3) (list 1 2 3))
+<function>(list-reverse &lt;list&gt;)</function>
+<para>The function <code>list-reverse</code> is defined in the bootstrapping section.</para>
+(test '() (list-reverse '()))
+(test '(3 2 1) (list-reverse '(1 2 3)))
+<function>(list->values &lt;list&gt;)</function>
+<macro>(values->list &lt;form&gt;)</macro>
+(fdef list->values (list)
+  (apply (fref values) list))
+
+(mdef values->list (form)
+  (list 'multiple-value-call '(fref list) form))
+
+(test '(1 2 3) (values->list (list->values '(1 2 3))))
+<syntax>(_for-each &lt;function-form&gt; &lt;list-form&gt;)</syntax>
+#+(or cps oocps sboocps)
+(test
+ '(3 2 1)
+ (vlet ((acc '()))
+   (_for-each
+    (vlambda (x) (vset! acc (cons x acc)))
+    '(1 2 3))
+   acc))
+</section>
+<section>
+<title>Primitive Datatype <code>empty-list</code></title>
+<primitivefunction>(empty-list? &lt;object&gt;)</primitivefunction>
+(test #t (empty-list? '()))
+</section>
+<section>
+<title>Primitive Datatype <code>cons</code></title>
+<primitivefunction>(cons? &lt;object&gt;)</primitivefunction>
+(test #t (cons? '(1 2 3)))
+<primitivefunction>(cons &lt;object&gt; &lt;object&gt;)</primitivefunction>
+(test '(1 2 3) (cons 1 (cons 2 (cons 3 '()))))
+<primitivefunction>(car &lt;cons&gt;)</primitivefunction>
+<primitivefunction>(cdr &lt;cons&gt;)</primitivefunction>
+<function>(caar &lt;cons&gt;)</function>
+<function>(cdar &lt;cons&gt;)</function>
+<function>(cadr &lt;cons&gt;)</function>
+<function>(cddr &lt;cons&gt;)</function>
+<function>(caaar &lt;cons&gt;)</function>
+<function>(cdaar &lt;cons&gt;)</function>
+<function>(cadar &lt;cons&gt;)</function>
+<function>(cddar &lt;cons&gt;)</function>
+<function>(caadr &lt;cons&gt;)</function>
+<function>(cdadr &lt;cons&gt;)</function>
+<function>(caddr &lt;cons&gt;)</function>
+<function>(cdddr &lt;cons&gt;)</function>
+<function>(caaaar &lt;cons&gt;)</function>
+<function>(cdaaar &lt;cons&gt;)</function>
+<function>(cadaar &lt;cons&gt;)</function>
+<function>(cddaar &lt;cons&gt;)</function>
+<function>(caadar &lt;cons&gt;)</function>
+<function>(cdadar &lt;cons&gt;)</function>
+<function>(caddar &lt;cons&gt;)</function>
+<function>(cdddar &lt;cons&gt;)</function>
+<function>(caaadr &lt;cons&gt;)</function>
+<function>(cdaadr &lt;cons&gt;)</function>
+<function>(cadadr &lt;cons&gt;)</function>
+<function>(cddadr &lt;cons&gt;)</function>
+<function>(caaddr &lt;cons&gt;)</function>
+<function>(cdaddr &lt;cons&gt;)</function>
+<function>(cadddr &lt;cons&gt;)</function>
+<function>(cddddr &lt;cons&gt;)</function>
+<!-- FIXME &hellip; -->
+<para>The functions <code>caar</code>, ..., <code>cddddr</code> are defined in the bootstrapping section.</para>
+<primitivefunction>(set-car! &lt;cons&gt; &lt;object&gt;)</primitivefunction>
+<primitivefunction>(set-cdr! &lt;cons&gt; &lt;object&gt;)</primitivefunction>
+<function>(set-caar! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-cdar! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-cadr! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-cddr! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-caaar! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-cdaar! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-cadar! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-cddar! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-caadr! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-cdadr! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-caddr! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-cdddr! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-caaaar! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-cdaaar! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-cadaar! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-cddaar! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-caadar! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-cdadar! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-caddar! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-cdddar! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-caaadr! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-cdaadr! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-cadadr! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-cddadr! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-caaddr! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-cdaddr! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-cadddr! &lt;cons&gt; &lt;object&gt;)</function>
+<function>(set-cddddr! &lt;cons&gt; &lt;object&gt;)</function>
+(fdef set-caar! (x y) (set-car! (car x) y))
+(fdef set-cdar! (x y) (set-cdr! (car x) y))
+(fdef set-cadr! (x y) (set-car! (cdr x) y))
+(fdef set-cddr! (x y) (set-cdr! (cdr x) y))
+(fdef set-caaar! (x y) (set-car! (caar x) y))
+(fdef set-cdaar! (x y) (set-cdr! (caar x) y))
+(fdef set-cadar! (x y) (set-car! (cdar x) y))
+(fdef set-cddar! (x y) (set-cdr! (cdar x) y))
+(fdef set-caadr! (x y) (set-car! (cadr x) y))
+(fdef set-cdadr! (x y) (set-cdr! (cadr x) y))
+(fdef set-caddr! (x y) (set-car! (cddr x) y))
+(fdef set-cdddr! (x y) (set-cdr! (cddr x) y))
+(fdef set-caaaar! (x y) (set-car! (caaar x) y))
+(fdef set-cdaaar! (x y) (set-cdr! (caaar x) y))
+(fdef set-cadaar! (x y) (set-car! (cdaar x) y))
+(fdef set-cddaar! (x y) (set-cdr! (cdaar x) y))
+(fdef set-caadar! (x y) (set-car! (cadar x) y))
+(fdef set-cdadar! (x y) (set-cdr! (cadar x) y))
+(fdef set-caddar! (x y) (set-car! (cddar x) y))
+(fdef set-cdddar! (x y) (set-cdr! (cddar x) y))
+(fdef set-caaadr! (x y) (set-car! (caadr x) y))
+(fdef set-cdaadr! (x y) (set-cdr! (caadr x) y))
+(fdef set-cadadr! (x y) (set-car! (cdadr x) y))
+(fdef set-cddadr! (x y) (set-cdr! (cdadr x) y))
+(fdef set-caaddr! (x y) (set-car! (caddr x) y))
+(fdef set-cdaddr! (x y) (set-cdr! (caddr x) y))
+(fdef set-cadddr! (x y) (set-car! (cdddr x) y))
+(fdef set-cddddr! (x y) (set-cdr! (cdddr x) y))
+
+(fdef test-cr ()
+  (cons
+   (cons
+    (cons
+     (cons #v #v)
+     (cons #v #v))
+    (cons
+     (cons #v #v)
+     (cons #v #v)))
+   (cons
+    (cons
+     (cons #v #v)
+     (cons #v #v))
+    (cons
+     (cons #v #v)
+     (cons #v #v)))))
+
+(test 'x (vlet ((tree (test-cr))) (set-car! tree 'x) (car tree)))
+(test 'x (vlet ((tree (test-cr))) (set-cdr! tree 'x) (cdr tree)))
+(test 'x (vlet ((tree (test-cr))) (set-caar! tree 'x) (caar tree)))
+(test 'x (vlet ((tree (test-cr))) (set-cdar! tree 'x) (cdar tree)))
+(test 'x (vlet ((tree (test-cr))) (set-cadr! tree 'x) (cadr tree)))
+(test 'x (vlet ((tree (test-cr))) (set-cddr! tree 'x) (cddr tree)))
+(test 'x (vlet ((tree (test-cr))) (set-caaar! tree 'x) (caaar tree)))
+(test 'x (vlet ((tree (test-cr))) (set-cdaar! tree 'x) (cdaar tree)))
+(test 'x (vlet ((tree (test-cr))) (set-cadar! tree 'x) (cadar tree)))
+(test 'x (vlet ((tree (test-cr))) (set-cddar! tree 'x) (cddar tree)))
+(test 'x (vlet ((tree (test-cr))) (set-caadr! tree 'x) (caadr tree)))
+(test 'x (vlet ((tree (test-cr))) (set-cdadr! tree 'x) (cdadr tree)))
+(test 'x (vlet ((tree (test-cr))) (set-caddr! tree 'x) (caddr tree)))
+(test 'x (vlet ((tree (test-cr))) (set-cdddr! tree 'x) (cdddr tree)))
+(test 'x (vlet ((tree (test-cr))) (set-caaaar! tree 'x) (caaaar tree)))
+(test 'x (vlet ((tree (test-cr))) (set-cdaaar! tree 'x) (cdaaar tree)))
+(test 'x (vlet ((tree (test-cr))) (set-cadaar! tree 'x) (cadaar tree)))
+(test 'x (vlet ((tree (test-cr))) (set-cddaar! tree 'x) (cddaar tree)))
+(test 'x (vlet ((tree (test-cr))) (set-caadar! tree 'x) (caadar tree)))
+(test 'x (vlet ((tree (test-cr))) (set-cdadar! tree 'x) (cdadar tree)))
+(test 'x (vlet ((tree (test-cr))) (set-caddar! tree 'x) (caddar tree)))
+(test 'x (vlet ((tree (test-cr))) (set-cdddar! tree 'x) (cdddar tree)))
+(test 'x (vlet ((tree (test-cr))) (set-caaadr! tree 'x) (caaadr tree)))
+(test 'x (vlet ((tree (test-cr))) (set-cdaadr! tree 'x) (cdaadr tree)))
+(test 'x (vlet ((tree (test-cr))) (set-cadadr! tree 'x) (cadadr tree)))
+(test 'x (vlet ((tree (test-cr))) (set-cddadr! tree 'x) (cddadr tree)))
+(test 'x (vlet ((tree (test-cr))) (set-caaddr! tree 'x) (caaddr tree)))
+(test 'x (vlet ((tree (test-cr))) (set-cdaddr! tree 'x) (cdaddr tree)))
+(test 'x (vlet ((tree (test-cr))) (set-cadddr! tree 'x) (cadddr tree)))
+(test 'x (vlet ((tree (test-cr))) (set-cddddr! tree 'x) (cddddr tree)))
+</section>
+<section>
+<title>Primitive Datatype <code>vector</code></title>
+<primitivefunction>(vector? &lt;object&gt;)</primitivefunction>
+(test #t (vector? #(1 2 3)))
+</section>
+<section>
+<title>Primitive Datatype <code>function</code></title>
+<primitivefunction>(function? &lt;object&gt;)</primitivefunction>
+(test #t (function? (fref eq?)))
+(test #t (function? (fref equal?)))
+</section>
+<section>
+<title>Primitive Datatype <code>primitive-function</code></title>
+<primitivefunction>(primitive-function? &lt;object&gt;)</primitivefunction>
+(test #t (primitive-function? (fref eq?)))
+</section>
+<section>
+<title>Primitive Datatype <code>closure</code></title>
+<primitivefunction>(closure? &lt;object&gt;)</primitivefunction>
+(test #t (closure? (fref equal?)))
+</section>
+</chapter>

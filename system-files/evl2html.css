@@ -1,0 +1,24 @@
+/* SPDX-FileCopyrightText: Copyright (c) 2024 Raphaël Van Dyck */
+/* SPDX-License-Identifier: BSD-3-Clause */
+
+html {
+  font-family: Arial, sans-serif;
+  font-size: 14pt;
+  line-height: 1.4;
+}
+
+p.syntax > span, p.primitivefunction > span, p.macro > span, p.function > span {
+  background-color: lightgray;
+}
+
+pre.blockcode, div.indentation {
+  font-family: monospace;
+}
+
+div.blockcomment, span.eolcomment {
+  font-family: Arial, sans-serif;
+}
+
+span.eolcomment::before {
+  content: '\2014  '; /* em dash followed by a single space */
+}

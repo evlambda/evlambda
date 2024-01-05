@@ -1,0 +1,510 @@
+/* SPDX-FileCopyrightText: Copyright (c) 2024 Raphaël Van Dyck */
+/* SPDX-License-Identifier: BSD-3-Clause */
+
+/*********/
+/* Reset */
+/*********/
+
+button {
+  all: unset;
+}
+
+* {
+  outline: none;
+  user-select: none;
+}
+
+.contentsAreaRoot * {
+  user-select: initial;
+}
+
+/**********/
+/* Colors */
+/**********/
+
+@import '@radix-ui/colors/gray.css';
+@import '@radix-ui/colors/gray-alpha.css';
+@import '@radix-ui/colors/indigo.css';
+
+$gray1: var(--gray-1);
+$gray2: var(--gray-2);
+$gray3: var(--gray-3);
+$gray4: var(--gray-4);
+$gray5: var(--gray-5);
+$gray6: var(--gray-6);
+$gray7: var(--gray-7);
+$gray8: var(--gray-8);
+$gray9: var(--gray-9);
+$gray10: var(--gray-10);
+$gray11: var(--gray-11);
+$gray12: var(--gray-12);
+
+$grayA1: var(--gray-a1);
+$grayA2: var(--gray-a2);
+$grayA3: var(--gray-a3);
+$grayA4: var(--gray-a4);
+$grayA5: var(--gray-a5);
+$grayA6: var(--gray-a6);
+$grayA7: var(--gray-a7);
+$grayA8: var(--gray-a8);
+$grayA9: var(--gray-a9);
+$grayA10: var(--gray-a10);
+$grayA11: var(--gray-a11);
+$grayA12: var(--gray-a12);
+
+$primary1: var(--indigo-1);
+$primary2: var(--indigo-2);
+$primary3: var(--indigo-3);
+$primary4: var(--indigo-4);
+$primary5: var(--indigo-5);
+$primary6: var(--indigo-6);
+$primary7: var(--indigo-7);
+$primary8: var(--indigo-8);
+$primary9: var(--indigo-9);
+$primary10: var(--indigo-10);
+$primary11: var(--indigo-11);
+$primary12: var(--indigo-12);
+
+$appBgColor: $gray2;
+$appFgColor: black;
+
+$textButtonBgColor: transparent;
+$textButtonFgColor: currentcolor;
+$textButtonBgColorHover: $primary7;
+$textButtonFgColorHover: currentcolor;
+$textButtonBgColorActive: $primary8;
+$textButtonFgColorActive: currentcolor;
+
+$filledButtonBgColor: $primary6;
+$filledButtonFgColor: currentcolor;
+$filledButtonBgColorHover: $primary7;
+$filledButtonFgColorHover: currentcolor;
+$filledButtonBgColorActive: $primary8;
+$filledButtonFgColorActive: currentcolor;
+
+$menubarRootBgColor: $gray2;
+$menubarRootFgColor: black;
+
+$menubarTriggerBgColor: transparent;
+$menubarTriggerFgColor: currentcolor;
+$menubarTriggerBgColorHighlighted: $primary7;
+$menubarTriggerFgColorHighlighted: currentcolor;
+$menubarTriggerBgColorOpen: $primary8;
+$menubarTriggerFgColorOpen: currentcolor;
+
+$menubarContentBgColor: white;
+$menubarContentFgColor: black;
+$menubarContentBorderColor: black;
+
+$menubarItemBgColor: transparent;
+$menubarItemFgColor: currentcolor;
+$menubarItemBgColorHighlighted: $primary8;
+$menubarItemFgColorHighlighted: currentcolor;
+$menubarItemBgColorDisabled: transparent;
+$menubarItemFgColorDisabled: $gray6;
+
+$menubarSeparatorColor: $gray6;
+
+$infobarRootBgColor: $gray2;
+$infobarRootFgColor: black;
+
+$infobarItemBgColor: $gray6;
+$infobarItemFgColor: currentcolor;
+
+$windowDividerColor: black;
+
+$toolbarRootBgColor: $gray2;
+$toolbarRootFgColor: black;
+$toolbarRootBgColorSelected: $gray4;
+$toolbarRootFgColorSelected: black;
+
+$contentsAreaRootBgColor: white;
+$contentsAreaRootFgColor: black;
+
+$statusbarRootBgColor: $gray2;
+$statusbarRootFgColor: black;
+$statusbarRootBgColorSelected: $gray4;
+$statusbarRootFgColorSelected: black;
+
+$dialogOverlay: $grayA9;
+
+$dialogContentBgColor: white;
+$dialogContentFgColor: black;
+
+$dialogButtonBgColor: transparent;
+$dialogButtonFgColor: currentcolor;
+$dialogButtonBorderColor: black;
+$dialogButtonBgColorHover: $gray7;
+$dialogButtonFgColorHover: currentcolor;
+$dialogButtonBgColorActive: $gray8;
+$dialogButtonFgColorActive: currentcolor;
+
+$outlineColor: black;
+
+/***************/
+/* Page Layout */
+/***************/
+
+body {
+  font-family: Arial, sans-serif;
+  line-height: 1.4;
+  margin: 0;
+  padding: 0;
+}
+
+#wrapper {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: $appBgColor;
+  color: $appFgColor;
+}
+
+header {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+section {
+  flex: 1 0 auto;
+  position: relative;
+  background-color: $windowDividerColor;
+}
+
+footer {
+  flex: 0 0 auto;
+}
+
+/**************/
+/* TextButton */
+/**************/
+
+.textButton {
+  padding: 0 5px;
+  background-color: $textButtonBgColor;
+  color: $textButtonFgColor;
+}
+
+.textButton:hover, .textButton:focus {
+  background-color: $textButtonBgColorHover;
+  color: $textButtonFgColorHover;
+}
+
+.textButton:active {
+  background-color: $textButtonBgColorActive;
+  color: $textButtonFgColorActive;
+}
+
+/****************/
+/* FilledButton */
+/****************/
+
+.filledButton {
+  padding: 0 5px;
+  background-color: $filledButtonBgColor;
+  color: $filledButtonFgColor;
+}
+
+.filledButton:hover, .filledButton:focus {
+  background-color: $filledButtonBgColorHover;
+  color: $filledButtonFgColorHover;
+}
+
+.filledButton:active {
+  background-color: $filledButtonBgColorActive;
+  color: $filledButtonFgColorActive;
+}
+
+/***********/
+/* Menubar */
+/***********/
+
+.menubarRoot {
+  padding: 2px 4px;
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  background-color: $menubarRootBgColor;
+  color: $menubarRootFgColor;
+}
+
+.menubarTrigger {
+  padding: 0 5px;
+  background-color: $menubarTriggerBgColor;
+  color: $menubarTriggerFgColor;
+}
+
+.menubarTrigger[data-highlighted] {
+  background-color: $menubarTriggerBgColorHighlighted;
+  color: $menubarTriggerFgColorHighlighted;
+}
+
+.menubarTrigger[data-state='open'] {
+  background-color: $menubarTriggerBgColorOpen;
+  color: $menubarTriggerFgColorOpen;
+}
+
+.menubarContent {
+  box-shadow: 0 0 0 1px $menubarContentBorderColor;
+  padding: 5px;
+  background-color: $menubarContentBgColor;
+  color: $menubarContentFgColor;
+}
+
+.menubarItem {
+  padding: 3px 5px;
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  background-color: $menubarItemBgColor;
+  color: $menubarItemFgColor;
+}
+
+.menubarItem[data-highlighted] {
+  background-color: $menubarItemBgColorHighlighted;
+  color: $menubarItemFgColorHighlighted;
+}
+
+.menubarItem[data-disabled] {
+  background-color: $menubarItemBgColorDisabled;
+  color: $menubarItemFgColorDisabled;
+}
+
+.menubarItem.inset {
+  padding-left: 20px;
+}
+
+.menubarItemIndicator {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+
+}
+
+.menubarRightSlot {
+  margin-left: auto;
+  padding-left: 20px
+}
+
+.menubarSeparator {
+  margin: 3px 0;
+  height: 1px;
+  background-color: $menubarSeparatorColor;
+}
+
+/***********/
+/* Infobar */
+/***********/
+
+.infobarRoot {
+  padding: 2px 4px;
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  background-color: $infobarRootBgColor;
+  color: $infobarRootFgColor;
+}
+
+.infobarItem {
+  padding: 0 5px;
+  background-color: $infobarItemBgColor;
+  color: $infobarItemFgColor;
+}
+
+/**********/
+/* Window */
+/**********/
+
+.tilingWindow {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+}
+
+.fillingWindow {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.windowToolbar {
+  flex: 0 0 auto;
+}
+
+.windowContentsArea {
+  flex: 1 0 auto;
+}
+
+.windowStatusbar {
+  flex: 0 0 auto;
+}
+
+/***********/
+/* Toolbar */
+/***********/
+
+.toolbarRoot {
+  padding: 2px 4px;
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+  background-color: $toolbarRootBgColor;
+  color: $toolbarRootFgColor;
+}
+
+.toolbarRoot[data-selected] {
+  background-color: $toolbarRootBgColorSelected;
+  color: $toolbarRootFgColorSelected;
+}
+
+.toolbarButton {
+  padding: 0 5px;
+  background-color: $textButtonBgColor;
+  color: $textButtonFgColor;
+}
+
+.toolbarButton:hover, .toolbarButton:focus {
+  background-color: $textButtonBgColorHover;
+  color: $textButtonFgColorHover;
+}
+
+.toolbarButton:active {
+  background-color: $textButtonBgColorActive;
+  color: $textButtonFgColorActive;
+}
+
+/****************/
+/* ContentsArea */
+/****************/
+
+.contentsAreaRoot {
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 1px;
+  background-color: $contentsAreaRootBgColor;
+  color: $contentsAreaRootFgColor;
+}
+
+/*************/
+/* Statusbar */
+/*************/
+
+.statusbarRoot {
+  padding: 2px 4px;
+  background-color: $statusbarRootBgColor;
+  color: $statusbarRootFgColor;
+  white-space: nowrap;
+}
+
+.statusbarRoot[data-selected] {
+  background-color: $statusbarRootBgColorSelected;
+  color: $statusbarRootFgColorSelected;
+}
+
+/**********/
+/* Dialog */
+/**********/
+
+.dialogOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: $dialogOverlay;
+}
+
+.dialogContent {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 200px;
+  padding: 10px;
+  background-color: $dialogContentBgColor;
+  color: $dialogContentFgColor;
+}
+
+.dialogTitle {
+  font-size: larger;
+  font-weight: bolder;
+}
+
+.dialogButtons {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.dialogButton {
+  border: 1px solid $dialogButtonBorderColor;
+  padding: 0 5px;
+  background-color: $dialogButtonBgColor;
+  color: $dialogButtonFgColor;
+}
+
+.dialogButton:hover, .dialogButton:focus {
+  background-color: $dialogButtonBgColorHover;
+  color: $dialogButtonFgColorHover;
+}
+
+.dialogButton:active {
+  background-color: $dialogButtonBgColorActive;
+  color: $dialogButtonFgColorActive;
+}
+
+/**************/
+/* CodeMirror */
+/**************/
+
+/* https://discuss.codemirror.net/t/size-inside-flexbox/1359 */
+.cm-outer-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.cm-inner-container {
+  position: absolute;
+  inset: 0;
+}
+
+/**********/
+/* IFrame */
+/**********/
+
+iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/*****************/
+/* Miscellaneous */
+/*****************/
+
+ul.radio {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
+li.radio {
+  padding: 2px;
+}
+
+li.radio:focus-within {
+  outline: 1px dotted $outlineColor;
+}
+
+.error {
+  margin: 1em;
+}

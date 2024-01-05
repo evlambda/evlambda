@@ -1,0 +1,38 @@
+/* SPDX-FileCopyrightText: Copyright (c) 2024 Raphaël Van Dyck */
+/* SPDX-License-Identifier: BSD-3-Clause */
+
+html {
+  font-family: Arial, sans-serif;
+  font-size: 14pt;
+  line-height: 1.4;
+}
+
+table.ks {
+  border-collapse: collapse;
+  border: 1px solid;
+}
+
+table.ks th, table.ks td {
+  border: 1px solid;
+  padding: 5px;
+}
+
+table.bnf {
+  font-family: monospace;
+}
+
+td.lhs, td.def, td.rhs {
+  padding: 5px;
+}
+
+td.lhs {
+  text-align: right;
+}
+
+td.def {
+  text-align: center;
+}
+
+td.rhs {
+  text-align: left;
+}

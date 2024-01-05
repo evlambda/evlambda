@@ -1,0 +1,22 @@
+<!doctype html>
+<!-- SPDX-FileCopyrightText: Copyright (c) 2024 Raphaël Van Dyck -->
+<!-- SPDX-License-Identifier: BSD-3-Clause -->
+<html>
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="___cssURL___"/>
+    <script src="___jsURL___"></script>
+    <script>const windowId = ___windowId___;</script>
+  </head>
+  <body>
+    <p>Harold Abelson and Gerald Jay Sussman, Structure and Interpretation of Computer Programs, second edition, 1996, MIT Press</p>
+    <p>Tim Bray, Jean Paoli, C. M. Sperberg-McQueen, Eve Maler, François Yergeau (Editors), Extensible Markup Language (XML) 1.0, fifth edition, 2008, <a href="https://www.w3.org/TR/2008/REC-xml-20081126/" target="_blank">https://www.w3.org/TR/2008/REC-xml-20081126/</a></p>
+    <p>R. Kent Dybvig, The Scheme Programming Language, fourth edition, 2009, MIT Press</p>
+    <p>Daniel P. Friedman and Mitchell Wand, Essentials of Programming Languages, third edition, 2008, MIT Press</p>
+    <p>Peter Norvig, Paradigms of Artificial Intelligence Programming: Case Studies in Common Lisp, 1992, Morgan Kaufmann Publishers</p>
+    <p>Kent Pitman, Common Lisp HyperSpec, 2005, <a href="https://www.lispworks.com/documentation/HyperSpec/Front/index.htm" target="_blank">https://www.lispworks.com/documentation/HyperSpec/Front/index.htm</a></p>
+    <p>Christian Queinnec, Lisp in Small Pieces, 2003, Cambridge University Press</p>
+    <p>Michael Sperber, R. Kent Dybvig, Matthew Flatt, and Anton van Straaten (Editors), Revised<sup>6</sup> Report on the Algorithmic Language Scheme, 2007, <a href="https://www.r6rs.org/" target="_blank">https://www.r6rs.org/</a></p>
+    <p>Guy L. Steele Jr., Common Lisp: The Language, second edition, 1990, Digital Press</p>
+  </body>
+</html>
