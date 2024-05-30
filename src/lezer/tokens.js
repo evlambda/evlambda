@@ -5,7 +5,7 @@ import {
   LanguageKeyword
 } from './evlambda.terms.js';
 
-const syntacticKeywords = [
+const specialOperators = [
   'quote',
   'progn',
   'if',
@@ -51,8 +51,8 @@ const macros = [
 
 const languageKeywords = new Map();
 
-for (const syntacticKeyword of syntacticKeywords) {
-  languageKeywords.set(syntacticKeyword, true);
+for (const specialOperator of specialOperators) {
+  languageKeywords.set(specialOperator, true);
 }
 
 for (const macro of macros) {

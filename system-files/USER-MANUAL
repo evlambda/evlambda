@@ -1,0 +1,522 @@
+<!doctype html>
+<!-- SPDX-FileCopyrightText: Copyright (c) 2024 Raphaël Van Dyck -->
+<!-- SPDX-License-Identifier: BSD-3-Clause -->
+<html>
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="___cssURL___"/>
+    <script src="___jsURL___"></script>
+    <script>const windowId = ___windowId___;</script>
+  </head>
+  <body>
+    <h1>User Manual</h1>
+    <h2>Project</h2>
+    <p>The goal of the EVLambda project is to write from scratch a custom <a href="https://en.wikipedia.org/wiki/Lisp_(programming_language)" target="_blank">Lisp</a> dialect and to use the resulting programming language to explore various science topics. Along the way, the programming language will be fine-tuned and complemented by libraries also written from scratch whenever possible.</p>
+    <p>Please note that providing a stable programming language useful outside of the project is a non-goal. Backward compatibility will not be a priority and the decision to include a feature or an optimization will be based primarily on its usefulness to the project.</p>
+    <h2 id="programming-language">Programming Language</h2>
+    <p>This section provides an overview of the programming language. Some of the concepts introduced in this section will be illustrated in the section <a href="#listener-buffers">Listener Buffers</a>. An introduction to writing programs can be found in the tutorial. A detailed account of the programming language can be found in the reference manual.</p>
+    <p>The programming language, which is called EVLambda like the project, is heavily inspired by the programming languages <a href="https://en.wikipedia.org/wiki/Scheme_(programming_language)" target="_blank">Scheme</a> and <a href="https://en.wikipedia.org/wiki/Common_Lisp" target="_blank">Common Lisp</a>. The bibliography contains many references covering and/or using those two programming languages.</p>
+    <p>In EVLambda, there is no difference of nature between code and data. Both code and data are represented by objects and it is the context that determines if an object, in a given occurrence, must be treated as code or as data. The word object is used here in the broad sense of data structure without any reference to object-oriented programming.</p>
+    <p>Objects are patterns of bits inside the computer's memory. To facilitate communicating about objects, reading and writing code and data, etc., objects have associated sequences of characters that can be used to represent them.</p>
+    <p>Most objects have at least one readable representation. A readable representation of an object is a sequence of characters that can be used to represent the object in input operations. The reader is the component of the programming language responsible for converting a readable representation into the corresponding object.</p>
+    <p>All objects have exactly one printable representation. The printable representation of an object is a sequence of characters that can be used to represent the object in output operations. When an object has exactly one readable representation, its printable representation is identical to its readable representation. When an object has more than one readable representation, its printable representation is identical to one of its readable representations chosen to be the standard way to represent the object. When an object has no readable representations, its printable representation is a sequence of characters revealing its type. The printer is the component of the programming language responsible for converting an object into its printable representation.</p>
+    <p>Objects are organized into classes called types and types are organized into a hierarchy of types. The type at the top of the hierarchy is called the root type. The types at the bottom of the hierarchy are called the leaf types. If type <i>A</i> is located below type <i>B</i> in the hierarchy, then type <i>A</i> is called a subtype of type <i>B</i> and any object that belongs to type <i>A</i> also belongs to type <i>B</i>. The term &ldquo;data type&rdquo; is sometimes used in place of the term &ldquo;type&rdquo; even though a (data) type is a class of objects and an object can be a piece of code or a piece of data.</p>
+    <p>Here is a tree-view representation of the hierarchy of types:</p>
+    <pre>object<br>  |-void<br>  |-boolean<br>  |-number<br>  |-character<br>  |-string<br>  |-symbol<br>  |   |-keyword<br>  |   |-variable<br>  |-list<br>  |   |-empty-list<br>  |   |-cons<br>  |-vector<br>  |-function<br>  |   |-primitive-function<br>  |   |-closure</pre>
+    <p>And here is a brief description of the leaf types:</p>
+    <dl>
+      <dt><code>void</code></dt>
+      <dd>There is exactly one object of type <code>void</code>. Its readable representation is <code>#v</code> and its purpose is to represent missing or undefined objects.</dd>
+      <dt><code>boolean</code></dt>
+      <dd>Booleans represent truth values. There are exactly two objects of type <code>boolean</code>: <code>#t</code> (representing true) and <code>#f</code> (representing false).</dd>
+      <dt><code>number</code></dt>
+      <dd>Numbers represent mathematical numbers: <code>123</code>, <code>-123</code>, <code>123.456</code>, <code>-123.456</code>, &hellip; The representation of a mathematical number by an object of type number can be exact or approximate.</dd>
+      <dt><code>character</code></dt>
+      <dd>Characters represent Unicode characters: <code>#\a</code>, <code>#\b</code>, <code>#\c</code>, &hellip; Most of the characters used in the world have a corresponding <a href="https://home.unicode.org/" target="_blank">Unicode</a> character.</dd>
+      <dt><code>string</code></dt>
+      <dd>Strings represent sequences of Unicode characters: <code>"abc"</code>, &hellip;</dd>
+      <dt><code>keyword</code></dt>
+      <dd>Keywords can, among other uses, represent named values: <code>:red</code>, <code>:green</code>, <code>:blue</code>, &hellip;</dd>
+      <dt><code>variable</code></dt>
+      <dd>Variables are primarily used to name objects and various other entities. For example, the names of the types are variables: <code>object</code>, <code>void</code>, &hellip;</dd>
+      <dt><code>empty-list</code></dt>
+      <dd>There is exactly one object of type <code>empty-list</code>. Its readable representation is <code>()</code> and its purpose is to represent empty lists of objects.</dd>
+      <dt><code>cons</code></dt>
+      <dd>A cons is a pair of objects. The first element is called the car of the cons and the second element is called the cdr of the cons. Conses are the building blocks of many data structures. In particular, conses can be chained together to represent non-empty lists of objects. A non-empty list is represented by a cons whose car is the first element of the list and whose cdr is the sublist of the list obtained by omitting its first element. The non-empty list <code>(1 2 3)</code>, for example, is represented by a chain of three conses: a first cons whose car is the number <code>1</code> and whose cdr is the second cons, a second cons whose car is the number <code>2</code> and whose cdr is the third cons, and a third cons whose car is the number <code>3</code> and whose cdr is the empty list.</dd>
+      <dt><code>vector</code></dt>
+      <dd>Vectors represent indexed sequences of objects: <code>#()</code>, <code>#(1 2 3)</code>, &hellip;</dd>
+      <dt><code>primitive-function</code></dt>
+      <dd>Primitive functions are built-in input/output mappings implemented in JavaScript. Primitive functions have no readable representations and their printable representation is <code>#&lt;primitive-function&gt;</code>.</dd>
+      <dt><code>closure</code></dt>
+      <dd>Closures are input/output mappings implemented in EVLambda. Some closures are tagged as being a macro. Macros are code to code mappings used to create new language constructs. Closures have no readable representations and their printable representation is <code>#&lt;closure&gt;</code>.</dd>
+    </dl>
+    <p>Objects treated as code are called forms. A form is executed by being submitted to a component of the programming language called the evaluator. The evaluation of a form has three possible outcomes:</p>
+    <ul>
+      <li>The evaluation can complete normally and produce a result consisting of zero or more objects called the values of the form.</li>
+      <li>The evaluation can complete abnormally because of an error. An evaluation that completes abnormally does not produce any result.</li>
+      <li>The evaluation can get caught in an infinite loop and never complete.</li>
+    </ul>
+    <p>The primary value of a form whose evaluation completed normally is defined as follows: If the result consists of one or more objects, then the primary value of the form is the first object. Otherwise, the primary value of the form is <code>#v</code>.</p>
+    <p>Irrespective of its outcome, the evaluation of a form can also have side effects.</p>
+    <p>A side effect can be loosely defined as a change observable beyond some boundary. Examples of side effects are:</p>
+    <ul>
+      <li>Changes initiated inside a piece of code and observable outside the piece of code.</li>
+      <li>Changes initiated inside the evaluator and observable outside the evaluator. Side effects of this type are the basis of output operations.</li>
+      <li>Changes initiated outside the evaluator and observable inside the evaluator. Side effects of this type are the basis of input operations.</li>
+    </ul>
+    <p>A consequence of the existence of side effects is that the repeated evaluations of the same form do not necessarily have the same outcome.</p>
+    <p>It was said above that variables can be used to name objects. This is accomplished through the use of namespaces, bindings, environments, and lookup rules:</p>
+    <ul>
+      <li>Namespaces are a mechanism allowing the same variable to name different objects in different contexts. In order to use the mechanism, each context must have a corresponding namespace name. (The correspondence between contexts and namespace names is many-to-one.)</li>
+      <li>A binding is an association between a variable and a memory location containing an object. Each binding is labeled with a namespace name that confines the use of the binding to the contexts corresponding to the namespace name.</li>
+      <li>An environment is a set of bindings. By grouping together the bindings labeled with the same namespace name, an environment can be partitioned into subsets called namespaces.</li>
+      <li>Lookup rules are needed because three environments are always active at any given time. The lookup rules determine which environments must be consulted and in which order.</li>
+    </ul>
+    <p>The purpose of an environment is to implement a non-ambiguous mapping from variables to memory locations. Without the use of namespaces, an environment would not be allowed to contain different bindings for the same variable. With the use of namespaces, an environment is allowed to contain different bindings for the same variable as long as those bindings belong to different namespaces.</p>
+    <p>The association between a variable and an object through a binding is indirect. A binding is fundamentally an association between a variable and a memory location and the object that is associated with the variable through the binding is the object that happens to be stored in the memory location. And because the programming language provides operations to change the object stored in the memory location of a binding, it is possible for the object that is associated with the variable through the binding to change over time.</p>
+    <p>Changing the object stored in the memory location of a binding is called altering the binding. Altering a binding is an example of side effect. Each time a new binding is created, the memory location is drawn from a pool of fresh (unused) memory locations. Consequently, memory locations are not shared among bindings and altering a binding has no effect on other bindings.</p>
+    <p>A variable that is associated with a memory location through a binding belonging to namespace <i>X</i> of environment <i>Y</i> is said to be bound to the memory location in namespace <i>X</i> of environment <i>Y</i>. By abuse of language, the variable is also often said to be bound to the object contained in the memory location in namespace <i>X</i> of environment <i>Y</i>. A variable that is not associated with a memory location through a binding belonging to namespace <i>X</i> of environment <i>Y</i> is said to be unbound in namespace <i>X</i> of environment <i>Y</i>.</p>
+    <p>Each evaluation is done with respect to three environments: the global environment, the current lexical environment, and the current dynamic environment. The reference manual will introduce the concepts of scope and extent. The different environments draw their name from the scope and extent of the bindings they contain:</p>
+    <ul>
+      <li>Global environments contain bindings with indefinite scope and indefinite extent.</li>
+      <li>Lexical environments contain bindings with lexical scope and indefinite extent.</li>
+      <li>Dynamic environments contain bindings with indefinite scope and dynamic extent.</li>
+    </ul>
+    <p>Global environments and lexical environments are partitioned into two namespaces: the value namespace and the function namespace. Dynamic environments only have one namespace: the value namespace. The function namespace correspond to contexts requiring a function. The value namespace correspond to all other contexts. Although the programming language does not enforce any restriction on the type of the object stored in the memory location of a binding, function namespaces should only contain bindings between variables and functions.</p>
+    <p>The global environment is unique for a given instance of the evaluator. It is created when the evaluator starts and it continues to exist until the evaluator stops. The global environment of an evaluator that has just started contains a set of predefined bindings. Each primitive function, for example, is accessible through a predefined binding. As forms are evaluated, side effects can change the global environment in the following ways:</p>
+    <ul>
+      <li>Bindings can be added.</li>
+      <li>Bindings can be deleted.</li>
+      <li>Bindings can be altered.</li>
+    </ul>
+    <p>A global variable is a binding between a variable and an object (of any type) in the value namespace of the global environment. A global function is a binding between a variable and a function other than a macro in the function namespace of the global environment. A global macro is a binding between a variable and a macro in the function namespace of the global environment. Global variables, global functions, and global macros are usually created and altered using language constructs called global definitions.</p>
+    <p>The lexical and dynamic environments are not unique. Different forms can be evaluated with respect to different lexical and dynamic environments. The lexical and dynamic environments with respect to which a form is evaluated are called the current lexical and dynamic environments. In contrast to global environments, bindings are never added to or removed from a lexical or dynamic environment after the environment has been created.</p>
+    <p>Forms submitted to the evaluator through a <a href="#listener-buffers">listener buffer</a>, through the <a href="#evaluate-form">Evaluate Form</a> command, or through the <a href="#load-buffer">Load Buffer</a> command are evaluated with respect to an initial lexical environment and an initial dynamic environment that are both empty.</p>
+    <p>The current lexical and dynamic environments are not always empty. A consequence of the evaluation rules stated later in this section is that each form is evaluated with respect to (1) a lexical environment that is either the initial empty lexical environment or the result of extending, once or multiple times in sequence, the initial empty lexical environment and (2) a dynamic environment that is either the initial empty dynamic environment or the result of extending, once or multiple times in sequence, the initial empty dynamic environment.</p>
+    <p>Let <i>env</i> be an environment, <i>ns</i> be a namespace of the environment, <i>n</i> be a nonnegative integer, <i>var<sub>1</sub></i>, &hellip;, <i>var<sub>n</sub></i> be a sequence of <i>n</i> distinct variables, and <i>obj<sub>1</sub></i>, &hellip;, <i>obj<sub>n</sub></i> be a sequence of <i>n</i> objects. The environment extending the environment <i>env</i> to bind, in the namespace <i>ns</i>, the variable <i>var<sub>i</sub></i> to the object <i>obj<sub>i</sub></i> (for all <i>i</i> from 1 to <i>n</i>) is the environment obtained as follows:</p>
+    <ol>
+      <li>Copy the environment <i>env</i> in such a way that (1) the environment <i>env</i> and its copy are distinct (steps 2 and 3 below must have no effect on the environment <i>env</i>) and (2) the environment <i>env</i> and its copy contain the exact same bindings (the bindings are not copied but shared between the two environments).</li>
+      <li>For all <i>i</i> from 1 to <i>n</i>, delete from the copy of the namespace <i>ns</i> the binding for the variable <i>var<sub>i</sub></i>, if it exists.</li>
+      <li>For all <i>i</i> from 1 to <i>n</i>, add to the copy of the namespace <i>ns</i> a binding between the variable <i>var<sub>i</sub></i> and a fresh memory location containing the object <i>obj<sub>i</sub></i>.</li>
+    </ol>
+    <p>A binding deleted from the environment in step 2 is said to be shadowed by the binding for the same variable added to the environment in step 3. The extended environment is non-empty unless the environment being extended is empty and <i>n</i> is equal to zero.</p>
+    <p>Memory locations named by variables are accessed using three pairs of operations. In each pair, one operation is used to get (read) the object stored in the memory location and one operation is used to change (write) the object stored in the memory location. Each pair uses a specific lookup rule to determine the memory location named by the variable.</p>
+    <p>The operations <code>vref</code> and <code>vset!</code> limit their search to the value namespace and are primarily interested in bindings with a lexical scope. They use the following lookup rule:</p>
+    <ul>
+      <li>Search the value namespace of the current lexical environment.</li>
+      <li>If no binding is found for the variable, then search the value namespace of the global environment.</li>
+    </ul>
+    <p>The operations <code>fref</code> and <code>fset!</code> limit their search to the function namespace and are primarily interested in bindings with a lexical scope. They use the following lookup rule:</p>
+    <ul>
+      <li>Search the function namespace of the current lexical environment.</li>
+      <li>If no binding is found for the variable, then search the function namespace of the global environment.</li>
+    </ul>
+    <p>The operations <code>dref</code> and <code>dset!</code> limit their search to the value namespace and are primarily interested in bindings with a dynamic extent. They use the following lookup rule:</p>
+    <ul>
+      <li>Search the value namespace of the current dynamic environment.</li>
+      <li>If no binding is found for the variable, then search the value namespace of the global environment.</li>
+    </ul>
+    <p>A consequence of those two-step lookup rules is that a binding in the current lexical or dynamic environment will effectively shadow a binding for the same variable in the same namespace of the global environment.</p>
+    <p>When a form is submitted to the evaluator, the evaluator analyzes the form to determine how to evaluate it. If the form is the empty list, then the evaluation completes abnormally. Otherwise, if the form is neither a variable nor a cons, then the result of the evaluation is the form itself. (Objects that are neither the empty list, nor a variable, nor a cons are said to be self-evaluating.) Otherwise, if the form is a variable <i>var</i>, then the variable is treated as an abbreviation for either <code>(vref <i>var</i>)</code> or <code>(fref <i>var</i>)</code>, depending on the context. Otherwise, the form is necessarily a cons and the evaluation completes abnormally unless the form is a non-empty list matching one of the following patterns:</p>
+    <ol>
+      <li><code>(quote &lt;literal&gt;)</code></li>
+      <li><code>(progn &lt;forms&gt;)</code></li>
+      <li><code>(if &lt;test-form&gt; &lt;then-form&gt; &lt;else-form&gt;)</code></li>
+      <li><code>(_vlambda &lt;parameter-list&gt; &lt;body&gt;)</code></li>
+      <li><code>(_mlambda &lt;parameter-list&gt; &lt;body&gt;)</code></li>
+      <li><code>(_flambda &lt;parameter-list&gt; &lt;body&gt;)</code></li>
+      <li><code>(_dlambda &lt;parameter-list&gt; &lt;body&gt;)</code></li>
+      <li><code>(vref &lt;variable&gt;)</code></li>
+      <li><code>(vset! &lt;variable&gt; &lt;value-form&gt;)</code></li>
+      <li><code>(fref &lt;variable&gt;)</code></li>
+      <li><code>(fset! &lt;variable&gt; &lt;value-form&gt;)</code></li>
+      <li><code>(dref &lt;variable&gt;)</code></li>
+      <li><code>(dset! &lt;variable&gt; &lt;value-form&gt;)</code></li>
+      <li><code>(apply &lt;operator&gt; &lt;operands&gt;)</code></li>
+      <li><code>(multiple-value-call &lt;operator&gt; &lt;operands&gt;)</code></li>
+      <li><code>(multiple-value-apply &lt;operator&gt; &lt;operands&gt;)</code></li>
+      <li><code>(&lt;operator&gt; &lt;operands&gt;)</code></li>
+    </ol>
+    <p>Names enclosed in angle brackets have the following meanings:</p>
+    <ul>
+      <li><code>&lt;literal&gt;</code> matches any object</li>
+      <li><code>&lt;forms&gt;</code> matches any sequence of zero or more objects</li>
+      <li><code>&lt;test-form&gt;</code> matches any object</li>
+      <li><code>&lt;then-form&gt;</code> matches any object</li>
+      <li><code>&lt;else-form&gt;</code> matches any object</li>
+      <li><code>&lt;parameter-list&gt;</code> matches any list of distinct variables (as we will see in the reference manual, a parameter list can actually take two other forms)</li>
+      <li><code>&lt;body&gt;</code> matches any sequence of zero or more objects</li>
+      <li><code>&lt;variable&gt;</code> matches any variable</li>
+      <li><code>&lt;value-form&gt;</code> matches any object</li>
+      <li><code>&lt;operator&gt;</code> matches any object</li>
+      <li><code>&lt;operands&gt;</code> matches any sequence of zero or more objects</li>
+    </ul>
+    <p>The first sixteen patterns have priority over pattern 17: If a form matches one of the first sixteen patterns, then pattern 17 is ignored.</p>
+    <p>A form matching one of the first sixteen patterns is called a special form and the variables <code>quote</code>, <code>progn</code>, <code>if</code>, <code>_vlambda</code>, <code>_mlambda</code>, <code>_flambda</code>, <code>_dlambda</code>, <code>vref</code>, <code>vset!</code>, <code>fref</code>, <code>fset!</code>, <code>dref</code>, <code>dset!</code>, <code>apply</code>, <code>multiple-value-call</code>, and <code>multiple-value-apply</code> are called special operators. A form matching pattern 17 is either a macro call or a function call. If <code>&lt;operator&gt;</code> matches a variable naming a macro according to the lookup rule used by <code>fref</code>, then the form is a macro call. Otherwise, the form is a function call.</p>
+    <p>The rule regarding forms consisting of a variable is the following: If a variable <i>var</i> occurs in operator position, then the variable is treated as an abbreviation for <code>(fref <i>var</i>)</code> and the function namespace is used. Otherwise, the variable is treated as an abbreviation for <code>(vref <i>var</i>)</code> and the value namespace is used. The function call <code>(f x)</code>, for example, would be treated as an abbreviation for <code>((fref f) (vref x))</code>. The full forms <code>(fref <i>var</i>)</code> and <code>(vref <i>var</i>)</code> can always be used to force the use of one of the namespaces.</p>
+    <p>As we will see momentarily, the evaluation of a form containing subforms entails the evaluation of some or all of the subforms. When a subform is evaluated, the following rules apply:</p>
+    <ul>
+      <li>The subform is evaluated with respect to the same lexical and dynamic environments as the containing form. (But see below how closures are invoked.)</li>
+      <li>If the evaluation of the subform completes abnormally, then the evaluation of the containing form also completes abnormally.</li>
+      <li>If the evaluation of the subform does not complete, then the evaluation of the containing form does not complete either.</li>
+    </ul>
+    <p>Special forms and calls are evaluated as follows:</p>
+    <dl>
+      <dt><code>(quote &lt;literal&gt;)</code></dt>
+      <dd>The quote-form evaluates to the unevaluated literal. Using a quote-form, any object can be treated as data. For any object <i>obj</i>, (quote <i>obj</i>) can be abbreviated to <code>'<i>obj</i></code>.</dd>
+      <dt><code>(progn &lt;forms&gt;)</code></dt>
+      <dd>The forms are evaluated in sequence from left to right. If there is at least one form, then the progn-form evaluates to the values of the last form. Otherwise, the progn-form evaluates to <code>#v</code>.</dd>
+      <dt><code>(if &lt;test-form&gt; &lt;then-form&gt; &lt;else-form&gt;)</code></dt>
+      <dd>The test-form is evaluated. Let <i>primval</i> be the primary value of the test-form. If <i>primval</i> is not a boolean, then the evaluation of the if-form completes abnormally. If <i>primval</i> is the boolean #t, then the then-form is evaluated and the if-form evaluates to the values of the then-form. If <i>primval</i> is the boolean #f, then the else-form is evaluated and the if-form evaluates to the values of the else-form.</dd>
+      <dt><code>(_vlambda &lt;parameter-list&gt; &lt;body&gt;)</code></dt>
+      <dt><code>(_mlambda &lt;parameter-list&gt; &lt;body&gt;)</code></dt>
+      <dt><code>(_flambda &lt;parameter-list&gt; &lt;body&gt;)</code></dt>
+      <dt><code>(_dlambda &lt;parameter-list&gt; &lt;body&gt;)</code></dt>
+      <dd>A lambda-form evaluates to a closure recording the following two pieces of information: the lambda-form and the current lexical environment. A closure resulting from the evaluation of an _mlambda-form is tagged as being a macro.</dd>
+      <dt><code>(vref &lt;variable&gt;)</code></dt>
+      <dd>If the variable is bound to an object in the value namespace of the current lexical environment, then the vref-form evaluates to that object. Otherwise, if the variable is bound to an object in the value namespace of the global environment, then the vref-form evaluates to that object. Otherwise, the evaluation of the vref-form completes abnormally.</dd>
+      <dt><code>(vset! &lt;variable&gt; &lt;value-form&gt;)</code></dt>
+      <dd>The value-form is evaluated. Let <i>primval</i> be the primary value of the value-form. If the variable is bound to a memory location in the value namespace of the current lexical environment, then the object stored in that memory location is replaced by <i>primval</i>. Otherwise, if the variable is bound to a memory location in the value namespace of the global environment, then the object stored in that memory location is replaced by <i>primval</i>. Otherwise, a binding between the variable and a fresh memory location containing <i>primval</i> is added to the value namespace of the global environment. In all three cases, the vset-form evaluates to <i>primval</i>.</dd>
+      <dt><code>(fref &lt;variable&gt;)</code></dt>
+      <dd>If the variable is bound to an object in the function namespace of the current lexical environment, then the fref-form evaluates to that object. Otherwise, if the variable is bound to an object in the function namespace of the global environment, then the fref-form evaluates to that object. Otherwise, the evaluation of the fref-form completes abnormally.</dd>
+      <dt><code>(fset! &lt;variable&gt; &lt;value-form&gt;)</code></dt>
+      <dd>The value-form is evaluated. Let <i>primval</i> be the primary value of the value-form. If the variable is bound to a memory location in the function namespace of the current lexical environment, then the object stored in that memory location is replaced by <i>primval</i>. Otherwise, if the variable is bound to a memory location in the function namespace of the global environment, then the object stored in that memory location is replaced by <i>primval</i>. Otherwise, a binding between the variable and a fresh memory location containing <i>primval</i> is added to the function namespace of the global environment. In all three cases, the fset-form evaluates to <i>primval</i>.</dd>
+      <dt><code>(dref &lt;variable&gt;)</code></dt>
+      <dd>If the variable is bound to an object in the value namespace of the current dynamic environment, then the dref-form evaluates to that object. Otherwise, if the variable is bound to an object in the value namespace of the global environment, then the dref-form evaluates to that object. Otherwise, the evaluation of the dref-form completes abnormally.</dd>
+      <dt><code>(dset! &lt;variable&gt; &lt;value-form&gt;)</code></dt>
+      <dd>The value-form is evaluated. Let <i>primval</i> be the primary value of the value-form. If the variable is bound to a memory location in the value namespace of the current dynamic environment, then the object stored in that memory location is replaced by <i>primval</i>. Otherwise, if the variable is bound to a memory location in the value namespace of the global environment, then the object stored in that memory location is replaced by <i>primval</i>. Otherwise, a binding between the variable and a fresh memory location containing <i>primval</i> is added to the value namespace of the global environment. In all three cases, the dset-form evaluates to <i>primval</i>.</dd>
+      <dt><code>(apply &lt;operator&gt; &lt;operands&gt;)</code></dt>
+      <dt><code>(multiple-value-call &lt;operator&gt; &lt;operands&gt;)</code></dt>
+      <dt><code>(multiple-value-apply &lt;operator&gt; &lt;operands&gt;)</code></dt>
+      <dd>Variants of the plain function call described below. Those variants are described in the reference manual.</dd>
+      <dt><code>(&lt;operator&gt; &lt;operands&gt;)</code> classified as a macro call</dt>
+      <dd>Following the definition of a macro call, <code>&lt;operator&gt;</code> matches a variable naming a macro according to the lookup rule used by <code>fref</code>. The macro is invoked on the unevaluated operands. If the invocation completes abnormally, then the evaluation of the macro call also completes abnormally. Otherwise, if the invocation does not complete, then the evaluation of the macro call does not complete either. Otherwise, the primary value of the invocation, which is called the expansion of the macro call, is evaluated with respect to the current lexical and dynamic environments. If the evaluation of the expansion completes abnormally, then the evaluation of the macro call also completes abnormally. Otherwise, if the evaluation of the expansion does not complete, then the evaluation of the macro call does not complete either. Otherwise, the macro call evaluates to the values of the expansion.</dd>
+      <dt><code>(&lt;operator&gt; &lt;operands&gt;)</code> classified as a function call</dt>
+      <dd>The operator and the operands are evaluated in sequence from left to right. If the primary value of the operator is not a function, then the evaluation of the function call completes abnormally. Otherwise, the primary value of the operator is invoked on the primary values of the operands. If the invocation completes abnormally, then the evaluation of the function call also completes abnormally. Otherwise, if the invocation does not complete, then the evaluation of the function call does not complete either. Otherwise, the function call evaluates to the values of the invocation.</dd>
+    </dl>
+    <p>Invoking a function is what causes the function to compute the output corresponding to an input. The input of an invocation consists of zero or more objects called the arguments of the invocation. (The function is said to be invoked on the arguments.) The invocation of a function has three possible outcomes:</p>
+    <ul>
+      <li>The invocation can complete normally and produce an output consisting of zero or more objects called the values of the invocation. (The function is said to return the values.)</li>
+      <li>The invocation can complete abnormally because of an error. An invocation that completes abnormally does not produce any output.</li>
+      <li>The invocation can get caught in an infinite loop and never complete.</li>
+    </ul>
+    <p>The primary value of an invocation that completed normally is defined as follows: If the output consists of one or more objects, then the primary value of the invocation is the first object. Otherwise, the primary value of the invocation is <code>#v</code>.</p>
+    <p>Irrespective of its outcome, the invocation of a function can also have side effects.</p>
+    <p>Primitive functions are invoked as follows:</p>
+    <blockquote>A primitive function is implemented by a JavaScript function accepting as input (an encoding of) the arguments of the invocation of the primitive function and producing as output (an encoding of) the values of the invocation of the primitive function. The JavaScript function is invoked on the arguments. If the invocation of the JavaScript function completes abnormally, then the invocation of the primitive function also completes abnormally. Otherwise, if the invocation of the JavaScript function does not complete, then the invocation of the primitive function does not complete either. Otherwise, the primitive function returns the values returned by the JavaScript function.</blockquote>
+    <p>Closures are invoked as follows:</p>
+    <blockquote>
+      <p>If the number of variables in the parameter list of the lambda-form recorded by the closure and the number of arguments are different, then the invocation completes abnormally. (As we will see in the reference manual, it is actually possible to create closures accepting a variable number of arguments.) Otherwise, let <i>var<sub>1</sub></i>, &hellip;, <i>var<sub>n</sub></i> be the variables composing the parameter list of the lambda-form recorded by the closure, <i>arg<sub>1</sub></i>, &hellip;, <i>arg<sub>n</sub></i> be the arguments, and <i>lexenv</i> and <i>dynenv</i> be the following environments:</p>
+      <ul>
+        <li>If the closure results from the evaluation of a _vlambda-form or an _mlambda-form, then <i>lexenv</i> is the environment extending the lexical environment recorded by the closure to bind, in the value namespace, the variable <i>var<sub>i</sub></i> to the argument <i>arg<sub>i</sub></i> (for all <i>i</i> from 1 to <i>n</i>) and <i>dynenv</i> is the current dynamic environment.</li>
+        <li>If the closure results from the evaluation of an _flambda-form, then <i>lexenv</i> is the environment extending the lexical environment recorded by the closure to bind, in the function namespace, the variable <i>var<sub>i</sub></i> to the argument <i>arg<sub>i</sub></i> (for all <i>i</i> from 1 to <i>n</i>) and <i>dynenv</i> is the current dynamic environment.</li>
+        <li>If the closure results from the evaluation of a _dlambda-form, then <i>lexenv</i> is the lexical environment recorded by the closure and <i>dynenv</i> is the environment extending the current dynamic environment to bind, in the value namespace, the variable <i>var<sub>i</sub></i> to the argument <i>arg<sub>i</sub></i> (for all <i>i</i> from 1 to <i>n</i>).</li>
+      </ul>
+      <p>The objects composing the body of the lambda-form recorded by the closure are evaluated with respect to <i>lexenv</i> and <i>dynenv</i> as if they were part of a progn-form. If the evaluation of the progn-form completes abnormally, then the invocation also completes abnormally. Otherwise, if the evaluation of the progn-form does not complete, then the invocation does not complete either. Otherwise, the closure returns the values of the progn-form.</p>
+    </blockquote>
+    <h2>Integrated Development Environment</h2>
+    <p>The integrated development environment (IDE) is a web application that can run either from the EVLambda web server (online mode) or from a web server running on your machine (offline mode). The code running in the web browser is exactly the same in both modes but the behavior of the IDE is slightly different because the backends have different capabilities.</p>
+    <p>The IDE's graphical user interface consists of a menu bar at the top left, an info bar at the top right, a minibuffer at the bottom, and a set of windows in the main area. Each window consists of a contents area and a status bar. At any given time, a window displays the contents of a buffer, of which there are two types: the file buffers and the listener buffers.</p>
+    <p>A file buffer is a buffer whose contents reflects the contents of a file. The contents of the buffer is read from the file through open and revert operations and written into the file through save operations. When a window displays the contents of a file buffer, its status bar displays the name of the file, followed by a star when the current contents of the buffer differs from the contents that was last read from or written into the file.</p>
+    <p>When the IDE starts, it automatically opens a predefined set of files. In online mode, the files are located in a directory on the machine hosting the EVLambda web server. In offline mode, the files are located in the directory <code>&lt;EVLAMBDA_HOME&gt;/system-files</code> on your machine.</p>
+    <p>A listener buffer is a buffer that allows you to evaluate forms interactively. When a window displays the contents of a listener buffer, its status bar displays the name of the buffer. Currently, the IDE has exactly one listener buffer whose name is &ldquo;Listener&nbsp;1&rdquo;.</p>
+    <p>At any given time, there is exactly one selected window and, by extension, exactly one selected buffer. The status bar of the selected window is darker than the status bar of the non-selected windows. A window becomes the selected window when it receives the focus, which happens for instance when it receives a click event.</p>
+    <p>Currently, the only function of the minibuffer is to display messages and evaluation results.</p>
+    <p>The organization of the IDE around buffers is borrowed from the <a href="https://www.gnu.org/software/emacs/" target="_blank">Emacs</a> text editor.</p>
+    <h2>File Buffers</h2>
+    <p>A window can display the contents of a file buffer in one of two modes: raw mode or HTML mode. In raw mode, the contents of the buffer is displayed in an instance of the <a href="https://codemirror.net/" target="_blank">CodeMirror</a> text editor. In HTML mode, the contents of the buffer, or an HTML document derived from the contents of the buffer, is displayed in rendered form.</p>
+    <p>The all-caps files (USER-MANUAL, &hellip;), which are actually HTML files, can be displayed in raw mode or HTML mode. The EVLambda files (extension <code>.evl</code>), which contain a mix of EVLambda code and XML text, can be displayed in raw mode or HTML mode. The other types of files are always displayed in raw mode.</p>
+    <h2 id="listener-buffers">Listener Buffers</h2>
+    <p>A listener buffer allows you to evaluate forms interactively. To evaluate a form in a listener buffer, you type in a readable representation of the form after the prompt and press the Return or Enter key when the cursor is at the very end of the buffer. In response, the form is evaluated, the printable representations of the resulting values are printed separated by a newline, and a new prompt is printed, allowing you to evaluate another form. This sequence of operations is called a read-eval-print loop (REPL).</p>
+    <p>Notes:</p>
+    <ul>
+      <li>The prompt is the greater-than sign printed at the beginning of a line to inform you that the listener buffer is waiting for a form to be typed in.</li>
+      <li>If you press the Return or Enter key when (1) the cursor is not at the very end of the buffer or (2) the form is missing or incomplete, then a newline is simply inserted into the buffer and no evaluation takes place.</li>
+      <li>If the evaluation completes abnormally, then a message describing the error is printed in place of the printable representations of the (non-existing) resulting values.</li>
+      <li>If the evaluation does not complete, then you must abort the evaluation or restart the evaluator in order to get a new prompt.</li>
+    </ul>
+    <p>We will now illustrate some of the concepts introduced in the section <a href="#programming-language">Programming Language</a> by providing a commented transcript of a sequence of evaluations conducted in a listener buffer. If you want to reproduce the evaluations, be sure to start with a fresh Trampoline++ evaluator. To get a fresh Trampoline++ evaluator, restart the evaluator (using the Restart Evaluator&hellip; command from the Eval menu) and select Trampoline++ as the evaluator type.</p>
+    <p>Here are the global functions that will be used in the evaluations. For each function, a template function call and a description of the values returned by the function are provided. The variable in operator position is the name of the function (i.e., the variable bound to the function in the function namespace of the global environment).</p>
+    <dl>
+      <dt><code>(car <i>cons</i>)</code></dt>
+      <dd>The function <code>car</code> returns the first element of its argument, which must be of type <code>cons</code>.</dd>
+      <dt><code>(cdr <i>cons</i>)</code></dt>
+      <dd>The function <code>cdr</code> returns the second element of its argument, which must be of type <code>cons</code>.</dd>
+      <dt><code>(list <i>obj<sub>1</sub></i> &hellip; <i>obj<sub>n</sub></i>)</code></dt>
+      <dd>The function <code>list</code> collects its arguments into a list: when invoked on the arguments <i>obj<sub>1</sub></i>, &hellip;, <i>obj<sub>n</sub></i>, the function returns a list whose elements are <i>obj<sub>1</sub></i>, &hellip;, <i>obj<sub>n</sub></i>.</dd>
+      <dt><code>(+ <i>num<sub>1</sub></i> &hellip; <i>num<sub>n</sub></i>)</code></dt>
+      <dd>The function <code>+</code> returns the sum of its arguments, which must be of type <code>number</code>.</dd>
+      <dt><code>(* <i>num<sub>1</sub></i> &hellip; <i>num<sub>n</sub></i>)</code></dt>
+      <dd>The function <code>*</code> returns the product of its arguments, which must be of type <code>number</code>.</dd>
+      <dt><code>(values <i>obj<sub>1</sub></i> &hellip; <i>obj<sub>n</sub></i>)</code></dt>
+      <dd>The function <code>values</code> converts its arguments into values: when invoked on the arguments <i>obj<sub>1</sub></i>, &hellip;, <i>obj<sub>n</sub></i>, the function returns the values <i>obj<sub>1</sub></i>, &hellip;, <i>obj<sub>n</sub></i>.</dd>
+    </dl>
+    <p>Here are the global macros that will be used in the evaluations. For each macro, a template macro call and a description of what the macro does are provided. The variable in operator position is the name of the macro (i.e., the variable bound to the macro in the function namespace of the global environment).</p>
+    <dl>
+      <dt><code>(vdef &lt;variable&gt; &lt;value-form&gt;)</code></dt>
+      <dd>The purpose of the macro <code>vdef</code> is to define a global variable by ensuring that the variable is bound in the value namespace of the global environment to the primary value of the value-form. The macro call evaluates to the variable.</dd>
+      <dt><code>(fdef &lt;variable&gt; &lt;parameter-list&gt; &lt;body&gt;)</code></dt>
+      <dd>The purpose of the macro <code>fdef</code> is to define a global function by ensuring that the variable is bound in the function namespace of the global environment to the closure resulting from the evaluation of the _vlambda-form <code>(_vlambda &lt;parameter-list&gt; &lt;body&gt;)</code>. The macro call evaluates to the variable.</dd>
+      <dt><code>(loop &lt;forms&gt;)</code></dt>
+      <dd>The purpose of the macro <code>loop</code> is to create an infinite loop repeatedly evaluating the forms in sequence from left to right. The macro call <code>(loop)</code>, for example, endlessly does nothing. The evaluation of the macro call normally does not complete but there are ways to exit an infinite loop.</dd>
+    </dl>
+    <p>And here is the commented transcript, where each box contains a form and its values. The character &#x23CE; marks the places where the Return or Enter key should be pressed.</p>
+    <pre class="tr">&gt; (+ 1 2)&#x23CE;<br>3</pre>
+    <p>The evaluation produces a result consisting of the sum of the two numbers <code>1</code> and <code>2</code>. Because numbers are self-evaluating, quoting the numbers is not necessary.</p>
+    <pre class="tr">&gt; (+ '1 '2)&#x23CE;<br>3</pre>
+    <p>The evaluation produces the same result if the numbers are quoted. Quoting self-evaluating objects is unidiomatic, though.</p>
+    <pre class="tr">&gt; (car '(1 2 3))&#x23CE;<br>1</pre>
+    <p>The evaluation produces a result consisting of the first element of the list <code>(1 2 3)</code>. Because lists are not self-evaluating, quoting the list is necessary.</p>
+    <pre class="tr">&gt; (car (1 2 3))&#x23CE;<br>ERROR: The operator form does not evaluate to a function.</pre>
+    <p>The evaluation completes abnormally if the list is not quoted. The reason is as follows: The evaluator treats the list <code>(1 2 3)</code> as a function call and the operator, the number <code>1</code>, does not evaluate to a function.</p>
+    <pre class="tr">&gt; (cdr '(1 2 3))&#x23CE;<br>(2 3)</pre>
+    <p>The evaluation produces a result consisting of the sublist of the list <code>(1 2 3)</code> obtained by omitting its first element.</p>
+    <pre class="tr">&gt; (car (cdr '(1 2 3)))&#x23CE;<br>2</pre>
+    <p>The evaluation produces a result consisting of the second element of the list <code>(1 2 3)</code>.</p>
+    <pre class="tr">&gt; (cdr (cdr '(1 2 3)))&#x23CE;<br>(3)</pre>
+    <p>The evaluation produces a result consisting of the sublist of the list <code>(1 2 3)</code> obtained by omitting its first two elements.</p>
+    <pre class="tr">&gt; (car (cdr (cdr '(1 2 3))))&#x23CE;<br>3</pre>
+    <p>The evaluation produces a result consisting of the third element of the list <code>(1 2 3)</code>.</p>
+    <pre class="tr">&gt; (cdr (cdr (cdr '(1 2 3))))&#x23CE;<br>()</pre>
+    <p>The evaluation produces a result consisting of the sublist of the list <code>(1 2 3)</code> obtained by omitting its first three elements.</p>
+    <pre class="tr">&gt; (car (cdr (cdr (cdr '(1 2 3)))))&#x23CE;<br>ERROR: The 1st argument is not of type EVLCons.</pre>
+    <p>The evaluation completes abnormally because the empty list is not a cons.</p>
+    <pre class="tr">&gt; (disk-area 2)&#x23CE;<br>ERROR: The variable 'disk-area' is unbound in the FUNCTION namespace.</pre>
+    <p>The evaluation completes abnormally because the global function <code>disk-area</code> is undefined.</p>
+    <pre class="tr">&gt; (fdef disk-area (r) (* 3.14 r r))&#x23CE;<br>disk-area</pre>
+    <p>The evaluation produces a result consisting of the variable <code>disk-area</code>. More importantly, the evaluation has the side effect of defining the global function <code>disk-area</code>. The function accepts as input the radius of a disk and produces as output the area of the disk computed using <code>3.14</code> as the value of pi. When the function is invoked, its body is evaluated with respect to a lexical environment binding, in its value namespace, the variable <code>r</code> to the argument of the invocation (that is, the radius of the disk).</p>
+    <pre class="tr">&gt; (disk-area 2)&#x23CE;<br>12.56</pre>
+    <p>The evaluation produces the expected result.</p>
+    <pre class="tr">&gt; (fdef disk-area (r) (* 3.1415 r r))&#x23CE;<br>disk-area</pre>
+    <p>The evaluation has the side effect of redefining the global function <code>disk-area</code> to compute the area of the disk using <code>3.1415</code> as the value of pi.</p>
+    <pre class="tr">&gt; (disk-area 2)&#x23CE;<br>12.566</pre>
+    <p>The evaluation produces the expected result.</p>
+    <pre class="tr">&gt; (fdef disk-area (r) (* *pi* r r))&#x23CE;<br>disk-area</pre>
+    <p>The evaluation has the side effect of redefining the global function <code>disk-area</code> to compute the area of the disk using the value of the global variable <code>*pi*</code> as the value of pi. It is customary for a global variable to have a name starting and ending with an asterisk.</p>
+    <pre class="tr">&gt; (disk-area 2)&#x23CE;<br>ERROR: The variable '*pi*' is unbound in the VALUE namespace.</pre>
+    <p>The evaluation completes abnormally because the global variable <code>*pi*</code> is undefined.</p>
+    <pre class="tr">&gt; (vdef *pi* 3.141592)&#x23CE;<br>*pi*</pre>
+    <p>The evaluation produces a result consisting of the variable <code>*pi*</code>. More importantly, the evaluation has the side effect of defining the global variable <code>*pi*</code>. The variable has the value <code>3.141592</code>.</p>
+    <pre class="tr">&gt; (disk-area 2)&#x23CE;<br>12.566368</pre>
+    <p>The evaluation produces the expected result.</p>
+    <pre class="tr">&gt; (vdef *pi* 3.14159265)&#x23CE;<br>*pi*</pre>
+    <p>The evaluation has the side effect of redefining the global variable <code>*pi*</code> to have the value <code>3.14159265</code>.</p>
+    <pre class="tr">&gt; (disk-area 2)&#x23CE;<br>12.5663706</pre>
+    <p>The evaluation produces the expected result.</p>
+    <pre class="tr">&gt; (values)&#x23CE;</pre>
+    <p>The evaluation produces a result consisting of zero values.</p>
+    <pre class="tr">&gt; (values 1)&#x23CE;<br>1</pre>
+    <p>The evaluation produces a result consisting of one value: <code>1</code>.</p>
+    <pre class="tr">&gt; 1&#x23CE;<br>1</pre>
+    <p>Producing a result consisting of one value is the default behavior so using <code>values</code> in this case is unnecessary and unidiomatic.</p>
+    <pre class="tr">&gt; (values 1 2)&#x23CE;<br>1<br>2</pre>
+    <p>The evaluation produces a result consisting of two values: <code>1</code> and <code>2</code>.</p>
+    <pre class="tr">&gt; (list (values) (values 1) 1 (values 1 2))&#x23CE;<br>(#v 1 1 1)</pre>
+    <p>The forms <code>(values)</code>, <code>(values 1)</code>, <code>1</code>, and <code>(values 1 2)</code> have the primary values <code>#v</code>, <code>1</code>, <code>1</code>, and <code>1</code>, respectively.</p>
+    <pre class="tr">&gt; (loop)&#x23CE;<br>ABORTED</pre>
+    <p>The evaluation is caught in an infinite loop. You can use the Abort Evaluation command from the Eval menu to stop the evaluation and get a new prompt.</p>
+    <pre class="tr">&gt; (disk-area 2)&#x23CE;<br>12.5663706</pre>
+    <p>Aborting an evaluation has no effect on the global definitions.</p>
+    <pre class="tr">&gt; (loop)&#x23CE;<br>TERMINATED</pre>
+    <p>The evaluation is caught in an infinite loop. You can use the Restart Evaluator&hellip; command from the Eval menu to stop the evaluation and get a new prompt.</p>
+    <pre class="tr">&gt; (disk-area 2)&#x23CE;<br>ERROR: The variable 'disk-area' is unbound in the FUNCTION namespace.</pre>
+    <p>Restarting the evaluator erases all global definitions.</p>
+    <h2>Menu Bar</h2>
+    <h3>File Menu</h3>
+    <h4>Save Buffer</h4>
+    <p>Writes the contents of the selected file buffer into its associated file.</p>
+    <p>This command is not available in online mode.</p>
+    <h4>Revert Buffer&hellip;</h4>
+    <p>Reverts the contents of the selected file buffer to the contents of its associated file.</p>
+    <h3>Edit Menu</h3>
+    <h4>Toggle HTML Mode</h4>
+    <p>Toggles the selected window between raw and HTML modes.</p>
+    <p>This command is only available when the selected window displays the contents of an all-caps or EVLambda file.</p>
+    <h4>Clear Listener&hellip;</h4>
+    <p>Clears the selected listener buffer.</p>
+    <p>All contents before the last prompt is deleted.</p>
+    <h3>Eval Menu</h3>
+    <h4 id="evaluate-form">Evaluate Form</h4>
+    <p>Evaluates a top level form contained inside the selected file buffer.</p>
+    <p>This command is only available on EVLambda files.</p>
+    <p>A top level form is a form that is not contained inside another form.</p>
+    <p>The top level form to evaluate is selected as follows:</p>
+    <ul>
+      <li>If a top level form is covering the cursor position, then that form is selected for evaluation.</li>
+      <li>Otherwise, if the character directly after the cursor position is the first character of a top level form, then that form is selected for evaluation.</li>
+      <li>Otherwise, if the first non-blank character before the cursor position is the last character of a top level form, then that form is selected for evaluation.</li>
+      <li>Otherwise, no form is selected for evaluation and no evaluation takes place.</li>
+    </ul>
+    <p>If the evaluation of the top level form completes normally, then the printable representations of the resulting values are printed in the minibuffer, separated by a comma. If the evaluation of the top level form completes abnormally, then a message describing the error is printed in the minibuffer. If the evaluation of the top level form does not complete, then no new evaluation is possible until the evaluation is aborted or the evaluator is restarted.</p>
+    <h4 id="load-buffer">Load Buffer</h4>
+    <p>Evaluates the top level forms contained inside the selected file buffer.</p>
+    <p>This command is only available on EVLambda files.</p>
+    <p>The top level forms contained inside the selected file buffer are evaluated as if they were part of a progn-form.</p>
+    <p>If the evaluation of the progn-form completes normally, then the printable representations of the resulting values are printed in the minibuffer, separated by a comma. If the evaluation of the progn-form completes abnormally, then a message describing the error is printed in the minibuffer. If the evaluation of the progn-form does not complete, then no new evaluation is possible until the evaluation is aborted or the evaluator is restarted.</p>
+    <h4>Abort Evaluation</h4>
+    <p>Aborts the current evaluation.</p>
+    <h4>Restart Evaluator&hellip;</h4>
+    <p>Terminates the current evaluator and starts a new one.</p>
+    <p>Warning: All global definitions are lost.</p>
+    <p>The following evaluators are available:</p>
+    <ul>
+      <li>Plain Recursive (plainrec)</li>
+      <li>Continuation Passing Style (cps)</li>
+      <li>Object-Oriented CPS (oocps)</li>
+      <li>Stack-Based Object-Oriented CPS (sboocps)</li>
+      <li>Trampoline (trampoline)</li>
+      <li>Trampoline++ (trampolinepp)</li>
+    </ul>
+    <p>Only the Trampoline and Trampoline++ evaluators allow unbounded iterations through tail-recursive calls. The other evaluators are only useful as stepping stones to understand the Trampoline and Trampoline++ evaluators. The Trampoline++ evaluator is an optimized version of the Trampoline evaluator.</p>
+    <h3>View Menu</h3>
+    <h4>Select Other Window</h4>
+    <p>Selects one of the non-selected windows.</p>
+    <p>This command is not available when the selected window is maximized.</p>
+    <h4>Toggle Maximized State</h4>
+    <p>Toggles the selected window between unmaximized and maximized states.</p>
+    <h3>Buffer Menu</h3>
+    <p>The buffer menu allows you to select the buffer displayed in the selected window.</p>
+    <p>The buffer menu contains the following entries:</p>
+    <ul>
+      <li><code>/system/USER-MANUAL</code>: the user manual (this file)</li>
+      <!--<li><code>/system/TUTORIAL</code>: the tutorial</li>-->
+      <!--<li><code>/system/REFERENCE-MANUAL</code>: the reference manual</li>-->
+      <!--<li><code>/system/IMPLEMENTATION-NOTES</code>: the implementation notes</li>-->
+      <li><code>/system/BIBLIOGRAPHY</code>: the bibliography</li>
+      <li><code>/system/LICENSE</code>: the license</li>
+      <li><code>/system/all-caps.css</code>: the CSS file styling the all-caps files</li>
+      <li><code>/system/all-caps.js</code>: the JavaScript file loaded by the all-caps files</li>
+      <li><code>/system/core.js</code>: the JavaScript file implementing the evaluators, the primitive data types, the primitive functions, etc., constituting the &ldquo;core&rdquo; of the EVLambda programming language</li>
+      <li><code>/system/evl2html.xslt</code>: the XSLT file used to convert EVLambda files to HTML</li>
+      <li><code>/system/evl2html.css</code>: the CSS file styling the EVLambda files converted to HTML</li>
+      <li><code>/system/evl2html.js</code>: the JavaScript file loaded by the EVLambda files converted to HTML</li>
+      <li><code>/system/mantle.evl</code>: the EVLambda file implementing the non-primitive data types, the non-primitive functions, and the macros constituting the &ldquo;mantle&rdquo; of the EVLambda programming language</li>
+      <li><code>Listener 1</code>: the initial listener</li>
+    </ul>
+    <h3>Help Menu</h3>
+    <p>The help menu allows you to quickly navigate to various parts of the EVLambda website.</p>
+    <p>The help menu contains the following entries:</p>
+    <ul>
+      <li>Home: link to the home page</li>
+      <li>Changelog: link to the changelog</li>
+      <li>Contact: link to the contact page</li>
+      <li>My Account: link to the login page (if not logged in) or to the account page (if logged in)</li>
+      <li>Git Repository: link to the official Git repository's web interface</li>
+      <li>Discussions: link to the discussion forum</li>
+      <li>Issues: link to the issue tracker</li>
+      <li>Cookie Policy: link to the cookie policy</li>
+      <li>Privacy Policy: link to the privacy policy</li>
+      <li>Terms of Service: link to the terms of service</li>
+      <li>Credits: link to the credits page</li>
+      <li>Bill of Materials: link to a list of the libraries used by the IDE</li>
+    </ul>
+    <h2>Info Bar</h2>
+    <p>The info bar displays the type of the current evaluator.</p>
+    <h2>Keyboard Shortcuts</h2>
+    <table class="ks">
+      <tr><th>Linux</th><th>Windows</th><th>macOS</th><th>Command</th></tr>
+      <tr><td>ArrowLeft</td><td>ArrowLeft</td><td>ArrowLeft</td><td>cursorCharLeft</td></tr>
+      <tr><td>Shift-ArrowLeft</td><td>Shift-ArrowLeft</td><td>Shift-ArrowLeft</td><td>selectCharLeft</td></tr>
+      <tr><td>Ctrl-ArrowLeft</td><td>Ctrl-ArrowLeft</td><td>Alt-ArrowLeft</td><td>cursorGroupLeft</td></tr>
+      <tr><td>Ctrl-Shift-ArrowLeft</td><td>Ctrl-Shift-ArrowLeft</td><td>Alt-Shift-ArrowLeft</td><td>selectGroupLeft</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Cmd-ArrowLeft</td><td>cursorLineBoundaryLeft</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Cmd-Shift-ArrowLeft</td><td>selectLineBoundaryLeft</td></tr>
+      <tr><td>ArrowRight</td><td>ArrowRight</td><td>ArrowRight</td><td>cursorCharRight</td></tr>
+      <tr><td>Shift-ArrowRight</td><td>Shift-ArrowRight</td><td>Shift-ArrowRight</td><td>selectCharRight</td></tr>
+      <tr><td>Ctrl-ArrowRight</td><td>Ctrl-ArrowRight</td><td>Alt-ArrowRight</td><td>cursorGroupRight</td></tr>
+      <tr><td>Ctrl-Shift-ArrowRight</td><td>Ctrl-Shift-ArrowRight</td><td>Alt-Shift-ArrowRight</td><td>selectGroupRight</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Cmd-ArrowRight</td><td>cursorLineBoundaryRight</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Cmd-Shift-ArrowRight</td><td>selectLineBoundaryRight</td></tr>
+      <tr><td>ArrowUp</td><td>ArrowUp</td><td>ArrowUp</td><td>cursorLineUp</td></tr>
+      <tr><td>Shift-ArrowUp</td><td>Shift-ArrowUp</td><td>Shift-ArrowUp</td><td>selectLineUp</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Cmd-ArrowUp</td><td>cursorDocStart</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Cmd-Shift-ArrowUp</td><td>selectDocStart</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Ctrl-ArrowUp</td><td>cursorPageUp</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Ctrl-Shift-ArrowUp</td><td>selectPageUp</td></tr>
+      <tr><td>ArrowDown</td><td>ArrowDown</td><td>ArrowDown</td><td>cursorLineDown</td></tr>
+      <tr><td>Shift-ArrowDown</td><td>Shift-ArrowDown</td><td>Shift-ArrowDown</td><td>selectLineDown</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Cmd-ArrowDown</td><td>cursorDocEnd</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Cmd-Shift-ArrowDown</td><td>selectDocEnd</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Ctrl-ArrowDown</td><td>cursorPageDown</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Ctrl-Shift-ArrowDown</td><td>selectPageDown</td></tr>
+      <tr><td>PageUp</td><td>PageUp</td><td>PageUp</td><td>cursorPageUp</td></tr>
+      <tr><td>Shift-PageUp</td><td>Shift-PageUp</td><td>Shift-PageUp</td><td>selectPageUp</td></tr>
+      <tr><td>PageDown</td><td>PageDown</td><td>PageDown</td><td>cursorPageDown</td></tr>
+      <tr><td>Shift-PageDown</td><td>Shift-PageDown</td><td>Shift-PageDown</td><td>selectPageDown</td></tr>
+      <tr><td>Home</td><td>Home</td><td>Home</td><td>cursorLineBoundaryBackward</td></tr>
+      <tr><td>Shift-Home</td><td>Shift-Home</td><td>Shift-Home</td><td>selectLineBoundaryBackward</td></tr>
+      <tr><td>Ctrl-Home</td><td>Ctrl-Home</td><td>Cmd-Home</td><td>cursorDocStart</td></tr>
+      <tr><td>Ctrl-Shift-Home</td><td>Ctrl-Shift-Home</td><td>Cmd-Shift-Home</td><td>selectDocStart</td></tr>
+      <tr><td>End</td><td>End</td><td>End</td><td>cursorLineBoundaryForward</td></tr>
+      <tr><td>Shift-End</td><td>Shift-End</td><td>Shift-End</td><td>selectLineBoundaryForward</td></tr>
+      <tr><td>Ctrl-End</td><td>Ctrl-End</td><td>Cmd-End</td><td>cursorDocEnd</td></tr>
+      <tr><td>Ctrl-Shift-End</td><td>Ctrl-Shift-End</td><td>Cmd-Shift-End</td><td>selectDocEnd</td></tr>
+      <tr><td>Enter</td><td>Enter</td><td>Enter</td><td>insertNewlineAndIndent</td></tr>
+      <tr><td>Ctrl-a</td><td>Ctrl-a</td><td>Cmd-a</td><td>selectAll</td></tr>
+      <tr><td>Backspace</td><td>Backspace</td><td>Backspace</td><td>deleteCharBackward</td></tr>
+      <tr><td>Shift-Backspace</td><td>Shift-Backspace</td><td>Shift-Backspace</td><td>deleteCharBackward</td></tr>
+      <tr><td>Delete</td><td>Delete</td><td>Delete</td><td>deleteCharForward</td></tr>
+      <tr><td>Ctrl-Backspace</td><td>Ctrl-Backspace</td><td>Alt-Backspace</td><td>deleteGroupBackward</td></tr>
+      <tr><td>Ctrl-Delete</td><td>Ctrl-Delete</td><td>Alt-Delete</td><td>deleteGroupForward</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Cmd-Backspace</td><td>deleteLineBoundaryBackward</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Cmd-Delete</td><td>deleteLineBoundaryForward</td></tr>
+      <tr><td>Alt-ArrowLeft</td><td>Alt-ArrowLeft</td><td>Ctrl-ArrowLeft</td><td>cursorSyntaxLeft</td></tr>
+      <tr><td>Alt-Shift-ArrowLeft</td><td>Alt-Shift-ArrowLeft</td><td>Ctrl-Shift-ArrowLeft</td><td>selectSyntaxLeft</td></tr>
+      <tr><td>Alt-ArrowRight</td><td>Alt-ArrowRight</td><td>Ctrl-ArrowRight</td><td>cursorSyntaxRight</td></tr>
+      <tr><td>Alt-Shift-ArrowRight</td><td>Alt-Shift-ArrowRight</td><td>Ctrl-Shift-ArrowRight</td><td>selectSyntaxRight</td></tr>
+      <tr><td>Alt-ArrowUp</td><td>Alt-ArrowUp</td><td>Alt-ArrowUp</td><td>moveLineUp</td></tr>
+      <tr><td>Alt-Shift-ArrowUp</td><td>Alt-Shift-ArrowUp</td><td>Alt-Shift-ArrowUp</td><td>copyLineUp</td></tr>
+      <tr><td>Alt-ArrowDown</td><td>Alt-ArrowDown</td><td>Alt-ArrowDown</td><td>moveLineDown</td></tr>
+      <tr><td>Alt-Shift-ArrowDown</td><td>Alt-Shift-ArrowDown</td><td>Alt-Shift-ArrowDown</td><td>copyLineDown</td></tr>
+      <tr><td>Escape</td><td>Escape</td><td>Escape</td><td>simplifySelection</td></tr>
+      <tr><td>Ctrl-Enter</td><td>Ctrl-Enter</td><td>Cmd-Enter</td><td>insertBlankLine</td></tr>
+      <tr><td>Alt-l</td><td>Alt-l</td><td>Ctrl-l</td><td>selectLine</td></tr>
+      <tr><td>Ctrl-i</td><td>Ctrl-i</td><td>Cmd-i</td><td>selectParentSyntax</td></tr>
+      <tr><td>Ctrl-[</td><td>Ctrl-[</td><td>Cmd-[</td><td>indentLess</td></tr>
+      <tr><td>Ctrl-]</td><td>Ctrl-]</td><td>Cmd-]</td><td>indentMore</td></tr>
+      <tr><td>Ctrl-Alt-\</td><td>Ctrl-Alt-\</td><td>Cmd-Alt-\</td><td>indentSelection</td></tr>
+      <tr><td>Ctrl-Shift-k</td><td>Ctrl-Shift-k</td><td>Cmd-Shift-k</td><td>deleteLine</td></tr>
+      <tr><td>Ctrl-Shift-\</td><td>Ctrl-Shift-\</td><td>Cmd-Shift-\</td><td>cursorMatchingBracket</td></tr>
+      <tr><td>Ctrl-/</td><td>Ctrl-/</td><td>Cmd-/</td><td>toggleComment</td></tr>
+      <tr><td>Alt-Shift-a</td><td>Alt-Shift-a</td><td>Alt-Shift-a</td><td>toggleBlockComment</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Ctrl-b</td><td>cursorCharLeft</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Ctrl-Shift-b</td><td>selectCharLeft</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Ctrl-f</td><td>cursorCharRight</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Ctrl-Shift-f</td><td>selectCharRight</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Ctrl-p</td><td>cursorLineUp</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Ctrl-Shift-p</td><td>selectLineUp</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Ctrl-n</td><td>cursorLineDown</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Ctrl-Shift-n</td><td>selectLineDown</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Ctrl-a</td><td>cursorLineStart</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Ctrl-Shift-a</td><td>selectLineStart</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Ctrl-e</td><td>cursorLineEnd</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Ctrl-Shift-e</td><td>selectLineEnd</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Ctrl-d</td><td>deleteCharForward</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Ctrl-h</td><td>deleteCharBackward</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Ctrl-k</td><td>deleteToLineEnd</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Ctrl-Alt-h</td><td>deleteGroupBackward</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Ctrl-o</td><td>splitLine</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Ctrl-t</td><td>transposeChars</td></tr>
+      <tr><td>N/A</td><td>N/A</td><td>Ctrl-v</td><td>cursorPageDown</td></tr>
+      <tr><td>Ctrl-z</td><td>Ctrl-z</td><td>Cmd-z</td><td>undo</td></tr>
+      <tr><td>Ctrl-y</td><td>Ctrl-y</td><td>Cmd-Shift-z</td><td>redo</td></tr>
+      <tr><td>Ctrl-Shift-z</td><td>N/A</td><td>N/A</td><td>redo</td></tr>
+      <tr><td>Tab</td><td>Tab</td><td>Tab</td><td>indentSelection</td></tr>
+      <tr><td>Ctrl-f</td><td>Ctrl-f</td><td>Cmd-f</td><td>openSearchPanel</td></tr>
+      <tr><td>F3</td><td>F3</td><td>F3</td><td>findNext</td></tr>
+      <tr><td>Shift-F3</td><td>Shift-F3</td><td>Shift-F3</td><td>findPrevious</td></tr>
+      <tr><td>Ctrl-g</td><td>Ctrl-g</td><td>Cmd-g</td><td>findNext</td></tr>
+      <tr><td>Ctrl-Shift-g</td><td>Ctrl-Shift-g</td><td>Cmd-Shift-g</td><td>findPrevious</td></tr>
+      <tr><td>Escape</td><td>Escape</td><td>Escape</td><td>closeSearchPanel</td></tr>
+      <tr><td>Ctrl-Shift-l</td><td>Ctrl-Shift-l</td><td>Cmd-Shift-l</td><td>selectSelectionMatches</td></tr>
+      <tr><td>Alt-g</td><td>Alt-g</td><td>Alt-g</td><td>gotoLine</td></tr>
+      <tr><td>Ctrl-d</td><td>Ctrl-d</td><td>Cmd-d</td><td>selectNextOccurrence</td></tr>
+      <tr><td>Ctrl-s</td><td>Ctrl-s</td><td>Cmd-s</td><td>Save Buffer</td></tr>
+      <tr><td>Ctrl-Alt-h</td><td>Ctrl-Alt-h</td><td>Ctrl-Cmd-h</td><td>Toggle HTML Mode</td></tr>
+      <tr><td>Ctrl-Alt-e</td><td>Ctrl-Alt-e</td><td>Ctrl-Cmd-e</td><td>Evaluate Form</td></tr>
+      <tr><td>Ctrl-Alt-l</td><td>Ctrl-Alt-l</td><td>Ctrl-Cmd-l</td><td>Load Buffer</td></tr>
+      <tr><td>Ctrl-Alt-o</td><td>Ctrl-Alt-o</td><td>Ctrl-Cmd-o</td><td>Select Other Window</td></tr>
+      <tr><td>Ctrl-Alt-m</td><td>Ctrl-Alt-m</td><td>Ctrl-Cmd-m</td><td>Toggle Maximized State</td></tr>
+    </table>
+  </body>
+</html>

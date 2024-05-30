@@ -360,7 +360,7 @@
   (test/fn expected-value-form form))
 
 (mdef test-mv (expected-values-form form)
-  (test/fn expected-values-form (list 'multiple-value-call '(fref list) form)))
+  (test/fn expected-values-form (list 'multiple-value-call 'list form)))
 
 (mdef test-error (form)
   (test/fn #t (list 'string? (list '_catch-errors form))))
@@ -554,7 +554,7 @@
 (test '(1 (2)) ((dlambda (x &rest y) (list (dref x) (dref y))) 1 2))
 </section>
 <section>
-<title>Calling and Applying</title>
+<title>Invoking</title>
 <syntax>(&lt;operator&gt; &lt;operand&gt;*)</syntax>
 <syntax>(apply &lt;operator&gt; &lt;operand&gt;*)</syntax>
 <syntax>(multiple-value-call &lt;operator&gt; &lt;operand&gt;*)</syntax>
@@ -575,11 +575,11 @@
  '(1 2 3 4)
  (multiple-value-apply (_vlambda x x) (values) 1 (values 2) (values 3 4) '()))
 
-(test 3 (+ 1 2))
+(test 3 (_+ 1 2))
 
-(test 3 (apply (fref +) 1 2 '()))
-(test 3 (apply (fref +) 1 '(2)))
-(test 3 (apply (fref +) '(1 2)))
+(test 3 (apply _+ 1 2 '()))
+(test 3 (apply _+ 1 '(2)))
+(test 3 (apply _+ '(1 2)))
 
 (test '(1 2) ((_vlambda (x y) (list x y)) 1 2))
 
@@ -863,16 +863,78 @@
 <title>Primitive Datatype <code>number</code></title>
 <primitivefunction>(number? &lt;object&gt;)</primitivefunction>
 (test #t (number? 0))
-<primitivefunction>(+ &lt;number&gt; &lt;number&gt;)</primitivefunction>
-<primitivefunction>(- &lt;number&gt; &lt;number&gt;)</primitivefunction>
-<primitivefunction>(* &lt;number&gt; &lt;number&gt;)</primitivefunction>
-<primitivefunction>(/ &lt;number&gt; &lt;number&gt;)</primitivefunction>
+<primitivefunction>(_+ &lt;number&gt; &lt;number&gt;)</primitivefunction>
+<primitivefunction>(_- &lt;number&gt; &lt;number&gt;)</primitivefunction>
+<primitivefunction>(_* &lt;number&gt; &lt;number&gt;)</primitivefunction>
+<primitivefunction>(_/ &lt;number&gt; &lt;number&gt;)</primitivefunction>
 <primitivefunction>(% &lt;number&gt; &lt;number&gt;)</primitivefunction>
-(test 8 (+ 6 2))
-(test 4 (- 6 2))
-(test 12 (* 6 2))
-(test 3 (/ 6 2))
+(test 8 (_+ 6 2))
+(test 4 (_- 6 2))
+(test 12 (_* 6 2))
+(test 3 (_/ 6 2))
 (test 0 (% 6 2))
+<function>(+ &lt;number&gt;*)</function>
+(fdef + (&rest numbers)
+  (fletrec ((rec (numbers acc)
+              (cond ((empty-list? numbers)
+                     acc)
+                    (else
+                     (rec (cdr numbers) (_+ acc (car numbers)))))))
+    (rec numbers 0)))
+
+(test 0 (+))
+(test 1 (+ 1))
+(test 3 (+ 1 2))
+(test 6 (+ 1 2 3))
+<function>(- &lt;number&gt;+)</function>
+(fdef - (&rest numbers)
+  (fletrec ((rec (numbers acc)
+              (cond ((empty-list? numbers)
+                     acc)
+                    (else
+                     (rec (cdr numbers) (_- acc (car numbers)))))))
+    (cond ((empty-list? numbers)
+           (error "Expecting at least one number."))
+          ((empty-list? (cdr numbers))
+           (rec numbers 0))
+          (else
+           (rec (cdr numbers) (car numbers))))))
+
+(test -1 (- 1))
+(test -1 (- 0 1))
+(test -3 (- 0 1 2))
+(test -6 (- 0 1 2 3))
+<function>(* &lt;number&gt;*)</function>
+(fdef * (&rest numbers)
+  (fletrec ((rec (numbers acc)
+              (cond ((empty-list? numbers)
+                     acc)
+                    (else
+                     (rec (cdr numbers) (_* acc (car numbers)))))))
+    (rec numbers 1)))
+
+(test 1 (*))
+(test 2 (* 2))
+(test 8 (* 2 4))
+(test 64 (* 2 4 8))
+<function>(/ &lt;number&gt;+)</function>
+(fdef / (&rest numbers)
+  (fletrec ((rec (numbers acc)
+              (cond ((empty-list? numbers)
+                     acc)
+                    (else
+                     (rec (cdr numbers) (_/ acc (car numbers)))))))
+    (cond ((empty-list? numbers)
+           (error "Expecting at least one number."))
+          ((empty-list? (cdr numbers))
+           (rec numbers 1))
+          (else
+           (rec (cdr numbers) (car numbers))))))
+
+(test 0.5 (/ 2))
+(test 0.5 (/ 1 2))
+(test 0.125 (/ 1 2 4))
+(test 0.015625 (/ 1 2 4 8))
 <primitivefunction>(= &lt;number&gt; &lt;number&gt;)</primitivefunction>
 <primitivefunction>(/= &lt;number&gt; &lt;number&gt;)</primitivefunction>
 <primitivefunction>(&lt; &lt;number&gt; &lt;number&gt;)</primitivefunction>
@@ -982,10 +1044,10 @@
 <function>(list->values &lt;list&gt;)</function>
 <macro>(values->list &lt;form&gt;)</macro>
 (fdef list->values (list)
-  (apply (fref values) list))
+  (apply values list))
 
 (mdef values->list (form)
-  (list 'multiple-value-call '(fref list) form))
+  (list 'multiple-value-call 'list form))
 
 (test '(1 2 3) (values->list (list->values '(1 2 3))))
 <syntax>(_for-each &lt;function-form&gt; &lt;list-form&gt;)</syntax>

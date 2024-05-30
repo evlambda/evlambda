@@ -4213,25 +4213,25 @@ primitiveFunction('number?', 1, 1, function(args) {
   return evlBoolean(args[0] instanceof EVLNumber);
 });
 
-primitiveFunction('+', 2, 2, function(args) {
+primitiveFunction('_+', 2, 2, function(args) {
   const x = checkType(args, 0, EVLNumber).jsValue;
   const y = checkType(args, 1, EVLNumber).jsValue;
   return new EVLNumber(x + y);
 });
 
-primitiveFunction('-', 2, 2, function(args) {
+primitiveFunction('_-', 2, 2, function(args) {
   const x = checkType(args, 0, EVLNumber).jsValue;
   const y = checkType(args, 1, EVLNumber).jsValue;
   return new EVLNumber(x - y);
 });
 
-primitiveFunction('*', 2, 2, function(args) {
+primitiveFunction('_*', 2, 2, function(args) {
   const x = checkType(args, 0, EVLNumber).jsValue;
   const y = checkType(args, 1, EVLNumber).jsValue;
   return new EVLNumber(x * y);
 });
 
-primitiveFunction('/', 2, 2, function(args) {
+primitiveFunction('_/', 2, 2, function(args) {
   const x = checkType(args, 0, EVLNumber).jsValue;
   const y = checkType(args, 1, EVLNumber).jsValue;
   return new EVLNumber(x / y);

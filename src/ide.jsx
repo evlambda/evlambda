@@ -145,7 +145,7 @@ export class FileBuffer extends Buffer {
   }
   static create(buffers, unifiedPathname, contents) {
     let buffer = null;
-    if (/\/[A-Z]+$/.test(unifiedPathname)) {
+    if (/\/[A-Z-]+$/.test(unifiedPathname)) {
       buffer = new AllCapsBuffer(unifiedPathname, contents);
     } else {
       const index = unifiedPathname.lastIndexOf('.');
@@ -1215,7 +1215,7 @@ function init(systemFiles) {
       }
       ListenerBuffer.create(buffers, 'Listener 1');
       const windows = new Map();
-      Window.create(windows, 'L', findFileBuffer(buffers, '/system/README'));
+      Window.create(windows, 'L', findFileBuffer(buffers, '/system/USER-MANUAL'));
       Window.create(windows, 'R', findListenerBuffer(buffers, 'Listener 1'));
       createRoot(document.querySelector('#root')).render(<IDE initialBuffers={buffers} initialWindows={windows}/>);
     })
@@ -1225,10 +1225,10 @@ function init(systemFiles) {
 }
 
 init([
-  'README',
+  'USER-MANUAL',
   //'TUTORIAL',
-  //'REFERENCE',
-  //'IMPLEMENTATION',
+  //'REFERENCE-MANUAL',
+  //'IMPLEMENTATION-NOTES',
   'BIBLIOGRAPHY',
   'LICENSE',
   'all-caps.css',

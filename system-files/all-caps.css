@@ -7,6 +7,24 @@ html {
   line-height: 1.4;
 }
 
+pre.tr {
+  margin-left: 2em;
+  padding: 10px;
+  border-radius: 10px;
+  width: 800px;
+  background-color: lightgray;
+}
+
+table {
+  border-collapse: collapse;
+  border: 1px solid;
+}
+
+table th, table td {
+  border: 1px solid;
+  padding: 5px;
+}
+
 table.ks {
   border-collapse: collapse;
   border: 1px solid;
