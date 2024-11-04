@@ -1,4 +1,5 @@
 deploy
+scratch.org
 /ide/
 /node_modules/
 /src/lezer/evlambda.js

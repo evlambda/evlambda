@@ -9,6 +9,7 @@
     <script>const windowId = ___windowId___;</script>
   </head>
   <body>
+    <h1>License</h1>
     <p>Copyright &copy; 2024 Raphaël Van Dyck</p>
     <p>Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:</p>
     <ol>

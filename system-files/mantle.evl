@@ -941,12 +941,12 @@
 <primitivefunction>(&lt;= &lt;number&gt; &lt;number&gt;)</primitivefunction>
 <primitivefunction>(&gt; &lt;number&gt; &lt;number&gt;)</primitivefunction>
 <primitivefunction>(&gt;= &lt;number&gt; &lt;number&gt;)</primitivefunction>
-(test #t (= 0 0))
-(test #f (/= 0 0))
-(test #f (< 0 0))
-(test #t (<= 0 0))
-(test #f (> 0 0))
-(test #t (>= 0 0))
+(test '(#f #t #f) (list (= -1 0) (= 0 0) (= 1 0)))
+(test '(#t #f #t) (list (/= -1 0) (/= 0 0) (/= 1 0)))
+(test '(#t #f #f) (list (< -1 0) (< 0 0) (< 1 0)))
+(test '(#t #t #f) (list (<= -1 0) (<= 0 0) (<= 1 0)))
+(test '(#f #f #t) (list (> -1 0) (> 0 0) (> 1 0)))
+(test '(#f #t #t) (list (>= -1 0) (>= 0 0) (>= 1 0)))
 </section>
 <section>
 <title>Primitive Datatype <code>character</code></title>
