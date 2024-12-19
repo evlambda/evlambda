@@ -7,12 +7,28 @@ html {
   line-height: 1.4;
 }
 
+.bg {
+  background-color: lightgray;
+}
+
 pre.repl {
   margin-left: 2em;
   padding: 10px;
   border-radius: 10px;
   width: 800px;
   background-color: lightgray;
+}
+
+div.trace ul {
+  border-left: 1px solid;
+}
+
+div.trace > ul {
+  border-left: none;
+}
+
+div.trace li {
+  list-style-type: none;
 }
 
 table {

@@ -1226,7 +1226,7 @@ function init(systemFiles) {
 
 init([
   'USER-MANUAL',
-  //'TUTORIAL',
+  'TUTORIAL',
   //'REFERENCE-MANUAL',
   //'IMPLEMENTATION-NOTES',
   'BIBLIOGRAPHY',
