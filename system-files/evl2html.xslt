@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- SPDX-FileCopyrightText: Copyright (c) 2024 Raphaël Van Dyck -->
+<!-- SPDX-FileCopyrightText: Copyright (c) 2024-2025 Raphaël Van Dyck -->
 <!-- SPDX-License-Identifier: BSD-3-Clause -->
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
   <xsl:output method="html" doctype-system="about:legacy-compat" encoding="utf-8"/>

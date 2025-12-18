@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: Copyright (c) 2024-2025 Raphaël Van Dyck
+// SPDX-License-Identifier: BSD-3-Clause
+
 import HTMLWebpackPlugin from 'html-webpack-plugin';
 import ESLintWebpackPlugin from 'eslint-webpack-plugin';
 import AdmZip from 'adm-zip';

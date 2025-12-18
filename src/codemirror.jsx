@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2024 Raphaël Van Dyck
+// SPDX-FileCopyrightText: Copyright (c) 2024-2025 Raphaël Van Dyck
 // SPDX-License-Identifier: BSD-3-Clause
 
 import React from 'react';
@@ -260,7 +260,7 @@ export function CodeMirror({id, ide, window, buffer}) {
   }, [buffer]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <div className="cm-outer-container">
-      <div className="cm-inner-container" ref={parentRef}/>
+      <div className="cm-inner-container" ref={parentRef}></div>
     </div>
   );
 }
@@ -558,5 +558,7 @@ export function Minibuffer({message}) {
   useEffect(() => {
     viewRef.current.setState(EditorState.create({doc: message, extensions: minibufferExtensions}));
   }, [message]);
-  return <div ref={parentRef}/>;
+  return (
+    <div ref={parentRef}></div>
+  );
 }

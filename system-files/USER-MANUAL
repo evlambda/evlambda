@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- SPDX-FileCopyrightText: Copyright (c) 2024 Raphaël Van Dyck -->
+<!-- SPDX-FileCopyrightText: Copyright (c) 2024-2025 Raphaël Van Dyck -->
 <!-- SPDX-License-Identifier: BSD-3-Clause -->
 <html>
   <head>
@@ -284,7 +284,7 @@
       <li>The transfer of information from the form/function to the outside world (an output operation).</li>
     </ul>
     <p>A consequence of the existence of side effects is that the repeated evaluations of the same form or the repeated invocations of the same function on the same arguments do not necessarily have the same outcome and, if they complete normally, do not necessarily produce the same result/output.</p>
-      <p>It is customary for a special operator, function, or macro that can alter an object, binding, or environment to have a name ending with an exclamation mark. This explains the exclamation mark in the names of the special operators <code>vset!</code>, <code>fset!</code>, and <code>dset!</code>.</p>
+    <p>It is customary for a special operator, function, or macro that can alter an object, binding, or environment to have a name ending with an exclamation mark. This explains the exclamation mark in the names of the special operators <code>vset!</code>, <code>fset!</code>, and <code>dset!</code>.</p>
     <h2>Integrated Development Environment</h2>
     <p>The integrated development environment (IDE) is a web application that can run either from the EVLambda web server (online mode) or from a web server running on your machine (offline mode). The code running in the web browser is exactly the same in both modes but the behavior of the IDE is slightly different because the backends have different capabilities.</p>
     <p>The IDE's graphical user interface consists of a menu bar at the top left, an info bar at the top right, a minibuffer at the bottom, and a set of windows in the main area. Each window consists of a contents area and a status bar. At any given time, a window displays the contents of a buffer, of which there are two types: the file buffers and the listener buffers.</p>

@@ -1,5 +1,5 @@
 <!doctype html>
-<!-- SPDX-FileCopyrightText: Copyright (c) 2024 Raphaël Van Dyck -->
+<!-- SPDX-FileCopyrightText: Copyright (c) 2024-2025 Raphaël Van Dyck -->
 <!-- SPDX-License-Identifier: BSD-3-Clause -->
 <html>
   <head>
@@ -167,7 +167,7 @@
       <dd>The purpose of the macro is to define a global macro by ensuring that the variable is bound in the function namespace of the global environment to the closure resulting from the evaluation of the _mlambda-form <code>(_mlambda &lt;parameter-list&gt; &lt;body&gt;)</code>. The macro call evaluates to the variable.</dd>
     </dl>
     <h2>Evaluation and Invocation Traces</h2>
-        <p>An evaluation trace is a structured recording of some or all of the evaluations, invocations, and various steps performed by the evaluator to evaluate a form. It is assumed that the evaluation of the form completes normally, which implies that all evaluations and invocations entailed by the evaluation of the form also complete normally. Evaluation traces have the following format:</p>
+    <p>An evaluation trace is a structured recording of some or all of the evaluations, invocations, and various steps performed by the evaluator to evaluate a form. It is assumed that the evaluation of the form completes normally, which implies that all evaluations and invocations entailed by the evaluation of the form also complete normally. Evaluation traces have the following format:</p>
     <ul>
       <li>An evaluation trace is a sequence of lines.</li>
       <li>Times flows from top to bottom.</li>
