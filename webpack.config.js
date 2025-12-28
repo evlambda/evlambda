@@ -3,6 +3,7 @@
 
 import HTMLWebpackPlugin from 'html-webpack-plugin';
 import ESLintWebpackPlugin from 'eslint-webpack-plugin';
+import CopyWebpackPlugin from 'copy-webpack-plugin';
 import AdmZip from 'adm-zip';
 import LicenseChecker from 'license-checker';
 import url from 'url';
@@ -48,6 +49,9 @@ class GenerateBOMWebpackPlugin {
                   pkgs.set(key.substring(0, key.lastIndexOf('@')), value);
                 }
                 const modules = new Set();
+                modules.add('mathjax');
+                modules.add('@mathjax/mathjax-newcm-font');
+                modules.add('@mathjax/mathjax-stix2-font');
                 for (const [pathname, module] of stats.compilation._modules.entries()) {
                   const match = pathname.match(/\/node_modules\/([^@][^\/]*)\//);
                   // .../node_modules/xxx/... => xxx
@@ -143,7 +147,7 @@ export default {
   entry: './src/ide.jsx',
   output: {
     path: path.join(__dirname, 'ide'),
-    filename: 'bundle.js',
+    filename: 'ide.js',
     clean: true
   },
   module: {
@@ -167,6 +171,22 @@ export default {
     }),
     new ESLintWebpackPlugin({
       extensions: ['js', 'jsx']
+    }),
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: path.join(__dirname, 'node_modules', 'mathjax'),
+          to: path.join(__dirname, 'ide', 'mathjax')
+        },
+        {
+          from: path.join(__dirname, 'node_modules', '@mathjax', 'mathjax-newcm-font'),
+          to: path.join(__dirname, 'ide', 'mathjax-newcm-font')
+        },
+        {
+          from: path.join(__dirname, 'node_modules', '@mathjax', 'mathjax-stix2-font'),
+          to: path.join(__dirname, 'ide', 'mathjax-stix2-font')
+        }
+      ]
     }),
     new ArchiveSystemFilesWebpackPlugin(),
     new GenerateBOMWebpackPlugin()

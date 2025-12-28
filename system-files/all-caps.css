@@ -7,6 +7,10 @@ html {
   line-height: 1.4;
 }
 
+div.preamble {
+  display: none;
+}
+
 .bg {
   background-color: lightgray;
 }

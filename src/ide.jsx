@@ -199,7 +199,10 @@ class AllCapsBuffer extends FileBuffer {
     const jsURL = URL.createObjectURL(jsBlob);
     const state = this.transaction.state;
     const text = state.sliceDoc();
-    const html = text.replaceAll('___cssURL___', cssURL).replaceAll('___jsURL___', jsURL).replaceAll('___windowId___', window.id);
+    let html = text;
+    html = html.replaceAll('___cssURL___', cssURL);
+    html = html.replaceAll('___jsURL___', jsURL);
+    html = html.replaceAll('___windowId___', window.id);
     setTimeout(() => toggleHTMLModeCommand2(ide, window, html, cssURL, jsURL));
   }
 }
