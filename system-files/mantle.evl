@@ -753,7 +753,7 @@
 (test #t (object? #t))
 (test #t (object? #f))
 (test #t (object? 0))
-(test #t (object? #\_))
+(test #t (object? #"_"))
 (test #t (object? "foo"))
 (test #t (object? :foo))
 (test #t (object? 'foo))
@@ -793,9 +793,9 @@
 (test #t (eql? 0 0))
 (test #t (equal? 0 0))
 
-(test #f (eq? #\_ #\_))
-(test #t (eql? #\_ #\_))
-(test #t (equal? #\_ #\_))
+(test #f (eq? #"_" #"_"))
+(test #t (eql? #"_" #"_"))
+(test #t (equal? #"_" #"_"))
 
 (test #f (eq? "foo" "foo"))
 (test #t (eql? "foo" "foo"))
@@ -951,7 +951,17 @@
 <section>
 <title>Primitive Datatype <code>character</code></title>
 <primitivefunction>(character? &lt;object&gt;)</primitivefunction>
-(test #t (character? #\_))
+(test #t (character? #"_"))
+
+(test '(#"\U{D83E}" #"\U{DD77}") '(#"🥷"))
+(test #"\U{D83E}" #0"🥷")
+(test #"\U{DD77}" #1"🥷")
+
+(test '(#"\U{D83E}" #"\U{DD77}" #"\U{D83C}" #"\U{DFFB}") '(#"🥷🏻"))
+(test '(#"\U{D83E}" #"\U{DD77}" #"\U{D83C}" #"\U{DFFC}") '(#"🥷🏼"))
+(test '(#"\U{D83E}" #"\U{DD77}" #"\U{D83C}" #"\U{DFFD}") '(#"🥷🏽"))
+(test '(#"\U{D83E}" #"\U{DD77}" #"\U{D83C}" #"\U{DFFE}") '(#"🥷🏾"))
+(test '(#"\U{D83E}" #"\U{DD77}" #"\U{D83C}" #"\U{DFFF}") '(#"🥷🏿"))
 </section>
 <section>
 <title>Primitive Datatype <code>string</code></title>

@@ -48,7 +48,7 @@ XMLPureElement {
   HashMinus { '#-' }
   Void { '#v' }
   Boolean { '#t' | '#f' }
-  Character { '#\\' _ (![ \t\r\n\'`,"()#\\] | '\\' _)* }
+  Character { '#"' (!["\\] | '\\' _)* '"' }
   XMLMixedElementStartTag { '<chapter>' | '<section>' }
   XMLPureElementStartTag { '<' $[a-z]+ '>' }
   XMLMixedElementEndTag { '</chapter>' | '</section>' }
@@ -56,13 +56,13 @@ XMLPureElement {
   XMLEmptyElementTag { '<' $[a-z]+ '/>' }
   XMLComment { '<!--' (![-] | '-' ![-])* '-->' }
   Number { $[+-]? $[0-9]+ ('.' $[0-9]+)? }
-  Symbol { (![ \t\r\n\'`,"()#\\] | '\\' _)+ }
+  Symbol { (![\t\n\v\f\r\u0020\u0085\u200E\u200F\u2028\u2029\'`,"()#\\] | '\\' _)+ }
   @precedence { XMLMixedElementStartTag, XMLPureElementStartTag, Symbol }
   @precedence { XMLMixedElementEndTag, XMLPureElementEndTag, Symbol }
   @precedence { XMLEmptyElementTag, Symbol }
   @precedence { XMLComment, Symbol }
   @precedence { Number, Symbol }
-  whitespace { $[ \t\r\n]+ }
+  whitespace { $[\t\n\v\f\r\u0020\u0085\u200E\u200F\u2028\u2029]+ }
   XMLCharacterData { ![<]+ }
 }
 

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: BSD-3-Clause
 
 import dotenv from 'dotenv';
-dotenv.config({path: '.env'});
-dotenv.config({path: '.env.local', override: true});
+dotenv.config({path: '.env', quiet: true});
+dotenv.config({path: '.env.local', override: true, quiet: true});
 const EVLAMBDA_PORT = process.env.EVLAMBDA_PORT;
 console.log(`EVLAMBDA_PORT: ${EVLAMBDA_PORT}`);
 

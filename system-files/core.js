@@ -66,12 +66,12 @@ function initialize(input) {
   GlobalEnv.set(VAL_NS, internVariable('*features*'), new EVLCons(internVariable(selectedEvaluator), EVLEmptyList.NIL));
   let lastResult = EVLVoid.VOID;
   for (const evlFile of input.evlFiles) {
-    const lexer = new Lexer(evlFile);
-    lexer.callback = object => lastResult = genericEval(object);
+    const tokenizer = new Tokenizer(evlFile);
+    tokenizer.callback = object => lastResult = genericEval(object);
     while (true) {
       let object = null;
       try {
-        object = read(lexer);
+        object = read(tokenizer);
       } catch(exception) {
         return completedAbnormally(exception);
       }
@@ -92,12 +92,12 @@ function initialize(input) {
 
 function evaluateFirstForm(text) {
   signalArray[0] = 0;
-  const lexer = new Lexer(text);
+  const tokenizer = new Tokenizer(text);
   let object = null;
   try {
-    object = read(lexer);
+    object = read(tokenizer);
   } catch(exception) {
-    if (exception instanceof UnexpectedEndOfFile) {
+    if (exception instanceof TruncatedToken || exception instanceof UnexpectedEndOfFile) {
       return foundNoForm();
     } else {
       return completedAbnormally(exception);
@@ -120,12 +120,12 @@ function evaluateFirstForm(text) {
 function evaluateAllForms(text) {
   signalArray[0] = 0;
   let lastResult = EVLVoid.VOID;
-  const lexer = new Lexer(text);
-  lexer.callback = object => lastResult = genericEval(object);
+  const tokenizer = new Tokenizer(text);
+  tokenizer.callback = object => lastResult = genericEval(object);
   while (true) {
     let object = null;
     try {
-      object = read(lexer);
+      object = read(tokenizer);
     } catch(exception) {
       return completedAbnormally(exception);
     }
@@ -145,10 +145,10 @@ function evaluateAllForms(text) {
 
 function convertToXML(text) {
   signalArray[0] = 0;
-  const lexer = new Lexer(text);
+  const tokenizer = new Tokenizer(text, true);
   let xml = null;
   try {
-    xml = convert(lexer);
+    xml = doConvertToXML(tokenizer);
   } catch(exception) {
     return completedAbnormally(exception);
   }
@@ -173,10 +173,10 @@ class Aborted extends Error {
   }
 }
 
-class LexerError extends Error {
+class TokenizerError extends Error {
   constructor(message) {
     super(message);
-    this.name = 'LexerError';
+    this.name = 'TokenizerError';
   }
 }
 
@@ -208,11 +208,18 @@ class EvaluatorError extends Error {
   }
 }
 
-/*********/
-/* Lexer */
-/*********/
+/*************/
+/* Tokenizer */
+/*************/
 
-// lexeme types
+class TruncatedToken extends TokenizerError {
+  constructor(message) {
+    super(message);
+    this.name = 'TruncatedToken';
+  }
+}
+
+// token types
 const QUOTE = 0;
 const QUASIQUOTE = 1;
 const UNQUOTE = 2;
@@ -236,91 +243,178 @@ const KEYWORD = 19; // value is an EVLKeyword
 const VARIABLE = 20; // value is an EVLVariable
 const EOF = 21;
 
+const codePointRegExp = /^[a-fA-F0-9]+$/;
 const numberRegExp = /^[+-]?[0-9]+(?:\.[0-9]+)?$/;
 const keywordRegExp = /^:[^:]+$/;
 const variableRegExp = /^[^:]+$/;
 
-function isValidCharacter(char) {
-  const charCode = char.charCodeAt(0);
-  return char === '\n' || (0x20 <= charCode && charCode <= 0x7E) || (0xC0 <= charCode && charCode <= 0xFF);
+function isLeadingSurrogate(codeUnit) {
+  return 0xD800 <= codeUnit && codeUnit <= 0xDBFF;
 }
 
-function isWhitespaceCharacter(char) {
-  return char === '\n' || char === ' ';
+function isTrailingSurrogate(codeUnit) {
+  return 0xDC00 <= codeUnit && codeUnit <= 0xDFFF;
 }
 
-function isTerminatingCharacter(char) {
-  return '\'`,"()#'.includes(char);
+function isSurrogate(codeUnit) {
+  return isLeadingSurrogate(codeUnit) || isTrailingSurrogate(codeUnit);
 }
 
-function isXMLNameCharacter(char) {
-  const charCode = char.charCodeAt(0);
-  return 0x61 <= charCode && charCode <= 0x7A; // a-z
+function ensureCodePoint (charOrCodePoint) {
+  if (typeof charOrCodePoint === "number") {
+    return charOrCodePoint;
+  } else {
+    return charOrCodePoint.codePointAt(0);
+  }
 }
 
-class Lexer {
-  constructor(text) {
+function isControlCharacter(charOrCodePoint) {
+  const codePoint = ensureCodePoint(charOrCodePoint);
+  return (0x00 <= codePoint && codePoint <= 0x1F) || (0x7F <= codePoint && codePoint <= 0x9F);
+}
+
+function isNoncharacter(charOrCodePoint) {
+  const codePoint = ensureCodePoint(charOrCodePoint);
+  const x = codePoint & 0xFFFF;
+  return x === 0xFFFE || x === 0xFFFF || (0xFDD0 <= codePoint && codePoint <= 0xFDEF);
+}
+
+function isWhitespaceCharacter(charOrCodePoint) {
+  // https://www.unicode.org/Public/UCD/latest/ucd/PropList.txt
+  // Pattern_White_Space
+  const codePoint = ensureCodePoint(charOrCodePoint);
+  return (
+    codePoint === 0x0009 || // Horizontal Tab
+    codePoint === 0x000A || // Line Feed
+    codePoint === 0x000B || // Vertical Tab
+    codePoint === 0x000C || // Form Feed
+    codePoint === 0x000D || // Carriage Return
+    codePoint === 0x0020 || // Space
+    codePoint === 0x0085 || // Next Line
+    codePoint === 0x200E || // Left-to-Right Mark
+    codePoint === 0x200F || // Right-to-Left Mark
+    codePoint === 0x2028 || // Line Separator
+    codePoint === 0x2029    // Paragraph Separator
+  );
+}
+
+function isSyntaxCharacter(charOrCodePoint) {
+  const codePoint = ensureCodePoint(charOrCodePoint);
+  return (
+    codePoint === 0x0027 || // "'"
+    codePoint === 0x0060 || // '`'
+    codePoint === 0x002C || // ','
+    codePoint === 0x0022 || // '"'
+    codePoint === 0x0028 || // '('
+    codePoint === 0x0029 || // ')'
+    codePoint === 0x0023    // '#'
+  );
+}
+
+function isXMLNameCharacter(charOrCodePoint) {
+  const codePoint = ensureCodePoint(charOrCodePoint);
+  return 0x61 <= codePoint && codePoint <= 0x7A; // a-z
+}
+
+function isDecimalDigit(charOrCodePoint) {
+  const codePoint = ensureCodePoint(charOrCodePoint);
+  return 0x30 <= codePoint && codePoint <= 0x39; // 0-9
+}
+
+class Tokenizer {
+  constructor(text, convertToXML = false) {
     this.text = text;
+    this.convertToXML = convertToXML;
     this.position = 0;
     this.xmlStack = []; // element: XML element name
+    this.savedCodeUnits = '';
   }
-  readCharacter(position = this.position) {
-    const char = this.text.charAt(position);
-    if (!isValidCharacter(char)) {
-      throw new LexerError('Invalid character.');
+  peekCharacter(position = this.position) {
+    let char = null; // one or two UTF-16 code units
+    const codeUnit = this.text.charCodeAt(position);
+    if (isTrailingSurrogate(codeUnit)) {
+      throw new TokenizerError('Lone surrogate.');
+    } else if (isLeadingSurrogate(codeUnit)) {
+      if (position + 1 === this.text.length) {
+        throw new TokenizerError('Lone surrogate.');
+      }
+      const codeUnit2 = this.text.charCodeAt(position + 1);
+      if (isTrailingSurrogate(codeUnit2)) {
+        char = String.fromCharCode(codeUnit, codeUnit2);
+      } else {
+        throw new TokenizerError('Lone surrogate.');
+      }
+    } else {
+      char = String.fromCharCode(codeUnit);
     }
+    const codePoint = char.codePointAt(0);
+    if (isControlCharacter(codePoint) && !isWhitespaceCharacter(codePoint)) {
+      throw new TokenizerError('Invalid control character.');
+    }
+    if (isNoncharacter(codePoint)) {
+      throw new TokenizerError('Noncharacter.');
+    }
+    // unassigned code points are allowed
     return char;
   }
-  commitCharacter(char) {
+  consumeCharacter(char) {
     this.lexeme += char;
-    this.position++;
+    this.position += char.length;
   }
-  nextLexeme() {
+  nextToken() {
     this.whitespace = ''; // whitespace preceding the lexeme
     this.lexeme = '';
-    this.type = null;
-    this.value = null;
-    const pureXML = this.xmlStack.length !== 0 && !['chapter', 'section'].includes(this.xmlStack[this.xmlStack.length - 1])
-    this.readWhitespace(pureXML);
-    if (this.position === this.text.length) {
-      this.type = EOF;
+    if (this.savedCodeUnits.length !== 0) {
+      this.type = CHARACTER;
+      this.value = new EVLCharacter(this.savedCodeUnits.charAt(0));
+      this.savedCodeUnits = this.savedCodeUnits.substring(1);
     } else {
-      this.readLexeme(pureXML);
+      this.type = null;
+      this.value = null;
+      const pureXML = this.xmlStack.length !== 0 && !['chapter', 'section'].includes(this.xmlStack[this.xmlStack.length - 1]);
+      while (this.type === null) {
+        this.skipWhitespace(pureXML);
+        if (this.position === this.text.length) {
+          this.type = EOF;
+        } else {
+          this.readToken(pureXML);
+        }
+      }
     }
   }
-  readWhitespace(pureXML) {
+  skipWhitespace(pureXML) {
     // When pure XML is true, XML character data is treated as whitespace.
     while (true) {
       if (this.position === this.text.length) {
         break;
       }
-      const char = this.readCharacter();
+      const char = this.peekCharacter();
       if (pureXML ? char === '<' : !isWhitespaceCharacter(char)) {
         break;
       }
       this.whitespace += char;
-      this.position++;
+      this.position += char.length;
     }
   }
-  readLexeme(pureXML) {
-    const char = this.readCharacter();
+  readToken(pureXML) {
+    const char = this.peekCharacter();
     switch (char) {
-      case '\'':
-        this.commitCharacter(char);
+      case "'":
+        this.consumeCharacter(char);
         this.type = QUOTE;
         break;
       case '`':
-        this.commitCharacter(char);
+        this.consumeCharacter(char);
         this.type = QUASIQUOTE;
         break;
       case ',':
-        this.commitCharacter(char);
+        this.consumeCharacter(char);
         if (this.position === this.text.length) {
           this.type = UNQUOTE;
         } else {
-          const char2 = this.readCharacter();
+          const char2 = this.peekCharacter();
           if (char2 === '@') {
-            this.commitCharacter(char2);
+            this.consumeCharacter(char2);
             this.type = UNQUOTE_SPLICING;
           } else {
             this.type = UNQUOTE;
@@ -328,135 +422,276 @@ class Lexer {
         }
         break;
       case '"':
-        this.commitCharacter(char);
-        readString(this);
+        this.consumeCharacter(char);
+        const string = readString(this);
+        this.type = STRING;
+        this.value = new EVLString(string);
         break;
       case '(':
-        this.commitCharacter(char);
+        this.consumeCharacter(char);
         this.type = OPENING_PARENTHESIS;
         break;
       case ')':
-        this.commitCharacter(char);
+        this.consumeCharacter(char);
         this.type = CLOSING_PARENTHESIS;
         break;
       case '#':
-        this.commitCharacter(char);
+        this.consumeCharacter(char);
         readHashConstruct(this);
         break;
       case '<':
-        if (readXMLMarkup(this)) {
+        if (readXMLMarkup(this, true)) {
           break;
         }
         if (pureXML) {
-          throw new LexerError('Malformed XML markup.');
+          throw new TokenizerError('Malformed XML markup.');
         }
-        // fall through ('<' will be read again by readToken)
+        // fall through ('<' will be read again by readProtoToken)
       default:
-        readToken(this);
-        if (this.value === '.') {
+        const protoToken = readProtoToken(this);
+        if (protoToken === '.') {
           this.type = DOT;
-        } else if (numberRegExp.test(this.value)) {
+        } else if (numberRegExp.test(protoToken)) {
           this.type = NUMBER;
-          this.value = new EVLNumber(Number.parseFloat(this.value));
-        } else if (keywordRegExp.test(this.value)) {
+          this.value = new EVLNumber(Number.parseFloat(protoToken));
+        } else if (keywordRegExp.test(protoToken)) {
           this.type = KEYWORD;
-          this.value = internKeyword(this.value.substring(1));
-        } else if (variableRegExp.test(this.value)) {
+          this.value = internKeyword(protoToken.substring(1));
+        } else if (variableRegExp.test(protoToken)) {
           this.type = VARIABLE;
-          this.value = internVariable(this.value);
+          this.value = internVariable(protoToken);
         } else {
-          throw new LexerError('Malformed token.');
+          throw new TokenizerError('Malformed proto-token.');
         }
         break;
     }
   }
 }
 
-function readString(lexer) {
-  lexer.value = '';
-  while (true) {
-    if (lexer.position === lexer.text.length) {
-      throw new LexerError('Truncated string.');
+function escapeCharacters(chars, escapeCharacter) {
+  let escapedChars = '';
+  let position = 0;
+  const length = chars.length;
+  while (position < length) {
+    let char = null; // one or two UTF-16 code units
+    const codeUnit = chars.charCodeAt(position);
+    if (isTrailingSurrogate(codeUnit)) {
+      escapedChars += unicodeEscape(codeUnit);
+      position += 1;
+      continue;
+    } else if (isLeadingSurrogate(codeUnit)) {
+      if (position + 1 === length) {
+        escapedChars += unicodeEscape(codeUnit);
+        position += 1;
+        continue;
+      }
+      const codeUnit2 = chars.charCodeAt(position + 1);
+      if (isTrailingSurrogate(codeUnit2)) {
+        char = String.fromCharCode(codeUnit, codeUnit2);
+        position += 2;
+      } else {
+        escapedChars += unicodeEscape(codeUnit);
+        position += 1;
+        continue;
+      }
+    } else {
+      char = String.fromCharCode(codeUnit);
+      position += 1;
     }
-    const char = lexer.readCharacter();
-    lexer.commitCharacter(char);
+    const codePoint = char.codePointAt(0);
+    if (isControlCharacter(codePoint) && !isWhitespaceCharacter(codePoint)) {
+      escapedChars += unicodeEscape(codePoint);
+      continue;
+    }
+    if (isNoncharacter(codePoint)) {
+      escapedChars += unicodeEscape(codePoint);
+      continue;
+    }
+    escapedChars += escapeCharacter(char);
+  }
+  return escapedChars;
+}
+
+function unicodeEscape(charOrCodePoint) {
+  const codePoint = ensureCodePoint(charOrCodePoint);
+  return '\\U{' + codePoint.toString(16).toUpperCase() + '}';
+}
+
+function readEscapeSequence(tokenizer) {
+  let chars = '';
+  if (tokenizer.position === tokenizer.text.length) {
+    throw new TruncatedToken('Truncated escape sequence.');
+  }
+  const char = tokenizer.peekCharacter();
+  tokenizer.consumeCharacter(char);
+  if (char !== '{') {
+    throw new TokenizerError('Malformed escape sequence.');
+  }
+  while (true) {
+    if (tokenizer.position === tokenizer.text.length) {
+      throw new TruncatedToken('Truncated escape sequence.');
+    }
+    const char2 = tokenizer.peekCharacter();
+    tokenizer.consumeCharacter(char2);
+    if (char2 === '}') {
+      break;
+    }
+    chars += char2;
+  }
+  return chars;
+}
+
+function readString(tokenizer) {
+  let chars = '';
+  while (true) {
+    if (tokenizer.position === tokenizer.text.length) {
+      throw new TruncatedToken('Truncated string.');
+    }
+    const char = tokenizer.peekCharacter();
+    tokenizer.consumeCharacter(char);
     if (char === '"') {
       break;
     }
     if (char === '\\') {
-      if (lexer.position === lexer.text.length) {
-        throw new LexerError('Truncated escape sequence.');
+      if (tokenizer.position === tokenizer.text.length) {
+        throw new TruncatedToken('Truncated escape sequence.');
       }
-      const char2 = lexer.readCharacter();
-      lexer.commitCharacter(char2);
-      lexer.value += char2;
+      const char2 = tokenizer.peekCharacter();
+      tokenizer.consumeCharacter(char2);
+      switch (char2) {
+        case '\\':
+          chars += '\\';
+          break;
+        case '"':
+          chars += '"';
+          break;
+        case 't':
+          chars += '\t';
+          break;
+        case 'n':
+          chars += '\n';
+          break;
+        case 'v':
+          chars += '\v';
+          break;
+        case 'f':
+          chars += '\f';
+          break;
+        case 'r':
+          chars += '\r';
+          break;
+        case 'U':
+          const codePoint = readEscapeSequence(tokenizer);
+          if (!codePointRegExp.test(codePoint)) {
+            throw new TokenizerError('Malformed escape sequence.');
+          }
+          chars += String.fromCodePoint(Number.parseInt(codePoint, 16));
+          break;
+        default:
+          throw new TokenizerError('Undefined escape sequence.');
+      }
     } else {
-      lexer.value += char;
+      chars += char;
     }
   }
-  lexer.type = STRING;
-  lexer.value = new EVLString(lexer.value);
+  return chars;
 }
 
-function readHashConstruct(lexer) {
-  if (lexer.position === lexer.text.length) {
-    throw new LexerError('Truncated hash construct.');
+function escapeStringCharacter (char) {
+  switch (char) {
+    case '\\':
+      return '\\\\';
+    case '"':
+      return '\\"';
+    case '\t':
+      return '\\t';
+    case '\n':
+      return '\\n';
+    case '\v':
+      return '\\v';
+    case '\f':
+      return '\\f';
+    case '\r':
+      return '\\r';
+    default:
+      return char;
   }
-  const char = lexer.readCharacter();
+}
+
+function readHashConstruct(tokenizer) {
+  let char = null;
+  let arg = '';
+  while (true) {
+    if (tokenizer.position === tokenizer.text.length) {
+      throw new TruncatedToken('Truncated hash construct.');
+    }
+    char = tokenizer.peekCharacter();
+    tokenizer.consumeCharacter(char);
+    if (isDecimalDigit(char)) {
+      arg += char;
+    } else {
+      break;
+    }
+  }
   switch (char) {
     case '(':
-      lexer.commitCharacter(char);
-      lexer.type = HASH_OPENING_PARENTHESIS;
+      tokenizer.type = HASH_OPENING_PARENTHESIS;
       break;
     case '+':
-      lexer.commitCharacter(char);
-      lexer.type = HASH_PLUS;
+      tokenizer.type = HASH_PLUS;
       break;
     case '-':
-      lexer.commitCharacter(char);
-      lexer.type = HASH_MINUS;
+      tokenizer.type = HASH_MINUS;
       break;
     case 'v':
-      lexer.commitCharacter(char);
-      lexer.type = VOID;
-      lexer.value = EVLVoid.VOID;
+      tokenizer.type = VOID;
+      tokenizer.value = EVLVoid.VOID;
       break;
     case 't':
-      lexer.commitCharacter(char);
-      lexer.type = BOOLEAN;
-      lexer.value = EVLBoolean.TRUE;
+      tokenizer.type = BOOLEAN;
+      tokenizer.value = EVLBoolean.TRUE;
       break;
     case 'f':
-      lexer.commitCharacter(char);
-      lexer.type = BOOLEAN;
-      lexer.value = EVLBoolean.FALSE;
+      tokenizer.type = BOOLEAN;
+      tokenizer.value = EVLBoolean.FALSE;
       break;
-    case '\\':
-      readToken(lexer);
-      if (lexer.value.length === 1) {
-        lexer.type = CHARACTER;
-        lexer.value = new EVLCharacter(lexer.value);
-      } else {
-        throw new LexerError('Undefined character name.');
+    case '"':
+      const string = readString(tokenizer);
+      if (tokenizer.convertToXML) {
+        tokenizer.type = CHARACTER;
+        tokenizer.value = new EVLCharacter(string);
+      } else if (arg !== '') {
+        const index = Number.parseInt(arg);
+        if (index < string.length) {
+          tokenizer.type = CHARACTER;
+          tokenizer.value = new EVLCharacter(string.charAt(index));
+        } else {
+          throw new TokenizerError('Index out of bounds.');
+        }
+      } else if (string.length !== 0) {
+        tokenizer.type = CHARACTER;
+        tokenizer.value = new EVLCharacter(string.charAt(0));
+        tokenizer.savedCodeUnits = string.substring(1);
       }
       break;
     default:
-      throw new LexerError('Undefined hash construct.');
+      throw new TokenizerError('Undefined hash construct.');
   }
 }
 
-function readXMLMarkup(lexer) {
+function readXMLMarkup(tokenizer, consume) {
   let state = 0;
   let isXMLEndTag = false;
   let isXMLEmptyElementTag = false;
   let isXMLComment = false;
   let name = '';
-  let position = lexer.position + 1;
+  let position = tokenizer.position + 1; // skip '<'
   loop: while (true) {
-    if (position === lexer.text.length) {
+    if (position === tokenizer.text.length) {
       return false;
     }
-    const char = lexer.readCharacter(position++);
+    const char = tokenizer.peekCharacter(position);
+    position += char.length;
     // <[0]/[100]a[101]b[101]c[101]/[102]>
     // <[0]![200]-[201]-[202]...[202]-[203]-[204]>
     switch (state) {
@@ -474,7 +709,7 @@ function readXMLMarkup(lexer) {
         else if (char === '>') break loop;
         else return false;
       case 102:
-        if (ch === '>') break loop;
+        if (char === '>') break loop;
         else return false;
       case 200:
         if (char === '-') {state = 201; break}
@@ -496,51 +731,88 @@ function readXMLMarkup(lexer) {
   if (isXMLEndTag && isXMLEmptyElementTag) {
     return false;
   }
-  lexer.lexeme = lexer.text.slice(lexer.position, position);
-  lexer.position = position;
-  if (isXMLComment) {
-    lexer.type = XML_COMMENT;
-  } else if (isXMLEndTag) {
-    if (lexer.xmlStack.length === 0) {
-      throw new LexerError('Unexpected XML end tag.');
+  if (consume) {
+    tokenizer.lexeme = tokenizer.text.slice(tokenizer.position, position);
+    tokenizer.position = position;
+    if (isXMLComment) {
+      tokenizer.type = XML_COMMENT;
+    } else if (isXMLEndTag) {
+      if (tokenizer.xmlStack.length === 0) {
+        throw new TokenizerError('Unexpected XML end tag.');
+      }
+      if (tokenizer.xmlStack[tokenizer.xmlStack.length - 1] !== name) {
+        throw new TokenizerError('Unmatched XML tags.');
+      }
+      tokenizer.xmlStack.pop();
+      tokenizer.type = XML_END_TAG;
+      tokenizer.value = name;
+    } else if (isXMLEmptyElementTag) {
+      tokenizer.type = XML_EMPTY_ELEMENT_TAG;
+      tokenizer.value = name;
+    } else {
+      tokenizer.xmlStack.push(name);
+      tokenizer.type = XML_START_TAG;
+      tokenizer.value = name;
     }
-    if (lexer.xmlStack[lexer.xmlStack.length - 1] !== name) {
-      throw new LexerError('Unmatched XML tags.');
-    }
-    lexer.xmlStack.pop();
-    lexer.type = XML_END_TAG;
-    lexer.value = name;
-  } else if (isXMLEmptyElementTag) {
-    lexer.type = XML_EMPTY_ELEMENT_TAG;
-    lexer.value = name;
-  } else {
-    lexer.xmlStack.push(name);
-    lexer.type = XML_START_TAG;
-    lexer.value = name;
   }
   return true;
 }
 
-function readToken(lexer) {
-  lexer.value = '';
+function readProtoToken(tokenizer) {
+  let chars = '';
   while (true) {
-    if (lexer.position === lexer.text.length) {
+    if (tokenizer.position === tokenizer.text.length) {
       break;
     }
-    const char = lexer.readCharacter();
-    if (isWhitespaceCharacter(char) || isTerminatingCharacter(char)) {
+    const char = tokenizer.peekCharacter();
+    if (isWhitespaceCharacter(char) || isSyntaxCharacter(char)) {
       break;
     }
-    lexer.commitCharacter(char);
+    if (char === '<' && readXMLMarkup(tokenizer, false)) {
+      break;
+    }
+    tokenizer.consumeCharacter(char);
     if (char === '\\') {
-      if (lexer.position === lexer.text.length) {
-        throw new LexerError('Truncated escape sequence.');
+      if (tokenizer.position === tokenizer.text.length) {
+        throw new TruncatedToken('Truncated escape sequence.');
       }
-      const char2 = lexer.readCharacter();
-      lexer.commitCharacter(char2);
-      lexer.value += char2;
+      const char2 = tokenizer.peekCharacter();
+      tokenizer.consumeCharacter(char2);
+      switch (char2) {
+        case '\\':
+          chars += '\\';
+          break;
+        case '<':
+          chars += '<';
+          break;
+        case 'U':
+          const codePoint = readEscapeSequence(tokenizer);
+          if (!codePointRegExp.test(codePoint)) {
+            throw new TokenizerError('Malformed escape sequence.');
+          }
+          chars += String.fromCodePoint(Number.parseInt(codePoint, 16));
+          break;
+        default:
+          throw new TokenizerError('Undefined escape sequence.');
+      }
     } else {
-      lexer.value += char;
+      chars += char;
+    }
+  }
+  return chars;
+}
+
+function escapeProtoTokenCharacter (char) {
+  if (isWhitespaceCharacter(char) || isSyntaxCharacter(char)) {
+    return unicodeEscape(char);
+  } else {
+    switch (char) {
+      case '\\':
+        return '\\\\';
+      case '<':
+        return '\\<';
+      default:
+        return char;
     }
   }
 }
@@ -577,8 +849,8 @@ class UnexpectedEndOfFile extends ReaderError {
   }
 }
 
-function read(lexer) {
-  const object = readObject(lexer);
+function read(tokenizer) {
+  const object = readObject(tokenizer);
   switch (object) {
     case DOT:
       throw new UnexpectedDot();
@@ -593,12 +865,12 @@ function read(lexer) {
   }
 }
 
-function readObject(lexer) {
+function readObject(tokenizer) {
   // Returns DOT, CLOSING_PARENTHESIS, XML_END_TAG, EOF, or an object.
   // XML elements are skipped because they are treated as comments.
   while (true) {
-    lexer.nextLexeme();
-    switch (lexer.type) {
+    tokenizer.nextToken();
+    switch (tokenizer.type) {
       case VOID:
       case BOOLEAN:
       case NUMBER:
@@ -606,17 +878,17 @@ function readObject(lexer) {
       case STRING:
       case KEYWORD:
       case VARIABLE:
-        return lexer.value;
+        return tokenizer.value;
       case QUOTE:
-        return readAbbreviation(lexer, quoteVariable);
+        return readAbbreviation(tokenizer, quoteVariable);
       case QUASIQUOTE:
-        return readAbbreviation(lexer, quasiquoteVariable);
+        return readAbbreviation(tokenizer, quasiquoteVariable);
       case UNQUOTE:
-        return readAbbreviation(lexer, unquoteVariable);
+        return readAbbreviation(tokenizer, unquoteVariable);
       case UNQUOTE_SPLICING:
-        return readAbbreviation(lexer, unquoteSplicingVariable);
+        return readAbbreviation(tokenizer, unquoteSplicingVariable);
       case HASH_PLUS: {
-        const object = readReadTimeConditional(lexer, true);
+        const object = readReadTimeConditional(tokenizer, true);
         if (object !== null) {
           return object;
         } else {
@@ -624,7 +896,7 @@ function readObject(lexer) {
         }
       }
       case HASH_MINUS: {
-        const object = readReadTimeConditional(lexer, false);
+        const object = readReadTimeConditional(tokenizer, false);
         if (object !== null) {
           return object;
         } else {
@@ -632,15 +904,15 @@ function readObject(lexer) {
         }
       }
       case OPENING_PARENTHESIS:
-        return readList(lexer);
+        return readList(tokenizer);
       case HASH_OPENING_PARENTHESIS:
-        return readVector(lexer);
+        return readVector(tokenizer);
       case DOT:
         return DOT;
       case CLOSING_PARENTHESIS:
         return CLOSING_PARENTHESIS;
       case XML_START_TAG:
-        readXMLElement(lexer);
+        readXMLElement(tokenizer);
         break; // skip
       case XML_END_TAG:
         return XML_END_TAG;
@@ -656,8 +928,8 @@ function readObject(lexer) {
   }
 }
 
-function readAbbreviation(lexer, variable) {
-  const object = readObject(lexer);
+function readAbbreviation(tokenizer, variable) {
+  const object = readObject(tokenizer);
   switch (object) {
     case DOT:
       throw new UnexpectedDot();
@@ -672,17 +944,17 @@ function readAbbreviation(lexer, variable) {
   }
 }
 
-function readReadTimeConditional(lexer, polarity) {
-  const featureExpression = readReadTimeConditionalFeatureExpression(lexer);
+function readReadTimeConditional(tokenizer, polarity) {
+  const featureExpression = readReadTimeConditionalFeatureExpression(tokenizer);
   if (evaluateFeatureExpression(featureExpression) === polarity) {
-    return readReadTimeConditionalObject(lexer);
+    return readReadTimeConditionalObject(tokenizer);
   } else {
-    return readReadTimeConditionalObject(lexer), null;
+    return readReadTimeConditionalObject(tokenizer), null;
   }
 }
 
-function readReadTimeConditionalFeatureExpression(lexer) {
-  const object = readObject(lexer);
+function readReadTimeConditionalFeatureExpression(tokenizer) {
+  const object = readObject(tokenizer);
   switch (object) {
     case DOT:
       throw new UnexpectedDot();
@@ -697,8 +969,8 @@ function readReadTimeConditionalFeatureExpression(lexer) {
   }
 }
 
-function readReadTimeConditionalObject(lexer) {
-  const object = readObject(lexer);
+function readReadTimeConditionalObject(tokenizer) {
+  const object = readObject(tokenizer);
   switch (object) {
     case DOT:
       throw new UnexpectedDot();
@@ -788,14 +1060,14 @@ function evaluateOrFeatureExpression(featureExpression) {
   return false;
 }
 
-function readList(lexer) {
+function readList(tokenizer) {
   let list = EVLEmptyList.NIL;
   let lastCons = null;
   loop: while (true) {
-    const object = readObject(lexer);
+    const object = readObject(tokenizer);
     switch (object) {
       case DOT:
-        return readDottedList(lexer, list, lastCons);
+        return readDottedList(tokenizer, list, lastCons);
       case CLOSING_PARENTHESIS:
         break loop;
       case XML_END_TAG:
@@ -816,11 +1088,11 @@ function readList(lexer) {
   return list;
 }
 
-function readDottedList(lexer, list, lastCons) {
+function readDottedList(tokenizer, list, lastCons) {
   if (lastCons === null) {
     throw new ReaderError('Malformed dotted list.');
   }
-  const object = readObject(lexer);
+  const object = readObject(tokenizer);
   switch (object) {
     case DOT:
       throw new ReaderError('Malformed dotted list.');
@@ -834,7 +1106,7 @@ function readDottedList(lexer, list, lastCons) {
       lastCons.cdr = object;
       break
   }
-  const object2 = readObject(lexer);
+  const object2 = readObject(tokenizer);
   switch (object2) {
     case DOT:
       throw new ReaderError('Malformed dotted list.');
@@ -849,10 +1121,10 @@ function readDottedList(lexer, list, lastCons) {
   }
 }
 
-function readVector(lexer) {
+function readVector(tokenizer) {
   const elements = [];
   loop: while (true) {
-    const object = readObject(lexer);
+    const object = readObject(tokenizer);
     switch (object) {
       case DOT:
         throw new UnexpectedDot();
@@ -870,17 +1142,17 @@ function readVector(lexer) {
   return new EVLVector(elements);
 }
 
-function readXMLElement(lexer) {
-  const xmlStartTagName = lexer.value;
+function readXMLElement(tokenizer) {
+  const xmlStartTagName = tokenizer.value;
   loop: while (true) {
-    const object = readObject(lexer);
+    const object = readObject(tokenizer);
     switch (object) {
       case DOT:
         throw new UnexpectedDot();
       case CLOSING_PARENTHESIS:
         throw new UnexpectedClosingParenthesis();
       case XML_END_TAG:
-        const xmlEndTagName = lexer.value;
+        const xmlEndTagName = tokenizer.value;
         if (xmlStartTagName === xmlEndTagName) {
           break loop;
         } else {
@@ -889,7 +1161,7 @@ function readXMLElement(lexer) {
       case EOF:
         throw new UnexpectedEndOfFile();
       default:
-        const callback = lexer.callback;
+        const callback = tokenizer.callback;
         if (callback !== undefined) {
           callback(object);
         }
@@ -898,9 +1170,9 @@ function readXMLElement(lexer) {
   }
 }
 
-/*************/
-/* Converter */
-/*************/
+/************************/
+/* EVL to XML Converter */
+/************************/
 
 const TOPLEVEL = 100; // top level context
 const ABBREVIATION = 101; // abbreviation context
@@ -908,23 +1180,23 @@ const RTC1 = 102; // context between #+ or #- and feature expression
 const RTC2 = 103; // context between feature expression and object
 const SEQUENCE = 104; // list or vector context
 
-const ABSTRACT_BOF = 0; // beginning-of-file lexeme
-const ABSTRACT_EVL = 1; // EVL lexeme
-const ABSTRACT_XML = 2; // XML lexeme
+const ABSTRACT_BOF = 0; // beginning-of-file abstract token
+const ABSTRACT_EVL = 1; // EVL abstract token
+const ABSTRACT_XML = 2; // XML abstract token
 const ABSTRACT_EOL_COMMENT = 3; // end-of-line comment
-const ABSTRACT_EOF = 4; // end-of-file lexeme
+const ABSTRACT_EOF = 4; // end-of-file abstract token
 
-function convert(lexer) {
+function doConvertToXML(tokenizer) {
   let xml = '';
   const contextStack = [TOPLEVEL]; // element: TOPLEVEL, ABBREVIATION, RTC1, RTC2, SEQUENCE, or XML element name
-  let previousAbstractLexeme = ABSTRACT_BOF;
+  let previousAbstractToken = ABSTRACT_BOF;
   let context = TOPLEVEL;
-  let abstractLexeme = null;
-  while ((abstractLexeme = abstractRead(lexer, contextStack)) !== ABSTRACT_EOF) {
+  let abstractToken = null;
+  while ((abstractToken = abstractRead(tokenizer, contextStack)) !== ABSTRACT_EOF) {
     if (context === TOPLEVEL) {
       // BOF   <evl-object|xml-element>   <evl-object|xml-element>   EOF
       //    ^^^                        ^^^                        ^^^
-      xml += lexer.whitespace; // whitespace is written as is
+      xml += tokenizer.whitespace; // whitespace is written as is
     } else if ([ABBREVIATION, RTC1, RTC2, SEQUENCE].includes(context)) {
       // '   <xml-element>   <xml-element>   <evl-object>
       //  ^^^             ^^^             ^^^
@@ -934,27 +1206,27 @@ function convert(lexer) {
       //                                                  ^^^             ^^^             ^^^
       // (   <evl-object|xml-element>   <xml-element|xml-element>   )
       //  ^^^                        ^^^                         ^^^
-      xml += convertEVL(previousAbstractLexeme, lexer.whitespace, abstractLexeme); // whitespace is converted by convertEVL
+      xml += convertEVL(previousAbstractToken, tokenizer.whitespace, abstractToken); // whitespace is converted by convertEVL
     } else if (['chapter', 'section'].includes(context)) {
       // <chapter>   <evl-object|xml-element>   <evl-object|xml-element>   </chapter>
       //          ^^^                        ^^^                        ^^^
       // <section>   <evl-object|xml-element>   <evl-object|xml-element>   </section>
       //          ^^^                        ^^^                        ^^^
-      xml += convertXML(previousAbstractLexeme, lexer.whitespace, abstractLexeme); // whitespace is converted by convertXML
+      xml += convertXML(previousAbstractToken, tokenizer.whitespace, abstractToken); // whitespace is converted by convertXML
     } else {
       // <para>   <xml-element>   <xml-element>   </para>
       //       ^^^             ^^^             ^^^
-      xml += lexer.whitespace; // whitespace (= character data) is written as is
+      xml += tokenizer.whitespace; // whitespace (= character data) is written as is
     }
-    if (abstractLexeme === ABSTRACT_EVL) {
-      xml += xmlEscape(lexer.lexeme); // lexeme is xml escaped
+    if (abstractToken === ABSTRACT_EVL) {
+      xml += xmlEscape(tokenizer.lexeme); // lexeme is xml escaped
     } else {
-      xml += lexer.lexeme; // lexeme is written as is
+      xml += tokenizer.lexeme; // lexeme is written as is
     }
-    previousAbstractLexeme = abstractLexeme;
+    previousAbstractToken = abstractToken;
     context = contextStack[contextStack.length - 1];
   }
-  xml += lexer.whitespace; // whitespace is written as is
+  xml += tokenizer.whitespace; // whitespace is written as is
   return xml;
 }
 
@@ -979,9 +1251,9 @@ function xmlEscape(string) {
   });
 }
 
-function abstractRead(lexer, contextStack) {
-  lexer.nextLexeme();
-  switch (lexer.type) {
+function abstractRead(tokenizer, contextStack) {
+  tokenizer.nextToken();
+  switch (tokenizer.type) {
     case VOID:
     case BOOLEAN:
     case NUMBER:
@@ -1015,18 +1287,18 @@ function abstractRead(lexer, contextStack) {
       updateContextStackForEVLObject(contextStack);
       return ABSTRACT_EVL;
     case XML_START_TAG:
-      if (lexer.value === 'comment') {
-        abstractReadEndOfLineComment(lexer, contextStack);
+      if (tokenizer.value === 'comment') {
+        abstractReadEndOfLineComment(tokenizer, contextStack);
         return ABSTRACT_EOL_COMMENT;
       } else {
-        contextStack.push(lexer.value); // enter XML element name context
+        contextStack.push(tokenizer.value); // enter XML element name context
         return ABSTRACT_XML;
       }
     case XML_END_TAG:
       if (typeof contextStack[contextStack.length - 1] !== 'string') {
         throw new ConverterError('Unexpected XML end tag.');
       }
-      if (contextStack[contextStack.length - 1] !== lexer.value) {
+      if (contextStack[contextStack.length - 1] !== tokenizer.value) {
         throw new ConverterError('Unmatched XML tags.');
       }
       contextStack.pop(); // exit XML element name context
@@ -1065,38 +1337,38 @@ function updateContextStackForEVLObject(contextStack) {
   }
 }
 
-function abstractReadEndOfLineComment(lexer) {
-  const whitespace = lexer.whitespace;
-  let lexeme = lexer.lexeme;
-  const contextStack = [lexer.value]; // local stack
+function abstractReadEndOfLineComment(tokenizer) {
+  const whitespace = tokenizer.whitespace;
+  let lexeme = tokenizer.lexeme;
+  const contextStack = [tokenizer.value]; // local stack
   while (true) {
-    lexer.nextLexeme();
-    switch (lexer.type) {
+    tokenizer.nextToken();
+    switch (tokenizer.type) {
       case XML_START_TAG:
-        lexeme += lexer.whitespace;
-        lexeme += lexer.lexeme;
-        contextStack.push(lexer.value);
+        lexeme += tokenizer.whitespace;
+        lexeme += tokenizer.lexeme;
+        contextStack.push(tokenizer.value);
         break;
       case XML_END_TAG:
-        if (contextStack[contextStack.length - 1] !== lexer.value) {
+        if (contextStack[contextStack.length - 1] !== tokenizer.value) {
           throw new ConverterError('Unmatched XML tags.');
         }
-        lexeme += lexer.whitespace;
-        lexeme += lexer.lexeme;
+        lexeme += tokenizer.whitespace;
+        lexeme += tokenizer.lexeme;
         contextStack.pop();
         if (contextStack.length === 0) {
-          lexer.whitespace = whitespace; // whitespace before end-of-line comment
-          lexer.lexeme = lexeme; // end-of-line comment
+          tokenizer.whitespace = whitespace; // whitespace before end-of-line comment
+          tokenizer.lexeme = lexeme; // end-of-line comment
           return;
         }
         break;
       case XML_EMPTY_ELEMENT_TAG:
-        lexeme += lexer.whitespace;
-        lexeme += lexer.lexeme;
+        lexeme += tokenizer.whitespace;
+        lexeme += tokenizer.lexeme;
         break;
       case XML_COMMENT:
-        lexeme += lexer.whitespace;
-        lexeme += lexer.lexeme;
+        lexeme += tokenizer.whitespace;
+        lexeme += tokenizer.lexeme;
         break;
       case EOF:
         throw new ConverterError('Unexpected end-of-file.');
@@ -1106,20 +1378,20 @@ function abstractReadEndOfLineComment(lexer) {
   }
 }
 
-function isXMLLexeme(lexeme) {
-  return lexeme === ABSTRACT_XML;
+function isXMLAbstractToken(abstractToken) {
+  return abstractToken === ABSTRACT_XML;
 }
 
-function isEVLLexeme(lexeme) {
-  return lexeme === ABSTRACT_EVL || lexeme === ABSTRACT_EOL_COMMENT;
+function isEVLAbstractToken(abstractToken) {
+  return abstractToken === ABSTRACT_EVL || abstractToken === ABSTRACT_EOL_COMMENT;
 }
 
-function convertXML(previousLexeme, whitespace, lexeme) {
+function convertXML(previousAbstractToken, whitespace, abstractToken) {
   let xml = '';
-  if (isXMLLexeme(previousLexeme) && isEVLLexeme(lexeme)) {
+  if (isXMLAbstractToken(previousAbstractToken) && isEVLAbstractToken(abstractToken)) {
     xml += whitespace;
     xml += '<toplevelcode><blockcode>';
-  } else if (isEVLLexeme(previousLexeme) && isEVLLexeme(lexeme)) {
+  } else if (isEVLAbstractToken(previousAbstractToken) && isEVLAbstractToken(abstractToken)) {
     if (countNewlines(whitespace) >= 2) {
       xml += '</blockcode></toplevelcode>';
       xml += whitespace;
@@ -1127,7 +1399,7 @@ function convertXML(previousLexeme, whitespace, lexeme) {
     } else {
       xml += whitespace;
     }
-  } else if (isEVLLexeme(previousLexeme) && isXMLLexeme(lexeme)) {
+  } else if (isEVLAbstractToken(previousAbstractToken) && isXMLAbstractToken(abstractToken)) {
     xml += '</blockcode></toplevelcode>';
     xml += whitespace;
   } else {
@@ -1146,14 +1418,14 @@ function countNewlines(string) {
   return count;
 }
 
-function convertEVL(previousLexeme, whitespace, lexeme) {
+function convertEVL(previousAbstractToken, whitespace, abstractToken) {
   let xml = '';
-  if (isEVLLexeme(previousLexeme) && isXMLLexeme(lexeme)) {
+  if (isEVLAbstractToken(previousAbstractToken) && isXMLAbstractToken(abstractToken)) {
     xml += '</blockcode><indentation style="margin-left: ';
     xml += countSpacesAfterFirstNewline(whitespace);
     xml += 'ch;"><blockcomment>';
     xml += whitespace;
-  } else if (isXMLLexeme(previousLexeme) && isEVLLexeme(lexeme)) {
+  } else if (isXMLAbstractToken(previousAbstractToken) && isEVLAbstractToken(abstractToken)) {
     xml += '</blockcomment></indentation><blockcode>';
     xml += whitespace;
   } else {
@@ -1731,7 +2003,7 @@ function emptyListError() {
 }
 
 function ifTestFormError() {
-  throw new EvaluatorError('The test form does not evaluate to a boolean.');
+  throw new EvaluatorError('The test-form does not evaluate to a boolean.');
 }
 
 function forEachNotImplemented() {
@@ -1739,15 +2011,15 @@ function forEachNotImplemented() {
 }
 
 function forEachFunctionFormError() {
-  throw new EvaluatorError('The function form does not evaluate to a function.');
+  throw new EvaluatorError('The function-form does not evaluate to a function.');
 }
 
 function forEachListFormError() {
-  throw new EvaluatorError('The list form does not evaluate to a proper list.');
+  throw new EvaluatorError('The list-form does not evaluate to a proper list.');
 }
 
 function applicationOperatorFormError() {
-  throw new EvaluatorError('The operator form does not evaluate to a function.');
+  throw new EvaluatorError('The operator-form does not evaluate to a function.');
 }
 
 /*****************************/
@@ -4286,7 +4558,7 @@ primitiveFunction('>=', 2, 2, function(args) {
 class EVLCharacter extends EVLObject {
   constructor(jsValue) {
     super();
-    this.jsValue = jsValue; // javascript string of one character
+    this.jsValue = jsValue; // javascript string of one UTF-16 code unit
   }
   eql(that) {
     if (that instanceof EVLCharacter) {
@@ -4296,7 +4568,7 @@ class EVLCharacter extends EVLObject {
     }
   }
   toString() {
-    return '#\\' + (isValidCharacter(this.jsValue) ? this.jsValue : '?');
+    return '#"' + escapeCharacters(this.jsValue, escapeStringCharacter) + '"';
   }
 }
 
@@ -4311,7 +4583,7 @@ primitiveFunction('character?', 1, 1, function(args) {
 class EVLString extends EVLObject {
   constructor(jsValue) {
     super();
-    this.jsValue = jsValue; // javascript string
+    this.jsValue = jsValue; // javascript string of zero or more UTF-16 code units
   }
   eql(that) {
     if (that instanceof EVLString) {
@@ -4321,19 +4593,7 @@ class EVLString extends EVLObject {
     }
   }
   toString() {
-    let string = '';
-    string += '"';
-    for (const char of this.jsValue) {
-      if (!isValidCharacter(char)) {
-        string += '?';
-      } else if (char === '"' || char === '\\') {
-        string += '\\' + char;
-      } else {
-        string += char;
-      }
-    }
-    string += '"';
-    return string;
+    return '"' + escapeCharacters(this.jsValue, escapeStringCharacter) + '"';
   }
 }
 
@@ -4348,23 +4608,7 @@ primitiveFunction('string?', 1, 1, function(args) {
 class EVLSymbol extends EVLObject { // abstract class
   constructor(name) {
     super();
-    this.name = name; // javascipt string
-  }
-  toString() {
-    let string = '';
-    if (this instanceof EVLKeyword) {
-      string += ':';
-    }
-    for (const char of this.name) {
-      if (!isValidCharacter(char)) {
-        string += '?';
-      } else if (isWhitespaceCharacter(char) || isTerminatingCharacter(char) || char === '\\') {
-        string += '\\' + char;
-      } else {
-        string += char;
-      }
-    }
-    return string;
+    this.name = name; // javascipt string of zero or more UTF-16 code units
   }
 }
 
@@ -4379,6 +4623,9 @@ primitiveFunction('symbol?', 1, 1, function(args) {
 class EVLKeyword extends EVLSymbol {
   constructor(name) {
     super(name);
+  }
+  toString() {
+    return ':' + escapeCharacters(this.name, escapeProtoTokenCharacter);
   }
 }
 
@@ -4410,6 +4657,9 @@ class EVLVariable extends EVLSymbol {
     super(name);
     this.value = null;
     this.function = null;
+  }
+  toString() {
+    return escapeCharacters(this.name, escapeProtoTokenCharacter);
   }
 }
 
