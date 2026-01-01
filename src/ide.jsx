@@ -1230,7 +1230,7 @@ function init(systemFiles) {
 init([
   'USER-MANUAL',
   'TUTORIAL',
-  //'REFERENCE-MANUAL',
+  'REFERENCE-MANUAL',
   //'IMPLEMENTATION-NOTES',
   'BIBLIOGRAPHY',
   'LICENSE',

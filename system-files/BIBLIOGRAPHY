@@ -11,15 +11,18 @@
   <body>
     <h1>Bibliography</h1>
     <p>Harold Abelson and Gerald Jay Sussman, Structure and Interpretation of Computer Programs, second edition, 1996, MIT Press</p>
-    <p>Tim Bray, Jean Paoli, C. M. Sperberg-McQueen, Eve Maler, François Yergeau (Editors), Extensible Markup Language (XML) 1.0, fifth edition, 2008, <a href="https://www.w3.org/TR/2008/REC-xml-20081126/" target="_blank">https://www.w3.org/TR/2008/REC-xml-20081126/</a></p>
+    <p>Tim Bray, Jean Paoli, C. M. Sperberg-McQueen, Eve Maler, and François Yergeau (Editors), Extensible Markup Language (XML) 1.0, fifth edition, 2008, <a href="https://www.w3.org/TR/2008/REC-xml-20081126/" target="_blank">https://www.w3.org/TR/2008/REC-xml-20081126/</a></p>
+    <p>Tim Bray, Jean Paoli, C. M. Sperberg-McQueen, Eve Maler, François Yergeau, and John Cowan (Editors), Extensible Markup Language (XML) 1.1, second edition, 2006, <a href="https://www.w3.org/TR/2006/REC-xml11-20060816/" target="_blank">https://www.w3.org/TR/2006/REC-xml11-20060816/</a></p>
     <p>R. Kent Dybvig, The Scheme Programming Language, fourth edition, 2009, MIT Press</p>
     <p>Daniel P. Friedman and Mitchell Wand, Essentials of Programming Languages, third edition, 2008, MIT Press</p>
     <p>Paul Graham, On Lisp: Advanced Techniques for Common Lisp, 1994, Prentice Hall</p>
     <p>Paul Graham, ANSI Common Lisp, 1996, Prentice Hall</p>
+    <p>Richard Kelsey, William Clinger, and Jonathan Rees (Editors), Revised<sup>5</sup> Report on the Algorithmic Language Scheme, 1998, search for &ldquo;R5RS&rdquo; on the internet to get a link</p>
     <p>Peter Norvig, Paradigms of Artificial Intelligence Programming: Case Studies in Common Lisp, 1992, Morgan Kaufmann Publishers</p>
     <p>Kent Pitman, Common Lisp HyperSpec, 2005, <a href="https://www.lispworks.com/documentation/HyperSpec/Front/index.htm" target="_blank">https://www.lispworks.com/documentation/HyperSpec/Front/index.htm</a></p>
     <p>Christian Queinnec, Lisp in Small Pieces, 2003, Cambridge University Press</p>
     <p>Michael Sperber, R. Kent Dybvig, Matthew Flatt, and Anton van Straaten (Editors), Revised<sup>6</sup> Report on the Algorithmic Language Scheme, 2007, <a href="https://www.r6rs.org/" target="_blank">https://www.r6rs.org/</a></p>
     <p>Guy L. Steele Jr., Common Lisp: The Language, second edition, 1990, Digital Press</p>
+    <p>The Unicode Consortium, The Unicode Standard, Version 17.0.0, 2025, <a href="https://www.unicode.org/versions/Unicode17.0.0/" target="_blank">https://www.unicode.org/versions/Unicode17.0.0/</a></p>
   </body>
 </html>

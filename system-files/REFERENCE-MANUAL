@@ -9,5 +9,156 @@
     <script>const windowId = ___windowId___;</script>
   </head>
   <body>
+    <h1>Reference Manual</h1>
+    <p>The reference manual provides a detailed account of the programming language. It supplements the user manual (particularly the sections &ldquo;Programming Language&rdquo; and &ldquo;Listener Buffers&rdquo;) and the tutorial.</p>
+    <h2>Syntax</h2>
+    <h3>Introduction</h3>
+    <h4>Listener Buffers</h4>
+    <p>Let's examine what happens when the form <code>(+ 123 456)</code> is evaluated in a listener buffer:</p>
+    <pre class="repl">&gt; (+ 123 456)<br>579</pre>
+    <p>The process can be broken down into the following five steps:</p>
+    <p><b>Step 1</b> The sequence of characters <span class="charseq"><span class="char">(</span><span class="char">+</span><span class="char">&nbsp;</span><span class="char">1</span><span class="char">2</span><span class="char">3</span><span class="char">&nbsp;</span><span class="char">4</span><span class="char">5</span><span class="char">6</span><span class="char">)</span></span> is read from the listener buffer.</p>
+    <p><b>Step 2</b> The reader converts the sequence of characters <span class="charseq"><span class="char">(</span><span class="char">+</span><span class="char">&nbsp;</span><span class="char">1</span><span class="char">2</span><span class="char">3</span><span class="char">&nbsp;</span><span class="char">4</span><span class="char">5</span><span class="char">6</span><span class="char">)</span></span> into the list <code>(+ 123 456)</code>. (The sequence of characters is a readable representation of the list.) This step can be broken down into the following two substeps:</p>
+    <p><b>Step 2.1</b> A component of the reader called the tokenizer converts the sequence of characters <span class="charseq"><span class="char">(</span><span class="char">+</span><span class="char">&nbsp;</span><span class="char">1</span><span class="char">2</span><span class="char">3</span><span class="char">&nbsp;</span><span class="char">4</span><span class="char">5</span><span class="char">6</span><span class="char">)</span></span> into a sequence of tokens. A token consists of the following pieces of information bundled together: a category and, if required by the category, a value. Each token category has an associated pattern and each token has an associated lexeme. A lexeme is a sequence of contiguous characters extracted from the input sequence of characters. The lexeme associated with a token must match the pattern associated with the token's category and the sequence of characters resulting from the concatenation of the lexemes associated with the tokens must match the input sequence of characters. The sequence of characters <span class="charseq"><span class="char">(</span><span class="char">+</span><span class="char">&nbsp;</span><span class="char">1</span><span class="char">2</span><span class="char">3</span><span class="char">&nbsp;</span><span class="char">4</span><span class="char">5</span><span class="char">6</span><span class="char">)</span></span> is converted into the following sequence of tokens:</p>
+    <ul>
+      <li>A token of category <code>opening-parenthesis</code> whose associated lexeme is <span class="charseq"><span class="char">(</span></span>. This token has no value.</li>
+      <li>A token of category <code>variable</code> whose associated lexeme is <span class="charseq"><span class="char">+</span></span>. The value of this token is the object of type <code>variable</code> whose name is <span class="charseq"><span class="char">+</span></span>.</li>
+      <li>A token of category <code>whitespace</code> whose associated lexeme is <span class="charseq"><span class="char">&nbsp;</span></span>. This token has no value.</li>
+      <li>A token of category <code>number</code> whose associated lexeme is <span class="charseq"><span class="char">1</span><span class="char">2</span><span class="char">3</span></span>. The value of this token is an object of type <code>number</code> representing the mathematical number $123$.</li>
+      <li>A token of category <code>whitespace</code> whose associated lexeme is <span class="charseq"><span class="char">&nbsp;</span></span>. This token has no value.</li>
+      <li>A token of category <code>number</code> whose associated lexeme is <span class="charseq"><span class="char">4</span><span class="char">5</span><span class="char">6</span></span>. The value of this token is an object of type <code>number</code> representing the mathematical number $456$.</li>
+      <li>A token of category <code>closing-parenthesis</code> whose associated lexeme is <span class="charseq"><span class="char">)</span></span>. This token has no value.</li>
+    </ul>
+    <p>Note that some whitespace is needed to separate the lexeme <span class="charseq"><span class="char">+</span></span> from the lexeme <span class="charseq"><span class="char">1</span><span class="char">2</span><span class="char">3</span></span> and the lexeme <span class="charseq"><span class="char">1</span><span class="char">2</span><span class="char">3</span></span> from the lexeme <span class="charseq"><span class="char">4</span><span class="char">5</span><span class="char">6</span></span> but no whitespace is needed to separate the lexeme <span class="charseq"><span class="char">(</span></span> from the lexeme <span class="charseq"><span class="char">+</span></span> or the lexeme <span class="charseq"><span class="char">4</span><span class="char">5</span><span class="char">6</span></span> from the lexeme <span class="charseq"><span class="char">)</span></span>.</p>
+    <p><b>Step 2.2</b> A component of the reader called the parser converts the sequence of tokens from step 2.1 (minus the tokens of category <code>whitespace</code>, which are ignored by the parser) into a cons whose car is the variable from step 2.1 and whose cdr is a cons whose car is the first number from step 2.1 and whose cdr is a cons whose car is the second number from step 2.1 and whose cdr is the empty list. Together, those three conses represent the list <code>(+ 123 456)</code>.</p>
+    <p><b>Step 3</b> The evaluator evaluates the list <code>(+ 123 456)</code> to the number <code>579</code>. The evaluation of the top-level form <code>(+ 123 456)</code> entails the evaluation of other non-top-level forms. Each form must be classified in order to determine how it should be evaluated. The form <code>(+ 123 456)</code> is classified as a plain function call. The variable <code>+</code> is treated as an abbreviation for the form <code>(fref +)</code>. The form <code>(fref +)</code> is classified as an <code>fref</code>-form. The forms <code>123</code> and <code>456</code> are classified as self-evaluating objects. Because the global function <code>+</code> is a closure, its invocation entails the evaluation (and thus the classification) of other forms. The component of the evaluator responsible for classifying forms is called the syntax analyzer.</p>
+    <p><b>Step 4</b> The printer converts the number <code>579</code> into the sequence of characters <span class="charseq"><span class="char">5</span><span class="char">7</span><span class="char">9</span></span>. (The sequence of characters is the printable representation of the number.)</p>
+    <p><b>Step 5</b> The sequence of characters <span class="charseq"><span class="char">5</span><span class="char">7</span><span class="char">9</span></span> is written into the listener buffer.</p>
+    <p>EVLambda has three levels of syntax:</p>
+    <ul>
+      <li>The token level contains the rules used by the tokenizer to convert a sequence of characters into a sequence of tokens.</li>
+      <li>The object level contains the rules used by the parser to convert a sequence of tokens into a sequence of objects.</li>
+      <li>The form level contains the rules used by the syntax analyzer to classify forms.</li>
+    </ul>
+    <p>Each level of syntax is described later in its own section.</p>
+    <h4>EVLambda Source Files</h4>
+    <p>The reader is used not only to convert the characters typed into a listener buffer into an object but also to convert the characters contained inside an EVLambda source file into a sequence of objects.</p>
+    <p>EVLambda source files come in two varieties: the plain EVLambda source files, which contain only EVLambda source code, and the documented EVLambda source files, which contain a mix of EVLambda source code and documentation in XML format.</p>
+    <p>Here is an example of a plain EVLambda source file:</p>
+    <pre class="repl">(fdef fact (n)<br>  (if (= n 0)<br>      1<br>    (* n (fact (- n 1)))))<br><br>(test 1 (fact 0))<br>(test 120 (fact 5))<br>(test 3628800 (fact 10))<br><br>(fdef fib (n)<br>  (if (= n 0)<br>      0<br>    (if (= n 1)<br>        1<br>      (+ (fib (- n 1)) (fib (- n 2))))))<br><br>(test 0 (fib 0))<br>(test 5 (fib 5))<br>(test 55 (fib 10))</pre>
+    <p>Here is an example of a documented EVLambda source file:</p>
+    <pre class="repl">&lt;chapter&gt;<br>&lt;title&gt;Recursive Functions&lt;/title&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;section&gt;<br>&lt;title&gt;Factorial Function&lt;/title&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>(fdef fact (n)<br>  &lt;para&gt;...block...&lt;/para&gt;<br>  &lt;para&gt;...block...&lt;/para&gt;<br>  (if (= n 0)<br>      1 &lt;comment&gt;...eol...&lt;/comment&gt;<br>    (* n (fact (- n 1))))) &lt;comment&gt;...eoll...&lt;/comment&gt;<br><br>(test 1 (fact 0))<br>(test 120 (fact 5))<br>(test 3628800 (fact 10))<br>&lt;/section&gt;<br>&lt;section&gt;<br>&lt;title&gt;Fibonacci Sequence&lt;/title&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>(fdef fib (n)<br>  &lt;para&gt;...block...&lt;/para&gt;<br>  &lt;para&gt;...block...&lt;/para&gt;<br>  (if (= n 0)<br>      0 &lt;comment&gt;...eol...&lt;/comment&gt;<br>    (if (= n 1)<br>        1 &lt;comment&gt;...eol...&lt;/comment&gt;<br>      (+ (fib (- n 1)) (fib (- n 2)))))) &lt;comment&gt;...eoll...&lt;/comment&gt;<br><br>(test 0 (fib 0))<br>(test 5 (fib 5))<br>(test 55 (fib 10))<br>&lt;/section&gt;<br>&lt;/chapter&gt;</pre>
+    <p>Documented EVLambda source files can be converted to HTML by a component of the programming language called the documentation generator.</p>
+    <h4>Extensible Markup Language (XML)</h4>
+    <p>An XML document is a annotated text document. An XML document is divided into two intermingled parts: the character data (the content) and the markup (the annotations). Markup can take many forms. Documented EVLambda source files use the following forms of markup:</p>
+    <dl>
+      <dt>start tags (without attributes)</dt>
+      <dd><code>&lt;chapter&gt;</code>, <code>&lt;section&gt;</code>, <code>&lt;title&gt;</code>, <code>&lt;para&gt;</code>, <code>&lt;comment&gt;</code>, &hellip;</dd>
+      <dt>end tags</dt>
+      <dd><code>&lt;/chapter&gt;</code>, <code>&lt;/section&gt;</code>, <code>&lt;/title&gt;</code>, <code>&lt;/para&gt;</code>, <code>&lt;/comment&gt;</code>, &hellip;</dd>
+      <dt>empty-element tags (without attributes)</dt>
+      <dd><code>&lt;br/&gt;</code>, &hellip;</dd>
+      <dt>comments</dt>
+      <dd><code>&lt;!-- FIXME --&gt;</code>, &hellip;</dd>
+      <dt>entity references</dt>
+      <dd><code>&amp;lt;</code> (refers to the character &lt;), <code>&amp;gt;</code> (refers to the character &gt;), <code>&amp;amp;</code> (refers to the character &amp;), &hellip;</dd>
+      <dt>character references (decimal representation)</dt>
+      <dd><code>&amp;#9166;</code> (refers to the character &#9166;), &hellip;</dd>
+      <dt>character references (hexadecimal representation)</dt>
+      <dd><code>&amp;#x23CE;</code> (refers to the character &#x23CE;), &hellip;</dd>
+    </dl>
+    <p>Many constraints must be satisfied for an XML document to be well-formed. The main well-formedness constraints are noted below.</p>
+    <p><b>Well-formedness constraint:</b> Start tags and end tags must appear in pairs. In each pair, the start tag must precede the end tag and both tags must have the same name.</p>
+    <p>An element is a sequence of characters delimited by a pair of start and end tags or by an empty-element tag. The characters of the delimiting tags or tag belong to the element. The characters that belong to an element but not to its delimiting tags or tag constitute the content of the element. The content of an element delimited by an empty-element tag is empty. The name of an element is the name of its delimiting tags or tag.</p>
+    <p><b>Well-formedness constraint:</b> Elements must not overlap. Let $X$ and $Y$ be two distinct elements. One of the following conditions must be true: $X$ precedes $Y$, $Y$ precedes $X$, $X$ is inside the content of $Y$, or $Y$ is inside the content of $X$.</p>
+    <p>Let $X$ and $Y$ be two elements. If $X$ is inside the content of $Y$ and there does not exist a third element $Z$ such that $X$ is inside the content of $Z$ and $Z$ is inside the content of $Y$, then $X$ is called a child of $Y$.</p>
+    <p>Let $X$, $Y$, and $Z$ be three elements. If $X$ is a child of $Y$ and $Z$, then $Y$ and $Z$ are the same element. That element is called the parent of $X$.</p>
+    <p>Not all elements have a parent. An element that has no parent is called a root element.</p>
+    <p><b>Well-formedness constraint:</b> There must exist exactly one root element.</p>
+    <p><b>Well-formedness constraint:</b> The characters &lt; and &amp; must not appear literally inside character data. They must be escaped using an entity reference or a character reference.</p>
+    <p>Documented EVLambda source files are structured as follows:</p>
+    <ul>
+      <li>The root element is a chapter element.</li>
+      <li>The chapter element must contain a child title element and may contain any number of child section and paragraph-level elements. The chapter element may also directly contain character data, which will be interpreted as EVLambda source code.</li>
+      <li>The section elements must contain a child title element and may contain any number of child section and paragraph-level elements. The section elements may also directly contain character data, which will be interpreted as EVLambda source code.</li>
+      <li>The only character data to be interpreted as EVLambda source code is the character data directly contained inside a chapter or section element.</li>
+      <li>EVLambda source code can contain comments in XML format: block comments (in the form of paragraph-level elements), end-of-line comments (in the form of comment elements), and end-of-last-line comments (also in the form of comment elements). End-of-last-line comments are special because they are located outside the piece of code they are logically connected to. (They are located after the last closing parenthesis.)</li>
+    </ul>
+    <p>Because the characters &lt; and &amp; can appear inside EVLambda source code, a documented EVLambda source file is not always a well-formed XML document.</p>
+    <h4>Documentation Generator</h4>
+    <p>The documentation generator converts a documented EVLambda source file to HTML in two steps:</p>
+    <p><b>Step 1</b> The characters &lt; and &amp; appearing inside EVLambda source code are escaped and some tags are added to better delimit the EVLambda source code and the comments. The resulting file is a well-formed XML document.</p>
+    <p><b>Step 2</b> The resulting file from step 1 is converted to HTML by an XSLT stylesheet.</p>
+    <h4>Unicode</h4>
+    <p>The characters contained inside listener buffers and EVLambda source files are Unicode characters. Unicode is a character set containing, as of version 17.0, $159801$ characters. Each Unicode character is uniquely identified by a nonnegative integer called its code point. Code points range from $0$ to $1114111$ in decimal and from <code>0</code> to <code>10FFFF</code> in hexadecimal. (Not all code points are assigned to a character.) The Unicode character whose code point is $\hex$ in hexadecimal is denoted by <code>U+$\hex$</code>. The order on integers directly translates into an order on Unicode characters. With respect to that order, the Unicode character $c_1$ precedes the Unicode character $c_2$ if and only if the code point of $c_1$ is strictly less than the code point of $c_2$. That order can be used to define ranges of Unicode characters.</p>
+    <p>The range from $0$ to $1114111$ is divided into $17$ planes each containing $65536$ code points. The first plane is called the basic multilingual plane (BMP) and the other planes are called the supplementary planes. Most of the characters in common use in the world are located in the BMP.</p>
+    <p>An encoding form is a mapping that maps a character to a sequence of $n$-bit words called code units. The following encoding forms are in common use:</p>
+    <ul>
+      <li>UTF-$32$: Code units are $32$-bit words and each character is mapped to a sequence of one code unit. Each character is mapped to the $32$-bit unsigned integer representing the character's code point.</li>
+      <li>UTF-$16$: Code units are $16$-bit words and each character is mapped to a sequence of one or two code units. Each character belonging to the BMP is mapped to the $16$-bit unsigned integer representing the character's code point. Each character belonging to a supplementary plane is mapped to a sequence of two code units called a surrogate pair. The first element is called the high-surrogate code unit and the second element is called the low-surrogate code unit.</li>
+      <li>UTF-$8$: Code units are $8$-bit words and each character is mapped to a sequence of one, two, three, or four code units. Each character belonging to the BMP is mapped to a sequence of one, two, or three code units. In particular, each of the $128$ ASCII characters is mapped to the $8$-bit unsigned integer representing the character's code point. Each character belonging to a supplementary plane is mapped to a sequence of four code units.</li>
+    </ul>
+    <p>An encoding scheme is a mapping that maps a character to a sequence of bytes. (A byte is an $8$-bit word.) The following encoding schemes are in common use:</p>
+    <ul>
+      <li>UTF-$32$BE: UTF-$32$ encoding form where each $32$-bit code unit is represented by four bytes ordered from most significant to least significant (big-endian order).</li>
+      <li>UTF-$32$LE: UTF-$32$ encoding form where each $32$-bit code unit is represented by four bytes ordered from least significant to most significant (little-endian order).</li>
+      <li>UTF-$16$BE: UTF-$16$ encoding form where each $16$-bit code unit is represented by two bytes ordered from most significant to least significant (big-endian order).</li>
+      <li>UTF-$16$LE: UTF-$16$ encoding form where each $16$-bit code unit is represented by two bytes ordered from least significant to most significant (little-endian order).</li>
+      <li>UTF-$8$: Because UTF-$8$ code units are bytes, UTF-$8$ is both an encoding form and an encoding scheme.</li>
+    </ul>
+    <p>Contrary to what was said in the user manual, an object of type <code>character</code> represents a UTF-$16$ code unit (instead of a Unicode character) and an object of type <code>string</code> represents an indexed sequence of UTF-$16$ code units (instead of an indexed sequence of Unicode characters).</p>
+    <p>Each Unicode character has a name (&ldquo;LATIN CAPITAL LETTER A&rdquo; for instance) and a set of properties. An important property is the general category. The general category property can take the following values:</p>
+    <table class="plain">
+      <tr><td>Lu</td><td>Uppercase_Letter</td><td>uppercase letters</td></tr>
+      <tr><td>Ll</td><td>Lowercase_Letter</td><td>lowercase letters</td></tr>
+      <tr><td>Lt</td><td>Titlecase_Letter</td><td>digraphs whose first constituent is an uppercase letter</td></tr>
+      <tr><td>LC</td><td>Cased_Letter</td><td>Lu, Ll, or Lt</td></tr>
+      <tr><td>Lm</td><td>Modifier_Letter</td><td>noncombining modifier letters</td></tr>
+      <tr><td>Lo</td><td>Other_Letter</td><td>letters from unicase alphabets and ideographs</td></tr>
+      <tr><td>L</td><td>Letter</td><td>Lu, Ll, Lt, Lm, or Lo</td></tr>
+      <tr><td>Mn</td><td>Nonspacing_Mark</td><td>nonspacing combining marks (accents, &hellip;)</td></tr>
+      <tr><td>Mc</td><td>Spacing_Mark</td><td>spacing combining marks</td></tr>
+      <tr><td>Me</td><td>Enclosing_Mark</td><td>enclosing combining marks</td></tr>
+      <tr><td>M</td><td>Mark</td><td>Mn, Mc, or Me</td></tr>
+      <tr><td>Nd</td><td>Decimal_Number</td><td>decimal digits</td></tr>
+      <tr><td>Nl</td><td>Letter_Number</td><td>letterlike numeric characters (Roman numerals, &hellip;)</td></tr>
+      <tr><td>No</td><td>Other_Number</td><td>other numeric characters (fractions, &hellip;)</td></tr>
+      <tr><td>N</td><td>Number</td><td>Nd, Nl, or No</td></tr>
+      <tr><td>Pc</td><td>Connector_Punctuation</td><td>connecting punctuation marks (underscore, &hellip;)</td></tr>
+      <tr><td>Pd</td><td>Dash_Punctuation</td><td>dashlike punctuation marks (hyphen, dashes, &hellip;)</td></tr>
+      <tr><td>Ps</td><td>Open_Punctuation</td><td>opening punctuation marks (opening parenthesis, &hellip;)</td></tr>
+      <tr><td>Pe</td><td>Close_Punctuation</td><td>closing punctuation marks (closing parenthesis, &hellip;)</td></tr>
+      <tr><td>Pi</td><td>Initial_Punctuation</td><td>initial quotation marks</td></tr>
+      <tr><td>Pf</td><td>Final_Punctuation</td><td>final quotation marks</td></tr>
+      <tr><td>Po</td><td>Other_Punctuation</td><td>other punctuation marks (period, comma, colon, semicolon, &hellip;)</td></tr>
+      <tr><td>P</td><td>Punctuation</td><td>Pc, Pd, Ps, Pe, Pi, Pf, or Po</td></tr>
+      <tr><td>Sm</td><td>Math_Symbol</td><td>mathematical symbols</td></tr>
+      <tr><td>Sc</td><td>Currency_Symbol</td><td>currency symbols</td></tr>
+      <tr><td>Sk</td><td>Modifier_Symbol</td><td>noncombining modifier symbols</td></tr>
+      <tr><td>So</td><td>Other_Symbol</td><td>other symbols (Emojis, &hellip;)</td></tr>
+      <tr><td>S</td><td>Symbol</td><td>Sm, Sc, Sk, or So</td></tr>
+      <tr><td>Zs</td><td>Space_Separator</td><td>space characters</td></tr>
+      <tr><td>Zl</td><td>Line_Separator</td><td>line separator character</td></tr>
+      <tr><td>Zp</td><td>Paragraph_Separator</td><td>paragraph separator character</td></tr>
+      <tr><td>Z</td><td>Separator</td><td>Zs, Zl, or Zp</td></tr>
+      <tr><td>Cc</td><td>Control</td><td>C0 and C1 control characters (horizontal tab, line feed, carriage return, &hellip;)</td></tr>
+      <tr><td>Cf</td><td>Format</td><td>format control characters (left-to-right and right-to-left marks, &hellip;)</td></tr>
+      <tr><td>Cs</td><td>Surrogate</td><td>surrogate code points</td></tr>
+      <tr><td>Co</td><td>Private_Use</td><td>private-use characters</td></tr>
+      <tr><td>Cn</td><td>Unassigned</td><td>noncharacters and unassigned code points</td></tr>
+      <tr><td>C</td><td>Other</td><td>Cc, Cf, Cs, Co, or Cn</td></tr>
+    </table>
+    <p>Most Unicode characters have associated visual representations called glyphs. For instance, the Unicode character &ldquo;LATIN CAPITAL LETTER A&rdquo; (<code>U+0041</code>) has the following associated glyphs (and infinitely more considering all possible variations in font, size, weight, style, etc.):</p>
+    <ul>
+      <li><span style="font: normal 1.5em serif;">A</span> (serif)</li>
+      <li><span style="font: bold italic 1.5em serif;">A</span> (serif bold italic)</li>
+      <li><span style="font: normal 1.5em sans-serif;">A</span> (sans-serif)</li>
+      <li><span style="font: bold italic 1.5em sans-serif;">A</span> (sans-serif bold italic)</li>
+    </ul>
+    <p>In general, the association is not between Unicode characters and glyphs but between sequences of Unicode characters and glyphs and it is possible for different sequences of Unicode characters to have the same associated glyphs. For example, the sequence of one Unicode character &ldquo;LATIN CAPITAL LETTER A WITH DIAERESIS&rdquo; (<code>U+00C4</code>) and the sequence of two Unicode characters &ldquo;LATIN CAPITAL LETTER A&rdquo; (<code>U+0041</code>) &ldquo;COMBINING DIAERESIS&rdquo; (<code>U+0308</code>) have the same associated glyphs:</p>
+    <ul>
+      <li><span style="font: normal 1em serif;">&#x00C4;</span>, <span style="font: bold italic 1em serif;">&#x00C4;</span>, <span style="font: normal 1em sans-serif;">&#x00C4;</span>, <span style="font: bold italic 1em sans-serif;">&#x00C4;</span>, &hellip; (<code>U+00C4</code>)</li>
+      <li><span style="font: normal 1em serif;">&#x0041;&#x0308;</span>, <span style="font: bold italic 1em serif;">&#x0041;&#x0308;</span>, <span style="font: normal 1em sans-serif;">&#x0041;&#x0308;</span>, <span style="font: bold italic 1em sans-serif;">&#x0041;&#x0308;</span>, &hellip; (<code>U+0041</code> <code>U+0308</code>)</li>
+    </ul>
   </body>
 </html>

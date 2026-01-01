@@ -69,7 +69,8 @@ window.MathJax = {
       vector: '\\mlvar{vector}',
       function: '\\mlvar{function}',
       primitivefunction: '\\mlvar{primitive-function}',
-      closure: '\\mlvar{closure}'
+      closure: '\\mlvar{closure}',
+      hex: '\\mlvar{hex}'
     }
   },
   output: {
