@@ -63,6 +63,10 @@ h6:before {
   background-color: lightgray;
 }
 
+.strike {
+  text-decoration: line-through;
+}
+
 pre.repl {
   margin-left: 2em;
   border-radius: 10px;
@@ -115,8 +119,8 @@ table.ks th, table.ks td {
   padding: 5px;
 }
 
-table.bnf {
-  font-family: monospace;
+
+table.ebnf {
   margin-left: 1em;
 }
 

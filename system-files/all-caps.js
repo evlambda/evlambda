@@ -27,10 +27,10 @@ window.MathJax = {
     skipHtmlTags: {'[-]': ['code']}
   },
   loader: {
-    load: ['[tex]/texhtml']
+    load: ['[tex]/texhtml', '[tex]/mathtools']
   },
   tex: {
-    packages: {'[+]': ['texhtml']},
+    packages: {'[+]': ['texhtml', 'mathtools']},
     allowTexHTML: true,
     inlineMath: {'[+]': [['$', '$']]},
     macros: {
@@ -48,9 +48,9 @@ window.MathJax = {
       dynenv: '\\mlvar{dynenv}',
       ns: '\\mlvar{ns}',
       binding: '\\mlvar{binding}',
-      vbind: '\\rightarrow_\\mathrm{v}',
+      vbind: '\\rightarrow_\\textrm{v}',
       vbinding: ['\\code{#1}\\vbind\\code{#2}', 2],
-      fbind: '\\rightarrow_\\mathrm{f}',
+      fbind: '\\rightarrow_\\textrm{f}',
       fbinding: ['\\code{#1}\\fbind\\code{#2}', 2],
       primval: '\\mlvar{primval}',
       type: '\\mlvar{type}',

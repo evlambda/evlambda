@@ -9,6 +9,11 @@
     <script>const windowId = ___windowId___;</script>
   </head>
   <body>
+    <div class="preamble">
+      $\newcommand{\unicode}[1]{U{+}\code{#1}}$
+      $\DeclareMathOperator{\lex}{lex}$
+      $\DeclareMathOperator{\pat}{pat}$
+    </div>
     <h1>Reference Manual</h1>
     <p>The reference manual provides a detailed account of the programming language. It supplements the user manual (particularly the sections &ldquo;Programming Language&rdquo; and &ldquo;Listener Buffers&rdquo;) and the tutorial.</p>
     <h2>Syntax</h2>
@@ -50,7 +55,7 @@
     <pre class="repl">&lt;chapter&gt;<br>&lt;title&gt;Recursive Functions&lt;/title&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;section&gt;<br>&lt;title&gt;Factorial Function&lt;/title&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>(fdef fact (n)<br>  &lt;para&gt;...block...&lt;/para&gt;<br>  &lt;para&gt;...block...&lt;/para&gt;<br>  (if (= n 0)<br>      1 &lt;comment&gt;...eol...&lt;/comment&gt;<br>    (* n (fact (- n 1))))) &lt;comment&gt;...eoll...&lt;/comment&gt;<br><br>(test 1 (fact 0))<br>(test 120 (fact 5))<br>(test 3628800 (fact 10))<br>&lt;/section&gt;<br>&lt;section&gt;<br>&lt;title&gt;Fibonacci Sequence&lt;/title&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>(fdef fib (n)<br>  &lt;para&gt;...block...&lt;/para&gt;<br>  &lt;para&gt;...block...&lt;/para&gt;<br>  (if (= n 0)<br>      0 &lt;comment&gt;...eol...&lt;/comment&gt;<br>    (if (= n 1)<br>        1 &lt;comment&gt;...eol...&lt;/comment&gt;<br>      (+ (fib (- n 1)) (fib (- n 2)))))) &lt;comment&gt;...eoll...&lt;/comment&gt;<br><br>(test 0 (fib 0))<br>(test 5 (fib 5))<br>(test 55 (fib 10))<br>&lt;/section&gt;<br>&lt;/chapter&gt;</pre>
     <p>Documented EVLambda source files can be converted to HTML by a component of the programming language called the documentation generator.</p>
     <h4>Extensible Markup Language (XML)</h4>
-    <p>An XML document is a annotated text document. An XML document is divided into two intermingled parts: the character data (the content) and the markup (the annotations). Markup can take many forms. Documented EVLambda source files use the following forms of markup:</p>
+    <p>An <a href="https://en.wikipedia.org/wiki/XML" target="_blank">extensible markup language</a> (XML) document is a annotated text document. An XML document is divided into two intermingled parts: the character data (the content) and the markup (the annotations). Markup can take many forms. Documented EVLambda source files use the following forms of markup:</p>
     <dl>
       <dt>start tags (without attributes)</dt>
       <dd><code>&lt;chapter&gt;</code>, <code>&lt;section&gt;</code>, <code>&lt;title&gt;</code>, <code>&lt;para&gt;</code>, <code>&lt;comment&gt;</code>, &hellip;</dd>
@@ -90,7 +95,7 @@
     <p><b>Step 1</b> The characters &lt; and &amp; appearing inside EVLambda source code are escaped and some tags are added to better delimit the EVLambda source code and the comments. The resulting file is a well-formed XML document.</p>
     <p><b>Step 2</b> The resulting file from step 1 is converted to HTML by an XSLT stylesheet.</p>
     <h4>Unicode</h4>
-    <p>The characters contained inside listener buffers and EVLambda source files are Unicode characters. Unicode is a character set containing, as of version 17.0, $159801$ characters. Each Unicode character is uniquely identified by a nonnegative integer called its code point. Code points range from $0$ to $1114111$ in decimal and from <code>0</code> to <code>10FFFF</code> in hexadecimal. (Not all code points are assigned to a character.) The Unicode character whose code point is $\hex$ in hexadecimal is denoted by <code>U+$\hex$</code>. The order on integers directly translates into an order on Unicode characters. With respect to that order, the Unicode character $c_1$ precedes the Unicode character $c_2$ if and only if the code point of $c_1$ is strictly less than the code point of $c_2$. That order can be used to define ranges of Unicode characters.</p>
+    <p>The characters contained inside listener buffers and EVLambda source files are <a href="https://en.wikipedia.org/wiki/Unicode" target="_blank">Unicode</a> characters. Unicode is a character set containing, as of version 17.0, $159801$ characters. Each Unicode character is uniquely identified by a nonnegative integer called its code point. Code points range from $0$ to $1114111$ in decimal and from <code>0</code> to <code>10FFFF</code> in hexadecimal. (Not all code points are assigned to a character.) The notation $U{+}\mlvar{hex}$ denotes the Unicode character whose code point is represented by the hexadecimal numeral $\mlvar{hex}$. The order on integers directly translates into an order on Unicode characters. With respect to that order, the Unicode character $c_1$ precedes the Unicode character $c_2$ if and only if the code point of $c_1$ is strictly less than the code point of $c_2$. That order can be used to define ranges of Unicode characters.</p>
     <p>The range from $0$ to $1114111$ is divided into $17$ planes each containing $65536$ code points. The first plane is called the basic multilingual plane (BMP) and the other planes are called the supplementary planes. Most of the characters in common use in the world are located in the BMP.</p>
     <p>An encoding form is a mapping that maps a character to a sequence of $n$-bit words called code units. The following encoding forms are in common use:</p>
     <ul>
@@ -148,17 +153,250 @@
       <tr><td>Cn</td><td>Unassigned</td><td>noncharacters and unassigned code points</td></tr>
       <tr><td>C</td><td>Other</td><td>Cc, Cf, Cs, Co, or Cn</td></tr>
     </table>
-    <p>Most Unicode characters have associated visual representations called glyphs. For instance, the Unicode character &ldquo;LATIN CAPITAL LETTER A&rdquo; (<code>U+0041</code>) has the following associated glyphs (and infinitely more considering all possible variations in font, size, weight, style, etc.):</p>
+    <p>Most Unicode characters have associated visual representations called glyphs. For instance, the Unicode character &ldquo;LATIN CAPITAL LETTER A&rdquo; ($\unicode{0041}$) has the following associated glyphs (and infinitely more considering all possible variations in font, size, weight, style, etc.):</p>
     <ul>
       <li><span style="font: normal 1.5em serif;">A</span> (serif)</li>
       <li><span style="font: bold italic 1.5em serif;">A</span> (serif bold italic)</li>
       <li><span style="font: normal 1.5em sans-serif;">A</span> (sans-serif)</li>
       <li><span style="font: bold italic 1.5em sans-serif;">A</span> (sans-serif bold italic)</li>
     </ul>
-    <p>In general, the association is not between Unicode characters and glyphs but between sequences of Unicode characters and glyphs and it is possible for different sequences of Unicode characters to have the same associated glyphs. For example, the sequence of one Unicode character &ldquo;LATIN CAPITAL LETTER A WITH DIAERESIS&rdquo; (<code>U+00C4</code>) and the sequence of two Unicode characters &ldquo;LATIN CAPITAL LETTER A&rdquo; (<code>U+0041</code>) &ldquo;COMBINING DIAERESIS&rdquo; (<code>U+0308</code>) have the same associated glyphs:</p>
+    <p>In general, the association is not between Unicode characters and glyphs but between sequences of Unicode characters and glyphs and it is possible for different sequences of Unicode characters to have the same associated glyphs. For example, the sequence of one Unicode character &ldquo;LATIN CAPITAL LETTER A WITH DIAERESIS&rdquo; ($\unicode{00C4}$) and the sequence of two Unicode characters &ldquo;LATIN CAPITAL LETTER A&rdquo; ($\unicode{0041}$) &ldquo;COMBINING DIAERESIS&rdquo; ($\unicode{0308}$) have the same associated glyphs:</p>
     <ul>
-      <li><span style="font: normal 1em serif;">&#x00C4;</span>, <span style="font: bold italic 1em serif;">&#x00C4;</span>, <span style="font: normal 1em sans-serif;">&#x00C4;</span>, <span style="font: bold italic 1em sans-serif;">&#x00C4;</span>, &hellip; (<code>U+00C4</code>)</li>
-      <li><span style="font: normal 1em serif;">&#x0041;&#x0308;</span>, <span style="font: bold italic 1em serif;">&#x0041;&#x0308;</span>, <span style="font: normal 1em sans-serif;">&#x0041;&#x0308;</span>, <span style="font: bold italic 1em sans-serif;">&#x0041;&#x0308;</span>, &hellip; (<code>U+0041</code> <code>U+0308</code>)</li>
+      <li><span style="font: normal 1em serif;">&#x00C4;</span>, <span style="font: bold italic 1em serif;">&#x00C4;</span>, <span style="font: normal 1em sans-serif;">&#x00C4;</span>, <span style="font: bold italic 1em sans-serif;">&#x00C4;</span>, &hellip; ($\unicode{00C4}$)</li>
+      <li><span style="font: normal 1em serif;">&#x0041;&#x0308;</span>, <span style="font: bold italic 1em serif;">&#x0041;&#x0308;</span>, <span style="font: normal 1em sans-serif;">&#x0041;&#x0308;</span>, <span style="font: bold italic 1em sans-serif;">&#x0041;&#x0308;</span>, &hellip; ($\unicode{0041}$ $\unicode{0308}$)</li>
     </ul>
+    <h4>Regular Expressions</h4>
+    <p>The tokenizer uses <a href="https://en.wikipedia.org/wiki/Regular_expression" target="_blank">regular expressions</a> to specify the patterns associated with the token categories.</p>
+    <h4>Extended Backus-Naur Form (EBNF)</h4>
+    <p>The parser and the syntax analyzer use a variant of the <a href="https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form" target="_blank">extended Backus-Naur form</a> (EBNF) notation to specify various <a href="https://en.wikipedia.org/wiki/Context-free_grammar" target="_blank">context-free grammars</a>.</p>
+    <h3>Tokenizer</h3>
+    <p>The tokenizer converts an input sequence of Unicode characters into a sequence of tokens in two steps. During the first step, the tokenizer converts the input sequence of Unicode characters into a provisional sequence of tokens. During the second step, the tokenizer converts the provisional sequence of tokens into a final sequence of tokens.</p>
+    <h4>Character Classes</h4>
+    <p>Let us first define the following named regular expressions:</p>
+    <table class="ebnf">
+      <tr>
+        <td class="lhs">$\metavar{valid-char}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>[\C{L}\C{M}\C{N}\C{P}\C{S}\C{Z}\U{09}-\U{0D}\U{85}\C{Cf}\C{Co}]</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{whitespace-char}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>[\U{09}-\U{0D}\U{20}\U{85}\U{200E}\U{200F}\U{2028}\U{2029}]</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{syntax-char}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>['`,"()#]</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{xml-name-char}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>[a-z]</code></td>
+      </tr>
+    </table>
+    <p>Each of those named regular expressions specifies a class of Unicode characters.</p>
+    <p>The whitespace characters are the following characters:</p>
+    <ul>
+      <li>The horizontal tab control character (HT, $\unicode{0009}$).</li>
+      <li>The line feed control character (LF, $\unicode{000A}$).</li>
+      <li>The vertical tab control character (VT, $\unicode{000B}$).</li>
+      <li>The form feed control character (FF, $\unicode{000C}$).</li>
+      <li>The carriage return control character (CR, $\unicode{000D}$).</li>
+      <li>The space ($\unicode{0020}$).</li>
+      <li>The next line control character (NEL, $\unicode{0085}$).</li>
+      <li>The left-to-right mark ($\unicode{200E}$).</li>
+      <li>The right-to-left mark ($\unicode{200F}$).</li>
+      <li>The line separator ($\unicode{2028}$).</li>
+      <li>The paragraph separator ($\unicode{2029}$).</li>
+    </ul>
+    <p>In Linux and macOS operating systems, an end of line is represented by an LF character. In Windows operating systems, an end of line is represented by a CR character followed by an LF character.</p>
+    <p>From the definition of $\metavar{valid-char}$, we can infer that the input sequence of Unicode characters must not contain any of the following characters and code points:</p>
+    <ul>
+      <li>The C0 and C1 control characters other than HT, LF, VT, FF, CR, and NEL.</li>
+      <li>The surrogate code points.</li>
+      <li>The noncharacters.</li>
+      <li><span class="strike">The unassigned code points.</span></li>
+    </ul>
+    <p>The unassigned code points are actually allowed by the current version of the code.</p>
+    <h4>Tokenization First Step</h4>
+    <p>During the first step, the tokenizer converts the input sequence of Unicode characters into a provisional sequence of tokens of the following categories (patterns are regular expressions):</p>
+    <dl>
+      <dt><code>whitespace</code></dt>
+      <dd>Pattern: <code>$\metavar{whitespace-char}$+</code></dd>
+      <dd>Value: N/A</dd>
+      <dt><code>quote</code></dt>
+      <dd>Pattern: <code>"'"</code></dd>
+      <dd>Value: N/A</dd>
+      <dt><code>quasiquote</code></dt>
+      <dd>Pattern: <code>'`'</code></dd>
+      <dd>Value: N/A</dd>
+      <dt><code>unquote</code></dt>
+      <dd>Pattern: <code>','</code></dd>
+      <dd>Value: N/A</dd>
+      <dt><code>unquote-splicing</code></dt>
+      <dd>Pattern: <code>',@'</code></dd>
+      <dd>Value: N/A</dd>
+      <dt><code>string</code></dt>
+      <dd>Pattern: <code>'"' (($\metavar{valid-char}$ - ["\\\\]) | ('\\\\' [\\\\"tnvfr]) | ('\\\\U{' [a-fA-F0-9]+ '}'))* '"'</code></dd>
+      <dd>Value: The backslash plays the role of an escape character. The escape sequences are interpreted as specified in the table below. The value is an object of type <code>string</code> representing the sequence of UTF-16 code units encoding the sequence of Unicode characters delimited by the double quotes (after interpretation of the escape sequences).</dd>
+      <dt><code>opening-parenthesis</code></dt>
+      <dd>Pattern: <code>'('</code></dd>
+      <dd>Value: N/A</dd>
+      <dt><code>closing-parenthesis</code></dt>
+      <dd>Pattern: <code>')'</code></dd>
+      <dd>Value: N/A</dd>
+      <dt><code>hash-opening-parenthesis</code></dt>
+      <dd>Pattern: <code>'#('</code></dd>
+      <dd>Value: N/A</dd>
+      <dt><code>hash-plus</code></dt>
+      <dd>Pattern: <code>'#+'</code></dd>
+      <dd>Value: N/A</dd>
+      <dt><code>hash-minus</code></dt>
+      <dd>Pattern: <code>'#-'</code></dd>
+      <dd>Value: N/A</dd>
+      <dt><code>void</code></dt>
+      <dd>Pattern: <code>'#v'</code></dd>
+      <dd>Value: The value is the single object of type <code>void</code>.</dd>
+      <dt><code>boolean</code></dt>
+      <dd>Pattern: <code>'#t' | '#f'</code></dd>
+      <dd>Value: If the lexeme matches <code>'#t'</code>, then the value is the single object of type <code>boolean</code> representing true. If the lexeme matches <code>'#f'</code>, then the value is the single object of type <code>boolean</code> representing false.</dd>
+      <dt><code>hash-string</code></dt>
+      <dd>Pattern: <code>'#' [0-9]* '"' (($\metavar{valid-char}$ - ["\\\\]) | ('\\\\' [\\\\"tnvfr]) | ('\\\\U{' [a-fA-F0-9]+ '}'))* '"'</code></dd>
+      <dd>Value: The backslash plays the role of an escape character. The escape sequences are interpreted as specified in the table below. The value is the sequence of UTF-16 code units encoding the sequence of Unicode characters delimited by the double quotes (after interpretation of the escape sequences). An optional decimal numeral can be provided between the hash and the opening double quote.</dd>
+      <dt><code>xml-start-tag</code></dt>
+      <dd>Pattern: <code>'&lt;' $\metavar{xml-name-char}$+ '&gt;'</code></dd>
+      <dd>Value: N/A</dd>
+      <dt><code>xml-end-tag</code></dt>
+      <dd>Pattern: <code>'&lt;/' $\metavar{xml-name-char}$+ '&gt;'</code></dd>
+      <dd>Value: N/A</dd>
+      <dt><code>xml-empty-element-tag</code></dt>
+      <dd>Pattern: <code>'&lt;' $\metavar{xml-name-char}$+ '/&gt;'</code></dd>
+      <dd>Value: N/A</dd>
+      <dt><code>xml-comment</code></dt>
+      <dd>Pattern: <code>'&lt;!--' (($\metavar{valid-char}$ - '-') | ('-' ($\metavar{valid-char}$ - '-')))* '--&gt;'</code></dd>
+      <dd>Value: N/A</dd>
+      <dt><code>proto-token</code></dt>
+      <dd>Pattern: <code>(($\metavar{valid-char}$ - ($\metavar{whitespace-char}$ | $\metavar{syntax-char}$ | '\\\\')) | ('\\\\' [\\\\&lt;]) | ('\\\\U{' [a-fA-F0-9]+ '}'))+</code></dd>
+      <dd>Value: The backslash plays the role of an escape character. The escape sequences are interpreted as specified in the table below. The value is the lexeme after interpretation of the escape sequences.</dd>
+    </dl>
+    <p>An escape character is a character that modifies the meaning of the following characters. Together, an escape character and the characters whose meanings are modified by the escape character form an escape sequence.</p>
+    <p>Escape sequences in lexemes associated with tokens of categories <code>string</code> and <code>hash-string</code> are interpreted as follows:</p>
+    <table class="plain">
+      <tr><th>Escape sequence</th><th>Meaning</th></tr>
+      <tr><td><code>\\\\</code></td><td>the backslash</td></tr>
+      <tr><td><code>\"</code></td><td>the double quote</td></tr>
+      <tr><td><code>\t</code></td><td>the horizontal tab control character</td></tr>
+      <tr><td><code>\n</code></td><td>the line feed control character</td></tr>
+      <tr><td><code>\v</code></td><td>the vertical tab control character</td></tr>
+      <tr><td><code>\f</code></td><td>the form feed control character</td></tr>
+      <tr><td><code>\r</code></td><td>the carriage return control character</td></tr>
+      <tr><td><code>\U{$\mlvar{hex}$}</code></td><td>the Unicode character whose code point is represented by the hexadecimal numeral $\mlvar{hex}$</td></tr>
+    </table>
+    <p>Escape sequences in lexemes associated with tokens of category <code>proto-token</code> are interpreted as follows:</p>
+    <table class="plain">
+      <tr><th>Escape sequence</th><th>Meaning</th></tr>
+      <tr><td><code>\\\\</code></td><td>the backslash</td></tr>
+      <tr><td><code>\&lt;</code></td><td>the less-than sign</td></tr>
+      <tr><td><code>\U{$\mlvar{hex}$}</code></td><td>the Unicode character whose code point is represented by the hexadecimal numeral $\mlvar{hex}$</td></tr>
+    </table>
+    <p>Let $\mlvar{input}$ be the input sequence of Unicode characters. For any token $T$, let us denote by $\lex(T)$ the lexeme associated with $T$ and by $\pat(T)$ the pattern associated with $T$'s category. The tokenizer must find a sequence of tokens $\langle T_0,\ldots,T_{n-1}\rangle$ such that the following conditions are satisfied:</p>
+    <ul>
+      <li>$\lex(T_i)$ matches $\pat(T_i)$ for all $i$ from $0$ to $n-1$</li>
+      <li>$\mlvar{input}=\lex(T_0)\ldots\lex(T_{n-1})$</li>
+    </ul>
+    <p>Because the meaning of a program cannot be ambiguous, there cannot exist more than one sequence of tokens satisfying the previous conditions for any given input. As the following examples demonstrate, the patterns alone do not provide this guarantee:</p>
+    <ul>
+      <li>The input <code class="bg">foobar</code> has many competing interpretations, including the following two:
+        <ul>
+          <li><code class="bg">foo</code><sub><code>proto-token</code></sub> <code class="bg">bar</code><sub><code>proto-token</code></sub></li>
+          <li><code class="bg">foobar</code><sub><code>proto-token</code></sub> (this is the intended interpretation)</li>
+        </ul>
+      </li>
+      <li>The input <code class="bg">,@foo</code> has many competing interpretations, including the following two:
+        <ul>
+          <li><code class="bg">,</code><sub><code>unquote</code></sub> <code class="bg">@foo</code><sub><code>proto-token</code></sub></li>
+          <li><code class="bg">,@</code><sub><code>unquote-splicing</code></sub> <code class="bg">foo</code><sub><code>proto-token</code></sub> (this is the intended interpretation)</li>
+        </ul>
+      </li>
+      <li>The input <code class="bg">foo&lt;bar&gt;baz</code> has many competing interpretations, including the following two:
+        <ul>
+          <li><code class="bg">foo&lt;bar&gt;baz</code><sub><code>proto-token</code></sub></li>
+          <li><code class="bg">foo</code><sub><code>proto-token</code></sub> <code class="bg">&lt;bar&gt;</code><sub><code>xml-start-tag</code></sub> <code class="bg">baz</code><sub><code>proto-token</code></sub>(this is the intended interpretation)</li>
+        </ul>
+      </li>
+    </ul>
+    <p>The tokenizer uses additional rules to resolve the ambiguities. Those additional rules are embedded into the algorithm provided below.</p>
+    <p>EVLambda source code can only be found outside any XML element (this is the case in listener buffers and plain EVLambda source files) or directly inside a <code>chapter</code> or <code>section</code> XML element (this is the case in documented EVLambda source files). A context that cannot contain EVLambda source code is called a pure-xml context. When processing a pure-xml context, the tokenizer only recognizes tokens of the following categories: <code>whitespace</code> (any character data is treated as whitespace when processing a pure-xml context), <code>xml-start-tag</code>, <code>xml-end-tag</code>, <code>xml-empty-element-tag</code>, and <code>xml-comment</code>. The tokenizer uses a stack of XML element names to determine if it is processing a pure-xml context. The tokenizer is processing a pure-xml context when the stack is not empty and the name at the top of the stack is neither <code>chapter</code> nor <code>section</code>.</p>
+    <p>Here is the algorithm  used by the tokenizer to convert the input sequence of Unicode characters into a provisional sequence of tokens (control normally flows from one step to the next and it is assumed that the stack of XML element names is initially empty):</p>
+    <ul>
+      <li>If the context is pure-xml and the next character is not a less-than sign, emit a token of category <code>whitespace</code> whose associated lexeme contains all the characters up to the end of the input or the first character that is a less-than sign (that character is not included in the lexeme).</li>
+      <li>If the context is not pure-xml and the next character is a whitespace character, emit a token of category <code>whitespace</code> whose associated lexeme contains all the characters up to the end of the input or the first character that is not a whitespace character (that character is not included in the lexeme).</li>
+      <li>If the end of the input has been reached, stop.</li>
+      <li>If the next character is a single quote, emit a token of category <code>quote</code> and loop to the top.</li>
+      <li>If the next character is a backquote, emit a token of category <code>quasiquote</code> and loop to the top.</li>
+      <li>If the next character is a comma followed by an at sign, emit a token of category <code>unquote-splicing</code> and loop to the top.</li>
+      <li>If the next character is a comma, emit a token of category <code>unquote</code> and loop to the top.</li>
+      <li>If the next character is a double quote, emit a token of category <code>string</code> whose associated lexeme contains all the charactes up to the first unescaped double quote (that character is included in the lexeme) and loop to the top. Fail if the lexeme contains an invalid escape sequence or the closing double quote is missing.</li>
+      <li>If the next character is an opening parenthesis, emit a token of category <code>opening-parenthesis</code> and loop to the top.</li>
+      <li>If the next character is a closing parenthesis, emit a token of category <code>closing-parenthesis</code> and loop to the top.</li>
+      <li>If the next character is a hash followed by an opening parenthesis, emit a token of category <code>hash-opening-parenthesis</code> and loop to the top.</li>
+      <li>If the next character is a hash followed by a plus sign, emit a token of category <code>hash-plus</code> and loop to the top.</li>
+      <li>If the next character is a hash followed by a minus sign, emit a token of category <code>hash-minus</code> and loop to the top.</li>
+      <li>If the next character is a hash followed by a lowercase <code>v</code>, emit a token of category <code>void</code> and loop to the top.</li>
+      <li>If the next character is a hash followed by a lowercase <code>t</code>, emit a token of category <code>boolean</code> and loop to the top.</li>
+      <li>If the next character is a hash followed by a lowercase <code>f</code>, emit a token of category <code>boolean</code> and loop to the top.</li>
+      <li>If the next character is a hash followed by a sequence of zero or more decimal digits followed by a double quote, emit a token of category <code>hash-string</code> whose associated lexeme contains all the charactes up to the first unescaped double quote (that character is included in the lexeme) and loop to the top. Fail if the lexeme contains an invalid escape sequence or the closing double quote is missing.</li>
+      <li>If the next character is a hash, fail.</li>
+      <li>If the next character is a less-than sign that is the first character of an XML start tag, emit a token of category <code>xml-start-tag</code>, push the name of the start tag on the stack, and loop to the top.</li>
+      <li>If the next character is a less-than sign that is the first character of an XML end tag, emit a token of category <code>xml-end-tag</code>, pop the top name off the stack, and loop to the top. Fail if the stack is empty or the top name does not match the name of the end tag.</li>
+      <li>If the next character is a less-than sign that is the first character of an XML empty-element tag, emit a token of category <code>xml-empty-element-tag</code> and loop to the top.</li>
+      <li>If the next character is a less-than sign that is the first character of an XML comment, emit a token of category <code>xml-comment</code> and loop to the top.</li>
+      <li>If the context is pure-xml, fail.</li>
+      <li>(The next character is neither a whitespace character, nor a syntax character, nor a less-than sign that is the first character of a piece of XML markup.) Emit a token of category <code>proto-token</code> whose associated lexeme contains all the characters up to the end of the input or the first character that is a whitespace character, a syntax character, or an unescaped less-than sign that is the first character of a piece of XML markup (that character is not included in the lexeme) and loop to the top. Fail if the lexeme contains an invalid escape sequence.</li>
+    </ul>
+    <h4>Tokenization Second Step</h4>
+    <p>During the second step, the tokenizer converts the provisional sequence of tokens into a final sequence of tokens as follows:</p>
+    <ul>
+      <li>The tokens of category <code>whitespace</code> are discarded.</li>
+      <li>Each token of category <code>hash-string</code> is processed as follows:
+        <ul>
+          <li>Case 1, the optional decimal numeral is not provided: Let $\langle\mlvar{code-unit}_0,\ldots,\mlvar{code-unit}_{n-1}\rangle$ be the value of the token of category <code>hash-string</code>. The token of category <code>hash-string</code> is replaced by a sequence of $n$ token(s) of category <code>character</code> such that the value of the $i$-th token of category <code>character</code> is an object of type <code>character</code> representing $\mlvar{code-unit}_i$.</li>
+          <li>Case 2, the optional decimal numeral is provided: Let $\langle\mlvar{code-unit}_0,\ldots,\mlvar{code-unit}_{n-1}\rangle$ be the value of the token of category <code>hash-string</code> and $i$ be the nonnegative integer represented by the optional decimal numeral. If $i\lt n$, then the token of category <code>hash-string</code> is replaced by a token of category <code>character</code> whose value is an object of type <code>character</code> representing $\mlvar{code-unit}_i$. Otherwise, the tokenization fails.</li>
+        </ul>
+      </li>
+      <li>Each token of category <code>proto-token</code> is replaced by a token of one of the following categories (patterns are regular expressions matched against the value of the token of category <code>proto-token</code>; the first pattern matching the value wins; tokenization fails if no pattern matches the value):
+        <dl>
+          <dt><code>dot</code></dt>
+          <dd>Pattern: <code>'.'</code></dd>
+          <dd>Value: N/A</dd>
+          <dt><code>number</code></dt>
+          <dd>Pattern: <code>('+' | '-')? [0-9]+ ('.' [0-9]+)?</code></dd>
+          <dd>Value: The value is an object of type <code>number</code> representing the mathematical number of which the value matching the pattern is a decimal representation.</dd>
+          <dt><code>keyword</code></dt>
+          <dd>Pattern: <code>':' [^:]+</code></dd>
+          <dd>Value: The value is the object of type <code>keyword</code> whose name is the value matching the pattern.</dd>
+          <dt><code>variable</code></dt>
+          <dd>Pattern: <code>[^:]+</code></dd>
+          <dd>Value: The value is the object of type <code>variable</code> whose name is the value matching the pattern.</dd>
+        </dl>
+      </li>
+      <li>The tokens of other categories are retained without modification.</li>
+    </ul>
+    <h4>Ninjas</h4>
+    <p>This section illustrates the use of the hash-string construct.</p>
+    <p>The Unicode character &ldquo;NINJA&rdquo; ($\unicode{1F977}$, high-surrogate $\unicode{D83E}$, low-surrogate $\unicode{DD77}$) represents a ninja with a nonrealistic skin tone:</p>
+    <pre class="repl">&gt; '(#"&#x1F977;")<br>(#"\U{D83E}" #"\U{DD77}")<br><br>&gt; #0"&#x1F977;"<br>#"\U{D83E}"<br><br>&gt; #1"&#x1F977;"<br>#"\U{DD77}"</pre>
+    <p>It is possible to obtain a ninja with a realistic skin tone by combining the Unicode character "NINJA" with one of the following skin-tone modifiers:</p>
+    <table class="plain">
+      <tr><th>Name</th><th>Code Point</th><th>High-Surrogate</th><th>Low-Surrogate</th><th>Sample</th></tr>
+      <tr><td>EMOJI MODIFIER FITZPATRICK TYPE-1-2</td><td>$\unicode{1F3FB}$</td><td>$\unicode{D83C}$</td><td>$\unicode{DFFB}$</td><td>&#x1F3FB;</td></tr>
+      <tr><td>EMOJI MODIFIER FITZPATRICK TYPE-3</td><td>$\unicode{1F3FC}$</td><td>$\unicode{D83C}$</td><td>$\unicode{DFFC}$</td><td>&#x1F3FC;</td></tr>
+      <tr><td>EMOJI MODIFIER FITZPATRICK TYPE-4</td><td>$\unicode{1F3FD}$</td><td>$\unicode{D83C}$</td><td>$\unicode{DFFD}$</td><td>&#x1F3FD;</td></tr>
+      <tr><td>EMOJI MODIFIER FITZPATRICK TYPE-5</td><td>$\unicode{1F3FE}$</td><td>$\unicode{D83C}$</td><td>$\unicode{DFFE}$</td><td>&#x1F3FE;</td></tr>
+      <tr><td>EMOJI MODIFIER FITZPATRICK TYPE-6</td><td>$\unicode{1F3FF}$</td><td>$\unicode{D83C}$</td><td>$\unicode{DFFF}$</td><td>&#x1F3FF;</td></tr>
+    </table>
+    <p>Here is the result of combining the Unicode character &ldquo;NINJA&rdquo; with the different skin-tone modifiers:</p>
+    <pre class="repl">&gt; '(#"&#x1F977;&#x1F3FB;")<br>(#"\U{D83E}" #"\U{DD77}" #"\U{D83C}" #"\U{DFFB}")<br><br>&gt; '(#"&#x1F977;&#x1F3FC;")<br>(#"\U{D83E}" #"\U{DD77}" #"\U{D83C}" #"\U{DFFC}")<br><br>&gt; '(#"&#x1F977;&#x1F3FD;")<br>(#"\U{D83E}" #"\U{DD77}" #"\U{D83C}" #"\U{DFFD}")<br><br>&gt; '(#"&#x1F977;&#x1F3FE;")<br>(#"\U{D83E}" #"\U{DD77}" #"\U{D83C}" #"\U{DFFE}")<br><br>&gt; '(#"&#x1F977;&#x1F3FF;")<br>(#"\U{D83E}" #"\U{DD77}" #"\U{D83C}" #"\U{DFFF}")<br><br></pre>
   </body>
 </html>
