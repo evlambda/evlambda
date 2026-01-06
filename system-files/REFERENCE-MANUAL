@@ -167,8 +167,62 @@
     </ul>
     <h4>Regular Expressions</h4>
     <p>The tokenizer uses <a href="https://en.wikipedia.org/wiki/Regular_expression" target="_blank">regular expressions</a> to specify the patterns associated with the token categories.</p>
+    <p>The following table summarizes the syntax of the regular expressions used in this document:</p>
+    <table class="plain">
+      <tr><th>Syntax</th><th>Meaning</th></tr>
+      <tr><td><code>'$\ldots$'</code></td><td>literal string (literal single quotes and backslashes must be escaped)</td></tr>
+      <tr><td><code>"$\ldots$"</code></td><td>literal string (literal double quotes and backslashes must be escaped)</td></tr>
+      <tr><td><code>[$\ldots$]</code></td><td>positive character class (literal carets, hyphens, closing square brackets, and backslashes must be escaped)</td></tr>
+      <tr><td><code>[^$\ldots$]</code></td><td>negative character class (literal carets, hyphens, closing square brackets, and backslashes must be escaped)</td></tr>
+      <tr><td><code>$\mlvar{char}_1$-$\mlvar{char}_2$</code></td><td>range of characters (inside character classes)</td></tr>
+      <tr><td><code>$\mlvar{re}_1\mlvar{re}_2$</code></td><td>concatenation operation</td></tr>
+      <tr><td><code>$\mlvar{re}_1$|$\mlvar{re}_2$</code></td><td>union (alternation) operation</td></tr>
+      <tr><td><code>$\mlvar{re}_1$-$\mlvar{re}_2$</code></td><td>difference operation</td></tr>
+      <tr><td><code>$\mlvar{re}$*</code></td><td>zero-or-more-times (Kleene star) operation</td></tr>
+      <tr><td><code>$\mlvar{re}$+</code></td><td>one-or-more-times (Kleene plus) operation</td></tr>
+      <tr><td><code>$\mlvar{re}$?</code></td><td>zero-or-one-time (optional) operation</td></tr>
+      <tr><td>$\metavar{name}\Coloneq\mlvar{re}$</td><td>definition of a named regular expression</td></tr>
+    </table>
+    <p>Literal strings can contain the following escape sequences:</p>
+    <table class="plain">
+      <tr><th>Escape sequence</th><th>Meaning</th></tr>
+      <tr><td><code>\\\\</code></td><td>the backslash</td></tr>
+      <tr><td><code>\'</code></td><td>the single quote</td></tr>
+      <tr><td><code>\"</code></td><td>the double quote</td></tr>
+      <tr><td><code>\U{$\mlvar{hex}$}</code></td><td>the Unicode character whose code point is represented by the hexadecimal numeral $\mlvar{hex}$</td></tr>
+    </table>
+    <p>Character classes can contain the following escape sequences:</p>
+    <table class="plain">
+      <tr><th>Escape sequence</th><th>Meaning</th></tr>
+      <tr><td><code>\\\\</code></td><td>the backslash</td></tr>
+      <tr><td><code>\^</code></td><td>the caret</td></tr>
+      <tr><td><code>\-</code></td><td>the hyphen</td></tr>
+      <tr><td><code>\]</code></td><td>the closing square bracket</td></tr>
+      <tr><td><code>\U{$\mlvar{hex}$}</code></td><td>the Unicode character whose code point is represented by the hexadecimal numeral $\mlvar{hex}$</td></tr></code></td></tr>
+      <tr><td><code>\C{$\mlvar{cat}$}</code></td><td>the Unicode characters whose general categories are $\mlvar{cat}$</td></tr>
+    </table>
+    <p>The zero-or-more-times, one-or-more-times, and zero-or-one-time operations have precedence over the concatenation operation and the concatenation operation has precedence over the union and difference operations. All operations are left associative. Parenthesis can be added to override those precedence and associativity rules.</p>
+    <p>References to named regular expressions can be used wherever regular expressions can be used. References to named regular expressions denoting classes of characters can also be used inside character classes. Circular definitions are not allowed.</p>
+    <p>Except for the parts referencing named regular expressions, regular expressions are typeset in a monospaced typeface. Spaces can be added freely outside literal strings and character classes without modifying the meaning of a regular expression.</p>
     <h4>Extended Backus-Naur Form (EBNF)</h4>
     <p>The parser and the syntax analyzer use a variant of the <a href="https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form" target="_blank">extended Backus-Naur form</a> (EBNF) notation to specify various <a href="https://en.wikipedia.org/wiki/Context-free_grammar" target="_blank">context-free grammars</a>.</p>
+    <p>The following table summarizes the syntax of the variant of the EBNF notation used in this document:</p>
+    <table class="plain">
+      <tr><th>Syntax</th><th>Meaning</th></tr>
+      <tr><td>$\mlvar{lhs}\Coloneq\mlvar{rhs}$</td><td>definition of a production rule (the left-hand-side is a nonterminal symbol and the right-hand-side is a sequence of zero or more nonterminal and/or terminal symbols)</td></tr>
+      <tr><td>$\metavar{nonterminal}$</td><td>nonterminal symbol</td></tr>
+      <tr><td><code>terminal</code></td><td>terminal symbol</td></tr>
+      <tr><td><code>'$\mlvar{char}$'</code></td><td>terminal symbol consisting of the character $\mlvar{char}$ ($\mlvar{char}\neq\code{'}$)</td></tr>
+      <tr><td><code>"$\mlvar{char}$"</code></td><td>terminal symbol consisting of the character $\mlvar{char}$ ($\mlvar{char}\neq\code{"}$)</td></tr>
+      <tr><td><code>'$\mlvar{char}_1\ldots\mlvar{char}_n$'</code></td><td>abbreviation for <code>'$\mlvar{char}_1$'</code>&hellip;<code>'$\mlvar{char}_n$'</code> ($\mlvar{char}_i\neq\code{'}$)</td></tr>
+      <tr><td><code>"$\mlvar{char}_1\ldots\mlvar{char}_n$"</code></td><td>abbreviation for <code>"$\mlvar{char}_1$"</code>&hellip;<code>"$\mlvar{char}_n$"</code> ($\mlvar{char}_i\neq\code{"}$)</td></tr>
+      <tr><td>$\epsilon$</td><td>empty sequence of symbols</td></tr>
+      <tr><td>$\mlvar{rhs}_1\mid\cdots\mid\mlvar{rhs}_n$</td><td>union (alternation) operation</td></tr>
+      <tr><td>$\mlvar{symbol}\ast$</td><td>zero-or-more-times (Kleene star) operation</td></tr>
+      <tr><td>$\mlvar{symbol}+$</td><td>one-or-more-times (Kleene plus) operation</td></tr>
+      <tr><td>$\mlvar{symbol}?$</td><td>zero-or-one-time (optional) operation</td></tr>
+      <tr><td>$(\mlvar{rhs})$</td><td>grouping (the group can be used wherever a symbol can be used)</td></tr>
+    </table>
     <h3>Tokenizer</h3>
     <p>The tokenizer converts an input sequence of Unicode characters into a sequence of tokens in two steps. During the first step, the tokenizer converts the input sequence of Unicode characters into a provisional sequence of tokens. During the second step, the tokenizer converts the provisional sequence of tokens into a final sequence of tokens.</p>
     <h4>Character Classes</h4>
@@ -300,10 +354,10 @@
       <tr><td><code>\&lt;</code></td><td>the less-than sign</td></tr>
       <tr><td><code>\U{$\mlvar{hex}$}</code></td><td>the Unicode character whose code point is represented by the hexadecimal numeral $\mlvar{hex}$</td></tr>
     </table>
-    <p>Let $\mlvar{input}$ be the input sequence of Unicode characters. For any token $T$, let us denote by $\lex(T)$ the lexeme associated with $T$ and by $\pat(T)$ the pattern associated with $T$'s category. The tokenizer must find a sequence of tokens $\langle T_0,\ldots,T_{n-1}\rangle$ such that the following conditions are satisfied:</p>
+    <p>Let $\mlvar{input}$ be the input sequence of Unicode characters. For any token $T$, let us denote by $\lex(T)$ the lexeme associated with $T$ and by $\pat(T)$ the pattern associated with $T$'s category. The tokenizer must find a sequence of tokens $\langle T_1,\ldots,T_n\rangle$ such that the following conditions are satisfied:</p>
     <ul>
-      <li>$\lex(T_i)$ matches $\pat(T_i)$ for all $i$ from $0$ to $n-1$</li>
-      <li>$\mlvar{input}=\lex(T_0)\ldots\lex(T_{n-1})$</li>
+      <li>$\lex(T_i)$ matches $\pat(T_i)$ for all $i$ from $1$ to $n$</li>
+      <li>$\mlvar{input}=\lex(T_1)\ldots\lex(T_n)$</li>
     </ul>
     <p>Because the meaning of a program cannot be ambiguous, there cannot exist more than one sequence of tokens satisfying the previous conditions for any given input. As the following examples demonstrate, the patterns alone do not provide this guarantee:</p>
     <ul>
@@ -337,7 +391,7 @@
       <li>If the next character is a backquote, emit a token of category <code>quasiquote</code> and loop to the top.</li>
       <li>If the next character is a comma followed by an at sign, emit a token of category <code>unquote-splicing</code> and loop to the top.</li>
       <li>If the next character is a comma, emit a token of category <code>unquote</code> and loop to the top.</li>
-      <li>If the next character is a double quote, emit a token of category <code>string</code> whose associated lexeme contains all the charactes up to the first unescaped double quote (that character is included in the lexeme) and loop to the top. Fail if the lexeme contains an invalid escape sequence or the closing double quote is missing.</li>
+      <li>If the next character is a double quote, emit a token of category <code>string</code> whose associated lexeme contains all the characters up to the first unescaped double quote (that character is included in the lexeme) and loop to the top. Fail if the lexeme contains an invalid escape sequence or the closing double quote is missing.</li>
       <li>If the next character is an opening parenthesis, emit a token of category <code>opening-parenthesis</code> and loop to the top.</li>
       <li>If the next character is a closing parenthesis, emit a token of category <code>closing-parenthesis</code> and loop to the top.</li>
       <li>If the next character is a hash followed by an opening parenthesis, emit a token of category <code>hash-opening-parenthesis</code> and loop to the top.</li>
@@ -346,7 +400,7 @@
       <li>If the next character is a hash followed by a lowercase <code>v</code>, emit a token of category <code>void</code> and loop to the top.</li>
       <li>If the next character is a hash followed by a lowercase <code>t</code>, emit a token of category <code>boolean</code> and loop to the top.</li>
       <li>If the next character is a hash followed by a lowercase <code>f</code>, emit a token of category <code>boolean</code> and loop to the top.</li>
-      <li>If the next character is a hash followed by a sequence of zero or more decimal digits followed by a double quote, emit a token of category <code>hash-string</code> whose associated lexeme contains all the charactes up to the first unescaped double quote (that character is included in the lexeme) and loop to the top. Fail if the lexeme contains an invalid escape sequence or the closing double quote is missing.</li>
+      <li>If the next character is a hash followed by a sequence of zero or more decimal digits followed by a double quote, emit a token of category <code>hash-string</code> whose associated lexeme contains all the characters up to the first unescaped double quote (that character is included in the lexeme) and loop to the top. Fail if the lexeme contains an invalid escape sequence or the closing double quote is missing.</li>
       <li>If the next character is a hash, fail.</li>
       <li>If the next character is a less-than sign that is the first character of an XML start tag, emit a token of category <code>xml-start-tag</code>, push the name of the start tag on the stack, and loop to the top.</li>
       <li>If the next character is a less-than sign that is the first character of an XML end tag, emit a token of category <code>xml-end-tag</code>, pop the top name off the stack, and loop to the top. Fail if the stack is empty or the top name does not match the name of the end tag.</li>
