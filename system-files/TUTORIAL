@@ -163,9 +163,9 @@
       <dt><code>(vdef $\metavar{variable}$ $\metavar{value-form}$)</code></dt>
       <dd>The purpose of the macro is to define a global variable by ensuring that the variable is bound in the value namespace of the global environment to the primary value of the value-form. The macro call evaluates to the variable.</dd>
       <dt><code>(fdef $\metavar{variable}$ $\metavar{parameter-list}$ $\metavar{body}$)</code></dt>
-      <dd>The purpose of the macro is to define a global function by ensuring that the variable is bound in the function namespace of the global environment to the closure resulting from the evaluation of the <code>_vlambda</code>-form <code>(_vlambda $\metavar{parameter-list}$ $\metavar{body}$)</code>. The macro call evaluates to the variable.</dd>
+      <dd>The purpose of the macro is to define a global function by ensuring that the variable is bound in the function namespace of the global environment to the closure resulting from the evaluation of the _vlambda-form <code>(_vlambda $\metavar{parameter-list}$ $\metavar{body}$)</code>. The macro call evaluates to the variable.</dd>
       <dt><code>(mdef $\metavar{variable}$ $\metavar{parameter-list}$ $\metavar{body}$)</code></dt>
-      <dd>The purpose of the macro is to define a global macro by ensuring that the variable is bound in the function namespace of the global environment to the closure resulting from the evaluation of the <code>_mlambda</code>-form <code>(_mlambda $\metavar{parameter-list}$ $\metavar{body}$)</code>. The macro call evaluates to the variable.</dd>
+      <dd>The purpose of the macro is to define a global macro by ensuring that the variable is bound in the function namespace of the global environment to the closure resulting from the evaluation of the _mlambda-form <code>(_mlambda $\metavar{parameter-list}$ $\metavar{body}$)</code>. The macro call evaluates to the variable.</dd>
     </dl>
     <h2>Evaluation and Invocation Traces</h2>
     <p>An evaluation trace is a structured recording of some or all of the evaluations, invocations, and various steps performed by the evaluator to evaluate a form. It is assumed that the evaluation of the form completes normally, which implies that all evaluations and invocations entailed by the evaluation of the form also complete normally. Evaluation traces have the following format:</p>
@@ -201,7 +201,7 @@
             <li>The form <code>(fref +)</code> is evaluated with respect to $[]$ and $[]$.</li>
             <li>
               <ul>
-                <li>The form <code>(fref +)</code> is classified as an <code>fref</code>-form.</li>
+                <li>The form <code>(fref +)</code> is classified as an fref-form.</li>
                 <li>The variable <code>+</code> is looked up.</li>
               </ul>
             </li>
@@ -223,7 +223,7 @@
             <li>The global function <code>+</code> is invoked on the numbers <code>1</code> and <code>2</code>.</li>
             <li>
               <ul>
-                <li><i>The global function <code>+</code> is a closure recording the following two pieces of information: the <code>_vlambda</code>-form <code>(_vlambda (x y) (_+ x y))</code> and the lexical environment $[]$.</i></li>
+                <li><i>The global function <code>+</code> is a closure recording the following two pieces of information: the _vlambda-form <code>(_vlambda (x y) (_+ x y))</code> and the lexical environment $[]$.</i></li>
                 <li>A new lexical environment is created that extends the lexical environment $[]$ to bind, in the value namespace, the variable <code>x</code> to the number <code>1</code> and the variable <code>y</code> to the number <code>2</code>.</li>
                 <li>The form <code>(_+ x y)</code> is evaluated with respect to $[\vbinding{x}{1},\vbinding{y}{2}]$ and $[]$.</li>
                 <li>
@@ -233,7 +233,7 @@
                     <li>The form <code>(fref _+)</code> is evaluated with respect to $[\vbinding{x}{1},\vbinding{y}{2}]$ and $[]$.</li>
                     <li>
                       <ul>
-                        <li>The form <code>(fref _+)</code> is classified as an <code>fref</code>-form.</li>
+                        <li>The form <code>(fref _+)</code> is classified as an fref-form.</li>
                         <li>The variable <code>_+</code> is looked up.</li>
                       </ul>
                     </li>
@@ -242,7 +242,7 @@
                     <li>The form <code>(vref x)</code> is evaluated with respect to $[\vbinding{x}{1},\vbinding{y}{2}]$ and $[]$.</li>
                     <li>
                       <ul>
-                        <li>The form <code>(vref x)</code> is classified as a <code>vref</code>-form.</li>
+                        <li>The form <code>(vref x)</code> is classified as a vref-form.</li>
                         <li>The variable <code>x</code> is looked up.</li>
                       </ul>
                     </li>
@@ -251,7 +251,7 @@
                     <li>The form <code>(vref y)</code> is evaluated with respect to $[\vbinding{x}{1},\vbinding{y}{2}]$ and $[]$.</li>
                     <li>
                       <ul>
-                        <li>The form <code>(vref y)</code> is classified as a <code>vref</code>-form.</li>
+                        <li>The form <code>(vref y)</code> is classified as a vref-form.</li>
                         <li>The variable <code>y</code> is looked up.</li>
                       </ul>
                     </li>
@@ -297,7 +297,7 @@
               <ul>
                 <li>The form <code>((_vlambda (x) (+ x 2)) 1)</code> is classified as a plain function call.</li>
                 <li>The form <code>(_vlambda (x) (+ x 2))</code> is evaluated with respect to $[]$ and $[]$.</li>
-                <li>The form <code>(_vlambda (x) (+ x 2))</code> evaluates to a closure recording the following two pieces of information: the <code>_vlambda</code>-form <code>(_vlambda (x) (+ x 2))</code> and the lexical environment $[]$.</li>
+                <li>The form <code>(_vlambda (x) (+ x 2))</code> evaluates to a closure recording the following two pieces of information: the _vlambda-form <code>(_vlambda (x) (+ x 2))</code> and the lexical environment $[]$.</li>
                 <li>The form <code>1</code> is evaluated with respect to $[]$ and $[]$.</li>
                 <li>The form <code>1</code> evaluates to the number <code>1</code>.</li>
                 <li>The closure is invoked on the number <code>1</code>.</li>
@@ -331,7 +331,7 @@
               <ul>
                 <li>The form <code>((_vlambda (x) (simple-vlet y 2 (+ x y))) 1)</code> is classified as a plain function call.</li>
                 <li>The form <code>(_vlambda (x) (simple-vlet y 2 (+ x y)))</code> is evaluated with respect to $[]$ and $[]$.</li>
-                <li>The form <code>(_vlambda (x) (simple-vlet y 2 (+ x y)))</code> evaluates to a closure recording the following two pieces of information: the <code>_vlambda</code>-form <code>(_vlambda (x) (simple-vlet y 2 (+ x y)))</code> and the lexical environment $[]$.</li>
+                <li>The form <code>(_vlambda (x) (simple-vlet y 2 (+ x y)))</code> evaluates to a closure recording the following two pieces of information: the _vlambda-form <code>(_vlambda (x) (simple-vlet y 2 (+ x y)))</code> and the lexical environment $[]$.</li>
                 <li>The form <code>1</code> is evaluated with respect to $[]$ and $[]$.</li>
                 <li>The form <code>1</code> evaluates to the number <code>1</code>.</li>
                 <li>The closure is invoked on the number <code>1</code>.</li>
@@ -349,7 +349,7 @@
                           <ul>
                             <li>The form <code>((_vlambda (y) (+ x y)) 2)</code> is classified as a plain function call.</li>
                             <li>The form <code>(_vlambda (y) (+ x y))</code> is evaluated with respect to $[\vbinding{x}{1}]$ and $[]$.</li>
-                            <li>The form <code>(_vlambda (y) (+ x y))</code> evaluates to a closure recording the following two pieces of information: the <code>_vlambda</code>-form <code>(_vlambda (y) (+ x y))</code> and the lexical environment $[\vbinding{x}{1}]$.</li>
+                            <li>The form <code>(_vlambda (y) (+ x y))</code> evaluates to a closure recording the following two pieces of information: the _vlambda-form <code>(_vlambda (y) (+ x y))</code> and the lexical environment $[\vbinding{x}{1}]$.</li>
                             <li>The form <code>2</code> is evaluated with respect to $[\vbinding{x}{1}]$ and $[]$.</li>
                             <li>The form <code>2</code> evaluates to the number <code>2</code>.</li>
                             <li>The closure is invoked on the number <code>2</code>.</li>
@@ -394,7 +394,7 @@
                 <li>The form <code>(if (&gt;= x 0) x (- x)))</code> is evaluated with respect to $[\vbinding{x}{1}]$ and $[]$.</li>
                 <li>
                   <ul>
-                    <li>The form <code>(if (&gt;= x 0) x (- x)))</code> is classified as an <code>if</code>-form.</li>
+                    <li>The form <code>(if (&gt;= x 0) x (- x)))</code> is classified as an if-form.</li>
                     <li>The form <code>(&gt;= x 0)</code> is evaluated with respect to $[\vbinding{x}{1}]$ and $[]$.</li>
                     <li>
                       <ul>
@@ -429,7 +429,7 @@
                 <li>The form <code>(if (&gt;= x 0) x (- x)))</code> is evaluated with respect to $[\vbinding{x}{-1}]$ and $[]$.</li>
                 <li>
                   <ul>
-                    <li>The form <code>(if (&gt;= x 0) x (- x)))</code> is classified as an <code>if</code>-form.</li>
+                    <li>The form <code>(if (&gt;= x 0) x (- x)))</code> is classified as an if-form.</li>
                     <li>The form <code>(&gt;= x 0)</code> is evaluated with respect to $[\vbinding{x}{-1}]$ and $[]$.</li>
                     <li>
                       <ul>
@@ -495,8 +495,8 @@
     <p>A form is said to be in tail position with respect to a lambda abstraction if and only if one of the following mutually exclusive conditions is satisfied:</p>
     <ul>
       <li>The form is the last form of the body of the lambda abstraction.</li>
-      <li>The form is the last form of a <code>progn</code>-form in tail position with respect to the lambda abstraction.</li>
-      <li>The form is the then-form or the else-form of an <code>if</code>-form in tail position with respect to the lambda abstraction.</li>
+      <li>The form is the last form of a progn-form in tail position with respect to the lambda abstraction.</li>
+      <li>The form is the then-form or the else-form of an if-form in tail position with respect to the lambda abstraction.</li>
     </ul>
     <p>A form in tail position with respect to a lambda abstraction has the following property: If (1) a closure resulting from the evaluation of the lambda abstraction is invoked and (2) the form happens to be evaluated during the invocation of the closure, then the result of the evaluation of the form becomes the result of the invocation of the closure without any further processing. (The values of the form are returned as is and not used otherwise.)</p>
     <h3>Factorial Function</h3>

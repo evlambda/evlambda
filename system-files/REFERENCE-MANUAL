@@ -36,7 +36,7 @@
     </ul>
     <p>Note that some whitespace is needed to separate the lexeme <span class="charseq"><span class="char">+</span></span> from the lexeme <span class="charseq"><span class="char">1</span><span class="char">2</span><span class="char">3</span></span> and the lexeme <span class="charseq"><span class="char">1</span><span class="char">2</span><span class="char">3</span></span> from the lexeme <span class="charseq"><span class="char">4</span><span class="char">5</span><span class="char">6</span></span> but no whitespace is needed to separate the lexeme <span class="charseq"><span class="char">(</span></span> from the lexeme <span class="charseq"><span class="char">+</span></span> or the lexeme <span class="charseq"><span class="char">4</span><span class="char">5</span><span class="char">6</span></span> from the lexeme <span class="charseq"><span class="char">)</span></span>.</p>
     <p><b>Step 2.2</b> A component of the reader called the parser converts the sequence of tokens from step 2.1 (minus the tokens of category <code>whitespace</code>, which are ignored by the parser) into a cons whose car is the variable from step 2.1 and whose cdr is a cons whose car is the first number from step 2.1 and whose cdr is a cons whose car is the second number from step 2.1 and whose cdr is the empty list. Together, those three conses represent the list <code>(+ 123 456)</code>.</p>
-    <p><b>Step 3</b> The evaluator evaluates the list <code>(+ 123 456)</code> to the number <code>579</code>. The evaluation of the top-level form <code>(+ 123 456)</code> entails the evaluation of other non-top-level forms. Each form must be classified in order to determine how it should be evaluated. The form <code>(+ 123 456)</code> is classified as a plain function call. The variable <code>+</code> is treated as an abbreviation for the form <code>(fref +)</code>. The form <code>(fref +)</code> is classified as an <code>fref</code>-form. The forms <code>123</code> and <code>456</code> are classified as self-evaluating objects. Because the global function <code>+</code> is a closure, its invocation entails the evaluation (and thus the classification) of other forms. The component of the evaluator responsible for classifying forms is called the syntax analyzer.</p>
+    <p><b>Step 3</b> The evaluator evaluates the list <code>(+ 123 456)</code> to the number <code>579</code>. The evaluation of the top-level form <code>(+ 123 456)</code> entails the evaluation of other non-top-level forms. Each form must be classified in order to determine how it should be evaluated. The form <code>(+ 123 456)</code> is classified as a plain function call. The variable <code>+</code> is treated as an abbreviation for the form <code>(fref +)</code>. The form <code>(fref +)</code> is classified as an fref-form. The forms <code>123</code> and <code>456</code> are classified as self-evaluating objects. Because the global function <code>+</code> is a closure, its invocation entails the evaluation (and thus the classification) of other forms. The component of the evaluator responsible for classifying forms is called the syntax analyzer.</p>
     <p><b>Step 4</b> The printer converts the number <code>579</code> into the sequence of characters <span class="charseq"><span class="char">5</span><span class="char">7</span><span class="char">9</span></span>. (The sequence of characters is the printable representation of the number.)</p>
     <p><b>Step 5</b> The sequence of characters <span class="charseq"><span class="char">5</span><span class="char">7</span><span class="char">9</span></span> is written into the listener buffer.</p>
     <p>EVLambda has three levels of syntax:</p>
@@ -92,7 +92,7 @@
     <p>Because the characters &lt; and &amp; can appear inside EVLambda source code, a documented EVLambda source file is not always a well-formed XML document.</p>
     <h4>Documentation Generator</h4>
     <p>The documentation generator converts a documented EVLambda source file to HTML in two steps:</p>
-    <p><b>Step 1</b> The characters &lt; and &amp; appearing inside EVLambda source code are escaped and some tags are added to better delimit the EVLambda source code and the comments. The resulting file is a well-formed XML document.</p>
+    <p><b>Step 1</b> The characters &lt; and &amp; appearing inside EVLambda source code are escaped and some tags are added to better delimit the code from the surrounding documentation and the comments from the surrounding code. The resulting file is a well-formed XML document.</p>
     <p><b>Step 2</b> The resulting file from step 1 is converted to HTML by an XSLT stylesheet.</p>
     <h4>Unicode</h4>
     <p>The characters contained inside listener buffers and EVLambda source files are <a href="https://en.wikipedia.org/wiki/Unicode" target="_blank">Unicode</a> characters. Unicode is a character set containing, as of version 17.0, $159801$ characters. Each Unicode character is uniquely identified by a nonnegative integer called its code point. Code points range from $0$ to $1114111$ in decimal and from <code>0</code> to <code>10FFFF</code> in hexadecimal. (Not all code points are assigned to a character.) The notation $U{+}\mlvar{hex}$ denotes the Unicode character whose code point is represented by the hexadecimal numeral $\mlvar{hex}$. The order on integers directly translates into an order on Unicode characters. With respect to that order, the Unicode character $c_1$ precedes the Unicode character $c_2$ if and only if the code point of $c_1$ is strictly less than the code point of $c_2$. That order can be used to define ranges of Unicode characters.</p>
@@ -198,31 +198,29 @@
       <tr><td><code>\^</code></td><td>the caret</td></tr>
       <tr><td><code>\-</code></td><td>the hyphen</td></tr>
       <tr><td><code>\]</code></td><td>the closing square bracket</td></tr>
-      <tr><td><code>\U{$\mlvar{hex}$}</code></td><td>the Unicode character whose code point is represented by the hexadecimal numeral $\mlvar{hex}$</td></tr></code></td></tr>
+      <tr><td><code>\U{$\mlvar{hex}$}</code></td><td>the Unicode character whose code point is represented by the hexadecimal numeral $\mlvar{hex}$</td></tr>
       <tr><td><code>\C{$\mlvar{cat}$}</code></td><td>the Unicode characters whose general categories are $\mlvar{cat}$</td></tr>
     </table>
     <p>The zero-or-more-times, one-or-more-times, and zero-or-one-time operations have precedence over the concatenation operation and the concatenation operation has precedence over the union and difference operations. All operations are left associative. Parenthesis can be added to override those precedence and associativity rules.</p>
     <p>References to named regular expressions can be used wherever regular expressions can be used. References to named regular expressions denoting classes of characters can also be used inside character classes. Circular definitions are not allowed.</p>
     <p>Except for the parts referencing named regular expressions, regular expressions are typeset in a monospaced typeface. Spaces can be added freely outside literal strings and character classes without modifying the meaning of a regular expression.</p>
     <h4>Extended Backus-Naur Form (EBNF)</h4>
-    <p>The parser and the syntax analyzer use a variant of the <a href="https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form" target="_blank">extended Backus-Naur form</a> (EBNF) notation to specify various <a href="https://en.wikipedia.org/wiki/Context-free_grammar" target="_blank">context-free grammars</a>.</p>
+    <p>The parser and the syntax analyzer use a variant of the <a href="https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form" target="_blank">extended Backus-Naur form</a> (EBNF) notation to define various <a href="https://en.wikipedia.org/wiki/Context-free_grammar" target="_blank">context-free grammars</a>.</p>
     <p>The following table summarizes the syntax of the variant of the EBNF notation used in this document:</p>
     <table class="plain">
       <tr><th>Syntax</th><th>Meaning</th></tr>
-      <tr><td>$\mlvar{lhs}\Coloneq\mlvar{rhs}$</td><td>definition of a production rule (the left-hand-side is a nonterminal symbol and the right-hand-side is a sequence of zero or more nonterminal and/or terminal symbols)</td></tr>
-      <tr><td>$\metavar{nonterminal}$</td><td>nonterminal symbol</td></tr>
+      <tr><td>$\mlvar{lhs}$ $\Coloneq$ <code>$\mlvar{rhs}$</code></td><td>definition of a production rule</td></tr>
+      <tr><td><code>$\metavar{nonterminal}$</code></td><td>nonterminal symbol</td></tr>
       <tr><td><code>terminal</code></td><td>terminal symbol</td></tr>
-      <tr><td><code>'$\mlvar{char}$'</code></td><td>terminal symbol consisting of the character $\mlvar{char}$ ($\mlvar{char}\neq\code{'}$)</td></tr>
-      <tr><td><code>"$\mlvar{char}$"</code></td><td>terminal symbol consisting of the character $\mlvar{char}$ ($\mlvar{char}\neq\code{"}$)</td></tr>
-      <tr><td><code>'$\mlvar{char}_1\ldots\mlvar{char}_n$'</code></td><td>abbreviation for <code>'$\mlvar{char}_1$'</code>&hellip;<code>'$\mlvar{char}_n$'</code> ($\mlvar{char}_i\neq\code{'}$)</td></tr>
-      <tr><td><code>"$\mlvar{char}_1\ldots\mlvar{char}_n$"</code></td><td>abbreviation for <code>"$\mlvar{char}_1$"</code>&hellip;<code>"$\mlvar{char}_n$"</code> ($\mlvar{char}_i\neq\code{"}$)</td></tr>
-      <tr><td>$\epsilon$</td><td>empty sequence of symbols</td></tr>
-      <tr><td>$\mlvar{rhs}_1\mid\cdots\mid\mlvar{rhs}_n$</td><td>union (alternation) operation</td></tr>
-      <tr><td>$\mlvar{symbol}\ast$</td><td>zero-or-more-times (Kleene star) operation</td></tr>
-      <tr><td>$\mlvar{symbol}+$</td><td>one-or-more-times (Kleene plus) operation</td></tr>
-      <tr><td>$\mlvar{symbol}?$</td><td>zero-or-one-time (optional) operation</td></tr>
-      <tr><td>$(\mlvar{rhs})$</td><td>grouping (the group can be used wherever a symbol can be used)</td></tr>
+      <tr><td><code>$\epsilon$</code></td><td>empty sequence of symbols</td></tr>
+      <tr><td><code>$\mlvar{rhs}_1$ | $\ldots$ | $\mlvar{rhs}_n$</code></td><td>union (alternation) operation</td></tr>
+      <tr><td><code>$\mlvar{symbol}$*</code></td><td>zero-or-more-times (Kleene star) operation</td></tr>
+      <tr><td><code>$\mlvar{symbol}$+</code></td><td>one-or-more-times (Kleene plus) operation</td></tr>
+      <tr><td><code>$\mlvar{symbol}$?</code></td><td>zero-or-one-time (optional) operation</td></tr>
+      <tr><td><code>{$\mlvar{rhs}$}</code></td><td>group</td></tr>
+      <tr><td><code>?</code> &hellip; <code>?</code></td><td>special sequence</td></tr>
     </table>
+    <p>A left-hand-side ($\mlvar{lhs}$) consists of a nonterminal symbol. A right-hand-side ($\mlvar{rhs}$) consists of a sequence of zero or more nonterminal and/or terminal symbols. A group can be used wherever a symbol can be used. A special sequence is a free-form text specifying a set of terminal symbols.</p>
     <h3>Tokenizer</h3>
     <p>The tokenizer converts an input sequence of Unicode characters into a sequence of tokens in two steps. During the first step, the tokenizer converts the input sequence of Unicode characters into a provisional sequence of tokens. During the second step, the tokenizer converts the provisional sequence of tokens into a final sequence of tokens.</p>
     <h4>Character Classes</h4>
@@ -334,7 +332,6 @@
       <dd>Pattern: <code>(($\metavar{valid-char}$ - ($\metavar{whitespace-char}$ | $\metavar{syntax-char}$ | '\\\\')) | ('\\\\' [\\\\&lt;]) | ('\\\\U{' [a-fA-F0-9]+ '}'))+</code></dd>
       <dd>Value: The backslash plays the role of an escape character. The escape sequences are interpreted as specified in the table below. The value is the lexeme after interpretation of the escape sequences.</dd>
     </dl>
-    <p>An escape character is a character that modifies the meaning of the following characters. Together, an escape character and the characters whose meanings are modified by the escape character form an escape sequence.</p>
     <p>Escape sequences in lexemes associated with tokens of categories <code>string</code> and <code>hash-string</code> are interpreted as follows:</p>
     <table class="plain">
       <tr><th>Escape sequence</th><th>Meaning</th></tr>
@@ -452,5 +449,603 @@
     </table>
     <p>Here is the result of combining the Unicode character &ldquo;NINJA&rdquo; with the different skin-tone modifiers:</p>
     <pre class="repl">&gt; '(#"&#x1F977;&#x1F3FB;")<br>(#"\U{D83E}" #"\U{DD77}" #"\U{D83C}" #"\U{DFFB}")<br><br>&gt; '(#"&#x1F977;&#x1F3FC;")<br>(#"\U{D83E}" #"\U{DD77}" #"\U{D83C}" #"\U{DFFC}")<br><br>&gt; '(#"&#x1F977;&#x1F3FD;")<br>(#"\U{D83E}" #"\U{DD77}" #"\U{D83C}" #"\U{DFFD}")<br><br>&gt; '(#"&#x1F977;&#x1F3FE;")<br>(#"\U{D83E}" #"\U{DD77}" #"\U{D83C}" #"\U{DFFE}")<br><br>&gt; '(#"&#x1F977;&#x1F3FF;")<br>(#"\U{D83E}" #"\U{DD77}" #"\U{D83C}" #"\U{DFFF}")<br><br></pre>
+    <h3>Parser</h3>
+    <p>The parser uses a context-free grammar to convert the sequence of tokens produced by the tokenizer into a sequence of objects. The conversion is conceptually a two-step process. During the first step, the parser converts the sequence of tokens into a derivation tree. During the second step, the parser assigns a meaning to the derivation tree.</p>
+    <p>The construction of the derivation tree is directed by the context-free grammar. Because the parser ignores the tokens' values and only takes into account the tokens' categories when constructing the derivation tree, the terminal symbols of the context-free grammar are the names of the token categories.</p>
+    <p>The production rule describing the whole sequence of tokens produced by the tokenizer depends on the origin of the input sequence of characters.</p>
+    <p>When the origin of the input sequence of characters is a listener buffer, the whole sequence of tokens is described by the following production rule:</p>
+    <table class="ebnf">
+      <tr>
+        <td class="lhs">$\metavar{input}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{object}$</code></td>
+      </tr>
+    </table>
+    <p>When the origin of the input sequence of characters is a plain EVLambda source file, the whole sequence of tokens is described by the following production rule:</p>
+    <table class="ebnf">
+      <tr>
+        <td class="lhs">$\metavar{input}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{object}$*</code></td>
+      </tr>
+    </table>
+    <p>When the origin of the input sequence of characters is a documented EVLambda source file, the whole sequence of tokens is described by the following production rule (the XML element is a chapter element):</p>
+    <table class="ebnf">
+      <tr>
+        <td class="lhs">$\metavar{input}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{xml-comment}$* $\metavar{xml-element}$ $\metavar{xml-comment}$*</code></td>
+      </tr>
+    </table>
+    <p>The rest of the context-free grammar, which does not depend on the origin of the input sequence of characters, is defined as follows:</p>
+    <table class="ebnf">
+      <tr>
+        <td class="lhs">$\metavar{xml-markup}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{xml-element}$ | $\metavar{xml-comment}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{xml-element}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>xml-start-tag $\metavar{xml-element-content}$* xml-end-tag | xml-empty-element-tag</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{xml-element-content}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{xml-markup}$ | $\metavar{object}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{xml-comment}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>xml-comment</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{object}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>void | boolean | number | character | string | keyword | variable | $\metavar{abbreviation}$ | $\metavar{list}$ | $\metavar{vector}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{abbreviation}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{quotation}$ | $\metavar{quasiquotation}$ | $\metavar{unquotation}$ | $\metavar{splicing-unquotation}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{quotation}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>quote $\metavar{xml-markup}$* $\metavar{object}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{quasiquotation}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>quasiquote $\metavar{xml-markup}$* $\metavar{object}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{unquotation}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>unquote $\metavar{xml-markup}$* $\metavar{object}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{splicing-unquotation}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>unquote-splicing $\metavar{xml-markup}$* $\metavar{object}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{list}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{proper-list}$ | $\metavar{dotted-list}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{proper-list}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>left-parenthesis {$\metavar{xml-markup}$* $\metavar{object}$}* $\metavar{xml-markup}$* right-parenthesis</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{dotted-list}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>left-parenthesis {$\metavar{xml-markup}$* $\metavar{object}$}+ $\metavar{xml-markup}$* dot $\metavar{xml-markup}$* $\metavar{object}$ $\metavar{xml-markup}$* right-parenthesis</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{vector}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>hash-left-parenthesis {$\metavar{xml-markup}$* $\metavar{object}$}* $\metavar{xml-markup}$* right-parenthesis</code></td>
+      </tr>
+    </table>
+    <p>Let us denote by $\mathcal{M}$ the function assigning a meaning to a derivation tree. The function $\mathcal{M}$ is defined by specifying, for each production rule, how the meaning of the nonterminal symbol on the left-hand side is computed from (1) the meanings of the nonterminal symbols on the right-hand side and (2) the terminal symbols on the right-hand side. Here is the definition of the function $\mathcal{M}$ (pairs of angle brackets denote sequence formation and $\|$ denotes sequence concatenation):</p>
+    <dl>
+      <!-- input -->
+      <dt>$\metavar{input}\Coloneq$ <code>$\metavar{object}$</code></dt>
+      <dd>$\mathcal{M}(\metavar{input})=\langle\mathcal{M}(\metavar{object})\rangle$</dd>
+      <dt>$\metavar{input}\Coloneq$ <code>$\metavarn{object}{1}$ $\ldots$ $\metavarn{object}{n\geq0}$</code></dt>
+      <dd>$\mathcal{M}(\metavar{input})=\langle\mathcal{M}(\metavarn{object}{1}),\ldots,\mathcal{M}(\metavarn{object}{n})\rangle$</dd>
+      <dt>$\metavar{input}\Coloneq$ <code>$\metavar{xml-comment}$* $\metavar{xml-element}$ $\metavar{xml-comment}$*</code></dt>
+      <dd>$\mathcal{M}(\metavar{input})=\mathcal{M}(\metavar{xml-element})$</dd>
+      <!-- xml-markup -->
+      <dt>$\metavar{xml-markup}\Coloneq$ <code>$\metavar{xml-element}$</code></dt>
+      <dd>$\mathcal{M}(\metavar{xml-markup})=\mathcal{M}(\metavar{xml-element})$</dd>
+      <dt>$\metavar{xml-markup}\Coloneq$ <code>$\metavar{xml-comment}$</code></dt>
+      <dd>$\mathcal{M}(\metavar{xml-markup})=\mathcal{M}(\metavar{xml-comment})$</dd>
+      <!-- xml-element -->
+      <dt>$\metavar{xml-element}\Coloneq$ <code>xml-start-tag $\metavarn{xml-element-content}{1}$ $\ldots$ $\metavarn{xml-element-content}{n\geq0}$ xml-end-tag</code></dt>
+      <dd>$\mathcal{M}(\metavar{xml-element})=\mathcal{M}(\metavarn{xml-element-content}{1})\|\cdots\|\mathcal{M}(\metavarn{xml-element-content}{n})$</dd>
+      <dt>$\metavar{xml-element}\Coloneq$ <code>xml-empty-element-tag</code></dt>
+      <dd>$\mathcal{M}(\metavar{xml-element})=\langle\rangle$</dd>
+      <!-- xml-element-content -->
+      <dt>$\metavar{xml-element-content}\Coloneq$ <code>$\metavar{xml-markup}$</code></dt>
+      <dd>$\mathcal{M}(\metavar{xml-element-content})=\mathcal{M}(\metavar{xml-markup})$</dd>
+      <dt>$\metavar{xml-element-content}\Coloneq$ <code>$\metavar{object}$</code></dt>
+      <dd>$\mathcal{M}(\metavar{xml-element-content})=\langle\mathcal{M}(\metavar{object})\rangle$</dd>
+      <!-- xml-comment -->
+      <dt>$\metavar{xml-comment}\Coloneq$ <code>xml-comment</code></dt>
+      <dd>$\mathcal{M}(\metavar{xml-comment})=\langle\rangle$</dd>
+      <!-- object -->
+      <dt>$\metavar{object}\Coloneq$ <code>void</code></dt>
+      <dd>$\mathcal{M}(\metavar{object})=$ the value of the token of category <code>void</code></dd>
+      <dt>$\metavar{object}\Coloneq$ <code>boolean</code></dt>
+      <dd>$\mathcal{M}(\metavar{object})=$ the value of the token of category <code>boolean</code></dd>
+      <dt>$\metavar{object}\Coloneq$ <code>number</code></dt>
+      <dd>$\mathcal{M}(\metavar{object})=$ the value of the token of category <code>number</code></dd>
+      <dt>$\metavar{object}\Coloneq$ <code>character</code></dt>
+      <dd>$\mathcal{M}(\metavar{object})=$ the value of the token of category <code>character</code></dd>
+      <dt>$\metavar{object}\Coloneq$ <code>string</code></dt>
+      <dd>$\mathcal{M}(\metavar{object})=$ the value of the token of category <code>string</code></dd>
+      <dt>$\metavar{object}\Coloneq$ <code>keyword</code></dt>
+      <dd>$\mathcal{M}(\metavar{object})=$ the value of the token of category <code>keyword</code></dd>
+      <dt>$\metavar{object}\Coloneq$ <code>variable</code></dt>
+      <dd>$\mathcal{M}(\metavar{object})=$ the value of the token of category <code>variable</code></dd>
+      <dt>$\metavar{object}\Coloneq$ <code>$\metavar{abbreviation}$</code></dt>
+      <dd>$\mathcal{M}(\metavar{object})=\mathcal{M}(\metavar{abbreviation})$</dd>
+      <dt>$\metavar{object}\Coloneq$ <code>$\metavar{list}$</code></dt>
+      <dd>$\mathcal{M}(\metavar{object})=\mathcal{M}(\metavar{list})$</dd>
+      <dt>$\metavar{object}\Coloneq$ <code>$\metavar{vector}$</code></dt>
+      <dd>$\mathcal{M}(\metavar{object})=\mathcal{M}(\metavar{vector})$</dd>
+      <!-- abbreviation -->
+      <dt>$\metavar{abbreviation}\Coloneq$ <code>$\metavar{quotation}$</code></dt>
+      <dd>$\mathcal{M}(\metavar{abbreviation})=\mathcal{M}(\metavar{quotation})$</dd>
+      <dt>$\metavar{abbreviation}\Coloneq$ <code>$\metavar{quasiquotation}$</code></dt>
+      <dd>$\mathcal{M}(\metavar{abbreviation})=\mathcal{M}(\metavar{quasiquotation})$</dd>
+      <dt>$\metavar{abbreviation}\Coloneq$ <code>$\metavar{unquotation}$</code></dt>
+      <dd>$\mathcal{M}(\metavar{abbreviation})=\mathcal{M}(\metavar{unquotation})$</dd>
+      <dt>$\metavar{abbreviation}\Coloneq$ <code>$\metavar{splicing-unquotation}$</code></dt>
+      <dd>$\mathcal{M}(\metavar{abbreviation})=\mathcal{M}(\metavar{splicing-unquotation})$</dd>
+      <!-- quotation -->
+      <dt>$\metavar{quotation}\Coloneq$ <code>quote $\metavar{object}$</code></dt>
+      <dd>$\mathcal{M}(\metavar{quotation})=$ a cons whose car is the variable <code>quote</code> and whose cdr is a cons whose car is $\mathcal{M}(\metavar{object})$ and whose cdr is the empty list</dd>
+      <!-- quasiquotation -->
+      <dt>$\metavar{quasiquotation}\Coloneq$ <code>quasiquote $\metavar{object}$</code></dt>
+      <dd>$\mathcal{M}(\metavar{quasiquotation})=$ a cons whose car is the variable <code>quasiquote</code> and whose cdr is a cons whose car is $\mathcal{M}(\metavar{object})$ and whose cdr is the empty list</dd>
+      <!-- unquotation -->
+      <dt>$\metavar{unquotation}\Coloneq$ <code>unquote $\metavar{object}$</code></dt>
+      <dd>$\mathcal{M}(\metavar{unquotation})=$ a cons whose car is the variable <code>unquote</code> and whose cdr is a cons whose car is $\mathcal{M}(\metavar{object})$ and whose cdr is the empty list</dd>
+      <!-- splicing-quotation -->
+      <dt>$\metavar{splicing-unquotation}\Coloneq$ <code>unquote-splicing $\metavar{object}$</code></dt>
+      <dd>$\mathcal{M}(\metavar{splicing-unquotation})=$ a cons whose car is the variable <code>unquote-splicing</code> and whose cdr is a cons whose car is $\mathcal{M}(\metavar{object})$ and whose cdr is the empty list</dd>
+      <!-- list -->
+      <dt>$\metavar{list}\Coloneq$ <code>$\metavar{proper-list}$</code></dt>
+      <dd>$\mathcal{M}(\metavar{list})=\mathcal{M}(\metavar{proper-list})$</dd>
+      <dt>$\metavar{list}\Coloneq$ <code>$\metavar{dotted-list}$</code></dt>
+      <dd>$\mathcal{M}(\metavar{list})=\mathcal{M}(\metavar{dotted-list})$</dd>
+      <!-- proper-list -->
+      <dt>$\metavar{proper-list}\Coloneq$ <code>left-parenthesis right-parenthesis</code></dt>
+      <dd>$\mathcal{M}(\metavar{proper-list})=$ the empty list</dd>
+      <dt>$\metavar{proper-list}\Coloneq$ <code>left-parenthesis $\metavarn{object}{1}$ $\ldots$ $\metavarn{object}{n\geq1}$ right-parenthesis</code></dt>
+      <dd>$\mathcal{M}(\metavar{proper-list})=$ the first cons of a chain of $n$ conses $\cons_1,\ldots,\cons_n$ such that the car of $\cons_i$ is $\mathcal{M}(\metavarn{object}{i})$, the cdr of $\cons_{i\lt n}$ is $\cons_{i+1}$, and the cdr of $\cons_n$ is the empty list</dd>
+      <!-- dotted-list -->
+      <dt>$\metavar{dotted-list}\Coloneq$ <code>left-parenthesis $\metavarn{object}{1}$ $\ldots$ $\metavarn{object}{n\geq1}$ dot $\metavarn{object}{n+1}$ right-parenthesis</code></dt>
+      <dd>$\mathcal{M}(\metavar{dotted-list})=$ the first cons of a chain of $n$ conses $\cons_1,\ldots,\cons_n$ such that the car of $\cons_i$ is $\mathcal{M}(\metavarn{object}{i})$, the cdr of $\cons_{i\lt n}$ is $\cons_{i+1}$, and the cdr of $\cons_n$ is $\mathcal{M}(\metavarn{object}{n+1})$</dd>
+      <!-- vector -->
+      <dt>$\metavar{vector}\Coloneq$ <code>hash-left-parenthesis $\metavarn{object}{1}$ $\ldots$ $\metavarn{object}{n\geq0}$ right-parenthesis</code></dt>
+      <dd>$\mathcal{M}(\metavar{vector})=$ a vector of $n$ elements $\mlvar{elem}_1,\ldots,\mlvar{elem}_n$ such that $\mlvar{elem}_i$ is $\mathcal{M}(\metavarn{object}{i})$</dd>
+    </dl>
+    <p>Note that the XML markup inside abbreviations, lists, and vectors cannot produce objects and has therefore been omitted from the definition of the function $\mathcal{M}$.</p>
+    <h3>Pattern Language and Template Languages</h3>
+    <p>The pattern language is a context-free language whose sentences are patterns meant to be matched against objects. The pattern language can be used to specify a set of objects $S$ as follows:</p>
+    <ul>
+      <li>Define a grammar $G$ whose sentences are also sentences of the pattern language.</li>
+      <li>Declare that the objects belonging to $S$ are the objects matching at least one sentence of $G$.</li>
+    </ul>
+    <p>The language specified by a grammar such as $G$ is called a template language. Template languages will be used to specify the forms recognized by the syntax analyzer, to specify template macro calls, to specify data structures, &hellip;</p>
+    <p>Here are the terminal symbols of the context-free grammar specifying the pattern language:</p>
+    <ul>
+      <li>The names of the types: $\object$, $\void$, $\boolean$, $\number$, $\character$, $\string$, $symbol$, $\keyword$, $\variable$, $\list$, $\emptylist$, $\cons$, $\vector$, $\function$, $\primitivefunction$, and $\closure$.</li>
+      <li>The readable representations of the objects of type <code>void</code>, <code>boolean</code>, <code>number</code>, <code>character</code>, <code>string</code>, <code>keyword</code>, and <code>variable</code>.</li>
+      <li>The opening parenthesis, the closing parenthesis, the dot, and the digraph consisting of a hash followed by an opening parenthesis.</li>
+    </ul>
+    <p>Here are the production rules of the context-free grammar specifying the pattern language:</p>
+    <table class="ebnf">
+      <tr>
+        <td class="lhs">$\metavar{pattern}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{type}$ | $\metavar{void}$ | $\metavar{boolean}$ | $\metavar{number}$ | $\metavar{character}$ | $\metavar{string}$ | $\metavar{keyword}$ | $\metavar{variable}$ | $\metavar{list}$ | $\metavar{vector}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{type}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\object$ | $\void$ | $\boolean$ | $\number$ | $\character$ | $\string$ | $symbol$ | $\keyword$ | $\variable$ | $\list$ | $\emptylist$ | $\cons$ | $\vector$ | $\function$ | $\primitivefunction$ | $\closure$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{void}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>?</code> any readable representation of an object of type <code>void</code> <code>?</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{boolean}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>?</code> any readable representation of an object of type <code>boolean</code> <code>?</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{number}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>?</code> any readable representation of an object of type <code>number</code> <code>?</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{character}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>?</code> any readable representation of an object of type <code>character</code> <code>?</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{string}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>?</code> any readable representation of an object of type <code>string</code> <code>?</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{keyword}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>?</code> any readable representation of an object of type <code>keyword</code> <code>?</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{variable}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>?</code> any readable representation of an object of type <code>variable</code> <code>?</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{list}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{proper-list}$ | $\metavar{dotted-list}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{proper-list}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>($\metavar{pattern}$*)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{dotted-list}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>($\metavar{pattern}$+ . $\metavar{pattern}$)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{vector}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>#($\metavar{pattern}$*)</code></td>
+      </tr>
+    </table>
+    <p>The rules specifying if an object matches a pattern are the following:</p>
+    <ul>
+      <li>An object matches the name of a type if and only if the object is a member of the type.</li>
+      <li>An object matches a readable representation if and only if the object is (or is <code>eql</code> to) the object denoted by the readable representation.</li>
+      <li>An object matches the pattern <code>()</code> if and only if the object is the empty list.</li>
+      <li>An object matches the pattern <code>($\metavarn{pattern}{1}$ $\ldots$ $\metavarn{pattern}{n\geq0}$)</code> if and only if the object is the first cons of a chain of $n$ conses $\cons_1,\ldots,\cons_n$ such that the car of $\cons_i$ matches $\metavarn{pattern}{i}$, the cdr of $\cons_{i\lt n}$ is $\cons_{i+1}$, and the cdr of $\cons_n$ is the empty list.</li>
+      <li>An object matches the pattern <code>($\metavarn{pattern}{1}$ $\ldots$ $\metavarn{pattern}{n\geq1}$ . $\metavarn{pattern}{n+1}$)</code> if and only if the object is the first cons of a chain of $n$ conses $\cons_1,\ldots,\cons_n$ such that the car of $\cons_i$ matches $\metavarn{pattern}{i}$, the cdr of $\cons_{i\lt n}$ is $\cons_{i+1}$, and the cdr of $\cons_n$ matches $\metavarn{pattern}{n+1}$.</li>
+      <li>An object matches the pattern <code>#($\metavarn{pattern}{1}$ $\ldots$ $\metavarn{pattern}{n\geq0}$)</code> if and only if the object is a vector of $n$ elements $\mlvar{elem}_1,\ldots,\mlvar{elem}_n$ such that $\mlvar{elem}_i$ matches $\metavarn{pattern}{i}$.</li>
+    </ul>
+    <p>By way of example, let us consider the template language specified by the following context-free grammar:</p>
+    <table class="ebnf">
+      <tr>
+        <td class="lhs">$\metavar{association-list}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>({($\metavar{key}$ . $\metavar{value}$)}*)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{key}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\object$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{value}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\object$</code></td>
+      </tr>
+    </table>
+    <p>The sentences of the example template language are the following:</p>
+    <ul>
+      <li><code>()</code></li>
+      <li><code>(($\object$ . $\object$))</code></li>
+      <li><code>(($\object$ . $\object$) ($\object$ . $\object$))</code></li>
+      <li><code>(($\object$ . $\object$) ($\object$ . $\object$) ($\object$ . $\object$))</code></li>
+      <li>&hellip;</li>
+    </ul>
+    <p>The objects specified by the example template language (= the objects matching at least one sentence of the example template language) are the proper lists of conses of arbitrary objects. As suggested by the names of the nonterminal symbols, the first object of each cons operates as a key, the second object of each cons operates as a value, and the proper list as a whole is called an association list.</p>
+    <h3>Read-Time Conditionalization Facility</h3>
+    <p>The purpose of the read-time conditionalization facility is to alter the flow of tokens according to some conditions. Because the facility is conceptually located between the tokenizer and the parser, its associated syntax does not belong to the context-free grammar used by the parser. It is however convenient to specify the syntax of a read-time conditional by the following production rule:</p>
+    <table class="ebnf">
+      <tr>
+        <td class="lhs">$\metavar{read-time-conditional}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>{hash-plus | hash-minus} $\metavar{xml-markup}$* $\metavar{object}$ $\metavar{xml-markup}$* $\metavar{object}$</code></td>
+      </tr>
+    </table>
+    <p>The first object is called the feature expression and the second object is called the conditionalized object.</p>
+    <p>When the facility encounters a <code>hash-plus</code> or a <code>hash-minus</code> token, it instructs the parser to parse, hand over, and discard the feature expression. The feature expression is then evaluated by the facility according to the rules stated below. If the feature expression evaluates to true, then the facility ends its processing of the read-time conditional by instructing the parser to parse and retain the conditionalized object. (The net effect is the same as if only the tokens of the conditionalized object had existed.) If the feature expression evaluates to false, then the facility ends its processing of the read-time conditional by instructing the parser to parse and discard the conditionalized object. (The net effect is the same as if the tokens of the read-time conditional had not existed.)</p>
+    <p>Feature expressions must belong to the set objects specified by the template language specified by the following context-free grammar:</p>
+    <table class="ebnf">
+      <tr>
+        <td class="lhs">$\metavar{feature-expression}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\symbol$ | (not $\metavar{operand}$) | (and $\metavar{operand}$*) | (or $\metavar{operand}$*)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{operand}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{feature-expression}$</code></td>
+      </tr>
+    </table>
+    <p>Feature expressions are evaluated as follows:</p>
+    <dl>
+      <dt>$\metavar{feature-expression}\Coloneq$ <code>$\symbol$</code></dt>
+      <dd>The feature expression evaluates to true if the symbol belongs to the value of the global variable <code>*features*</code> and to false otherwise.</dd>
+      <dt>$\metavar{feature-expression}\Coloneq$ <code>(not $\metavar{operand}$)</code></dt>
+      <dd>The feature expression evaluates to true if its operand evaluates to false and to false otherwise.</dd>
+      <dt>$\metavar{feature-expression}\Coloneq$ <code>(and $\metavar{operand}$*)</code></dt>
+      <dd>The feature expression evaluates to true if all its operands evaluate to true and to false otherwise.</dd>
+      <dt>$\metavar{feature-expression}\Coloneq$ <code>(or $\metavar{operand}$*)</code></dt>
+      <dd>The feature expression evaluates to false if all its operands evaluate to false and to true otherwise.</dd>
+    </dl>
+    <p>By way of example, let us consider the following sequence of characters:</p>
+    <blockquote><code>(1 . #+foo 2 #-foo 3)</code></blockquote>
+    <p>If the symbol <code>foo</code> belongs to the value of the global variable <code>*features*</code>, then the sequence of characters is parsed as the dotted list <code>(1 . 2)</code>. Otherwise, the sequence of characters is parsed as the dotted list <code>(1 . 3)</code>.</p>
+    <h3>Syntax Analyzer</h3>
+    <p>The forms recognized by the syntax analyzer are specified by the template language specified by the following context-free grammar:</p>
+    <table class="ebnf">
+      <tr>
+        <td class="lhs">$\metavar{form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{special-form}$ | $\metavar{macro-call}$ | $\metavar{plain-function-call}$ | $\metavar{self-evaluating-object}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{special-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{quote-form}$ | $\metavar{progn-form}$ | $\metavar{if-form}$ | $\metavar{lambda-abstraction}$ | $\metavar{variable-reference}$ | $\metavar{variable-assignment}$ | $\metavar{\_for-each-form}$ | $\metavar{\_catch-errors-form}$ | $\metavar{multiple-value-call-form}$ | $\metavar{apply-form}$ | $\metavar{multiple-value-apply-form}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{quote-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>(quote $\metavar{literal}$)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{literal}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\object$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{progn-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>(progn $\metavar{serial-form}$*)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{serial-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{form}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{if-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>(if $\metavar{test-form}$ $\metavar{then-form}$ $\metavar{else-form}$)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{test-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{form}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{then-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{form}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{else-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{form}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{lambda-abstraction}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{\_vlambda-form}$ | $\metavar{\_mlambda-form}$ | $\metavar{\_flambda-form}$ | $\metavar{\_dlambda-form}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{\_vlambda-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>(_vlambda $\metavar{parameter-list}$ $\metavar{body}$)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{\_mlambda-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>(_mlambda $\metavar{parameter-list}$ $\metavar{body}$)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{\_flambda-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>(_flambda $\metavar{parameter-list}$ $\metavar{body}$)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{\_dlambda-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>(_dlambda $\metavar{parameter-list}$ $\metavar{body}$)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{parameter-list}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\variable$ | ($\variable$*) | ($\variable$+ . $\variable$)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{body}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{serial-form}$*</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{variable-reference}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\variable$ | $\metavar{vref-form}$ | $\metavar{fref-form}$ | $\metavar{dref-form}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{vref-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>(vref $\variable$)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{fref-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>(fref $\variable$)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{dref-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>(dref $\variable$)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{variable-assignment}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{vset-form}$ | $\metavar{fset-form}$ | $\metavar{dset-form}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{vset-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>(vset! $\variable$ $\metavar{value-form}$)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{fset-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>(fset! $\variable$ $\metavar{value-form}$)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{dset-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>(dset! $\variable$ $\metavar{value-form}$)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{value-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{form}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{\_for-each-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>(_for-each $\metavar{function-form}$ $\metavar{list-form}$)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{function-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{form}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{list-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{form}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{\_catch-errors-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>(_catch-errors $\metavar{try-form}$)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{try-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{form}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{multiple-value-call-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>(multiple-value-call $\metavar{operator-form}$ $\metavar{operand-form}$*)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{apply-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>(apply $\metavar{operator-form}$ $\metavar{operand-form}$*)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{multiple-value-apply-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>(multiple-value-apply $\metavar{operator-form}$ $\metavar{operand-form}$*)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{macro-call}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>($\metavar{macro-operator}$ $\metavar{macro-operand}$*)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{macro-operator}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\variable$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{macro-operand}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\object$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{plain-function-call}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>($\metavar{operator-form}$ $\metavar{operand-form}$*)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{operator-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{form}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{operand-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{form}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{self-evaluating-object}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\void$ | $\boolean$ | $\number$ | $\character$ | $\string$ | $\keyword$ | $\vector$ | $\primitivefunction$ | $\closure$</code></td>
+      </tr>
+    </table>
+    <p>The names of the nonterminal symbols are the names that will be used throughout this document to name the forms and their components.</p>
+    <p>The following production rules introduce additional terminology:</p>
+    <table class="ebnf">
+      <tr>
+        <td class="lhs">$\metavar{special-operator}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>quote | progn | if | _vlambda | _mlambda | _flambda | _dlambda | vref | fref | dref | vset! | fset! | dset! | _for-each | _catch-errors | multiple-value-call | apply | multiple-value-apply</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{call}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{macro-call}$ | $\metavar{function-call}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{function-call}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{plain-function-call}$ | $\metavar{multiple-value-call-form}$ | $\metavar{apply-form}$ | $\metavar{multiple-value-apply-form}$</code></td>
+      </tr>
+    </table>
+    <p>The variables <code>quasiquote</code>, <code>unquote</code>, and <code>unquote-splicing</code> are not special operators. The variable <code>quasiquote</code> is the name of a global macro and the variables <code>unquote</code> and <code>unquote-splicing</code> are variables having special meanings in the context of a call to the global macro <code>quasiquote</code>.</p>
+    <p>A form consisting of a variable $\var$ is treated as an abbreviation. If it appears in operator position, then it is treated as an abbreviation for the special form <code>(fref $\var$)</code>. Otherwise, it is treated as an abbreviation for the special form <code>(vref $\var$)</code>.</p>
+    <p>Classifying a form is the first step in evaluating a form. If the classification fails, then the evaluation fails.</p>
+    <p>Some syntax analyzers classify forms without checking that the components that must be forms are actually forms. Syntax analyzers associated with interpreters usually function this way. With this kind of syntax analyzer, the components that must be forms are classified if and when they are evaluated.</p>
+    <p>According to the template language, some objects can simultaneously be a special form, a macro call, and a plain function call. Additional rules are needed to disambiguate the situation.</p>
+    <p>The following rules used by the syntax analyzer are not expressed by the template language:</p>
+    <ul>
+      <li>A list whose first element is a special operator is never classified as a call. Either the list is successfully classified as a special form or the classification fails.</li>
+      <li>A list whose first element is a variable (other than a special operator) naming a macro according to the lookup rule used by <code>fref</code> is never classified as a plain function call. Either the list is successfully classified as a macro call or the classification fails.</li>
+      <li>The variables of a parameter list must be distinct.</li>
+    </ul>
+    <h3>Documentation Generator</h3>
+    <p>In this section, the character &#x21F0; marks the places where line breaks have been added to wrap long lines.</p>
+    <p>Let us consider the following documented EVLambda source file:</p>
+    <pre class="repl">&lt;chapter&gt;<br>&lt;title&gt;Recursive Functions&lt;/title&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;section&gt;<br>&lt;title&gt;Factorial Function&lt;/title&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>(fdef fact (n)<br>  &lt;para&gt;...block...&lt;/para&gt;<br>  &lt;para&gt;...block...&lt;/para&gt;<br>  (if (= n 0)<br>      1 &lt;comment&gt;...eol...&lt;/comment&gt;<br>    (* n (fact (- n 1))))) &lt;comment&gt;...eoll...&lt;/comment&gt;<br><br>(test 1 (fact 0))<br>(test 120 (fact 5))<br>(test 3628800 (fact 10))<br>&lt;/section&gt;<br>&lt;section&gt;<br>&lt;title&gt;Fibonacci Sequence&lt;/title&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>(fdef fib (n)<br>  &lt;para&gt;...block...&lt;/para&gt;<br>  &lt;para&gt;...block...&lt;/para&gt;<br>  (if (= n 0)<br>      0 &lt;comment&gt;...eol...&lt;/comment&gt;<br>    (if (= n 1)<br>        1 &lt;comment&gt;...eol...&lt;/comment&gt;<br>      (+ (fib (- n 1)) (fib (- n 2)))))) &lt;comment&gt;...eoll...&lt;/comment&gt;<br><br>(test 0 (fib 0))<br>(test 5 (fib 5))<br>(test 55 (fib 10))<br>&lt;/section&gt;<br>&lt;/chapter&gt;</pre>
+    <p>The first step of the documentation generation process converts the documented EVLambda source file into the following XML document:</p>
+    <pre class="repl">&lt;chapter&gt;<br>&lt;title&gt;Recursive Functions&lt;/title&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;section&gt;<br>&lt;title&gt;Factorial Function&lt;/title&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;toplevelcode&gt;&lt;blockcode&gt;(fdef fact (n)&#x21F0;<br>&lt;/blockcode&gt;&lt;indentation style="margin-left: 2ch;"&gt;&lt;blockcomment&gt;<br>  &lt;para&gt;...block...&lt;/para&gt;<br>  &lt;para&gt;...block...&lt;/para&gt;&lt;/blockcomment&gt;&lt;/indentation&gt;&lt;blockcode&gt;<br>  (if (= n 0)<br>      1 &lt;comment&gt;...eol...&lt;/comment&gt;<br>    (* n (fact (- n 1))))) &#x21F0;<br>&lt;comment&gt;...eoll...&lt;/comment&gt;&lt;/blockcode&gt;&lt;/toplevelcode&gt;<br><br>&lt;toplevelcode&gt;&lt;blockcode&gt;(test 1 (fact 0))<br>(test 120 (fact 5))<br>(test 3628800 (fact 10))&lt;/blockcode&gt;&lt;/toplevelcode&gt;<br>&lt;/section&gt;<br>&lt;section&gt;<br>&lt;title&gt;Fibonacci Sequence&lt;/title&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;toplevelcode&gt;&lt;blockcode&gt;(fdef fib (n)&#x21F0;<br>&lt;/blockcode&gt;&lt;indentation style="margin-left: 2ch;"&gt;&lt;blockcomment&gt;<br>  &lt;para&gt;...block...&lt;/para&gt;<br>  &lt;para&gt;...block...&lt;/para&gt;&lt;/blockcomment&gt;&lt;/indentation&gt;&lt;blockcode&gt;<br>  (if (= n 0)<br>      0 &lt;comment&gt;...eol...&lt;/comment&gt;<br>    (if (= n 1)<br>        1 &lt;comment&gt;...eol...&lt;/comment&gt;<br>      (+ (fib (- n 1)) (fib (- n 2)))))) &#x21F0;<br>&lt;comment&gt;...eoll...&lt;/comment&gt;&lt;/blockcode&gt;&lt;/toplevelcode&gt;<br><br>&lt;toplevelcode&gt;&lt;blockcode&gt;(test 0 (fib 0))<br>(test 5 (fib 5))<br>(test 55 (fib 10))&lt;/blockcode&gt;&lt;/toplevelcode&gt;<br>&lt;/section&gt;<br>&lt;/chapter&gt;</pre>
+    <p>Here are a few remarks about the XML document:</p>
+    <ul>
+      <li>The XML document is well-formed. (In this case, the documented EVLambda source file was already well-formed because the code does not contain any &lt; or &amp; character.)</li>
+      <li>Top-level forms are delimited by <code>toplevelcode</code> elements.</li>
+      <li>Consecutive top-level forms that are not separated by at least one blank line are lumped into the same <code>toplevelcode</code> element.</li>
+      <li>The content of a <code>toplevelcode</code> element is segmented into a sequence of <code>blockcode</code> elements, which contain code and end-of-line/end-of-last-line comments, and <code>blockcomment</code> elements, which contain block comments.</li>
+      <li>Each <code>blockcomment</code> element is wrapped into an <code>indentation</code> element that specifies its indentation through the CSS property <code>margin-left</code>.</li>
+    </ul>
+    <p>The second step of the documentation generation process converts the XML document into the following HTML document:</p>
+    <pre class="repl">&lt;html&gt;<br>  &lt;head&gt;<br>  &lt;/head&gt;<br>  &lt;body&gt;<br>    &lt;h1&gt;Recursive Functions&lt;/h1&gt;<br>    &lt;p&gt;...para...&lt;/p&gt;<br>    &lt;p&gt;...para...&lt;/p&gt;<br>    &lt;h2&gt;Factorial Function&lt;/h2&gt;<br>    &lt;p&gt;...para...&lt;/p&gt;<br>    &lt;p&gt;...para...&lt;/p&gt;<br>    &lt;pre class="blockcode"&gt;(fdef fact (n)&lt;/pre&gt;<br>    &lt;div class="indentation" style="margin-left: 2ch;"&gt;<br>      &lt;div class="blockcomment"&gt;<br>        &lt;p&gt;...block...&lt;/p&gt;<br>        &lt;p&gt;...block...&lt;/p&gt;<br>      &lt;/div&gt;<br>    &lt;/div&gt;<br>    &lt;pre class="blockcode"&gt;<br>  (if (= n 0)<br>      1 &lt;span class="eolcomment"&gt;...eol...&lt;/span&gt;<br>    (* n (fact (- n 1))))) &#x21F0;<br>&lt;span class="eolcomment"&gt;...eoll...&lt;/span&gt;&lt;/pre&gt;<br>    &lt;pre class="blockcode"&gt;(test 1 (fact 0))<br>(test 120 (fact 5))<br>(test 3628800 (fact 10))&lt;/pre&gt;<br>    &lt;h2&gt;Fibonacci Sequence&lt;/h2&gt;<br>    &lt;p&gt;...para...&lt;/p&gt;<br>    &lt;p&gt;...para...&lt;/p&gt;<br>    &lt;pre class="blockcode"&gt;(fdef fib (n)&lt;/pre&gt;<br>    &lt;div class="indentation" style="margin-left: 2ch;"&gt;<br>      &lt;div class="blockcomment"&gt;<br>        &lt;p&gt;...block...&lt;/p&gt;<br>        &lt;p&gt;...block...&lt;/p&gt;<br>      &lt;/div&gt;<br>    &lt;/div&gt;<br>    &lt;pre class="blockcode"&gt;<br>  (if (= n 0)<br>      0 &lt;span class="eolcomment"&gt;...eol...&lt;/span&gt;<br>    (if (= n 1)<br>        1 &lt;span class="eolcomment"&gt;...eol...&lt;/span&gt;<br>      (+ (fib (- n 1)) (fib (- n 2)))))) &#x21F0;<br>&lt;span class="eolcomment"&gt;...eoll...&lt;/span&gt;&lt;/pre&gt;<br>    &lt;pre class="blockcode"&gt;(test 0 (fib 0))<br>(test 5 (fib 5))<br>(test 55 (fib 10))&lt;/pre&gt;<br>  &lt;/body&gt;<br>&lt;/html&gt;</pre>
   </body>
 </html>
