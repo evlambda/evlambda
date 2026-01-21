@@ -32,7 +32,7 @@
     <h3>Data Type <code>boolean</code></h3>
     <dl>
       <dt><code>(not $\boolean$)</code></dt>
-      <dd>The function returns <code>#t</code> if its argument is <code>#f</code> and <code>#f</code> if its argument is <code>#t</code>.</dd>
+      <dd>The function returns <code>#t</code> if $\boolean$ is <code>#f</code> and <code>#f</code> if $\boolean$ is <code>#t</code>.</dd>
     </dl>
     <pre class="repl">&gt; (not #t)<br>#f<br><br>&gt; (not #f)<br>#t</pre>
     <dl>
@@ -78,41 +78,41 @@
     <h4>Comparison Operators</h4>
     <dl>
       <dt><code>(= $\number_1$ $\number_2$)</code></dt>
-      <dd>The function returns <code>#t</code> if its two arguments are equal and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\number_1$ and $\number_2$ are numerically equal and <code>#f</code> otherwise.</dd>
       <dt><code>(/= $\number_1$ $\number_2$)</code></dt>
-      <dd>The function returns <code>#t</code> if its two arguments are different and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\number_1$ and $\number_2$ are numerically different and <code>#f</code> otherwise.</dd>
       <dt><code>(&lt; $\number_1$ $\number_2$)</code></dt>
-      <dd>The function returns <code>#t</code> if its first argument is less than its second argument and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\number_1$ is numerically less than $\number_2$ and <code>#f</code> otherwise.</dd>
       <dt><code>(&lt;= $\number_1$ $\number_2$)</code></dt>
-      <dd>The function returns <code>#t</code> if its first argument is less than or equal to its second argument and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\number_1$ is numerically less than or equal to $\number_2$ and <code>#f</code> otherwise.</dd>
       <dt><code>(&gt; $\number_1$ $\number_2$)</code></dt>
-      <dd>The function returns <code>#t</code> if its first argument is greater than its second argument and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\number_1$ is numerically greater than $\number_2$ and <code>#f</code> otherwise.</dd>
       <dt><code>(&gt;= $\number_1$ $\number_2$)</code></dt>
-      <dd>The function returns <code>#t</code> if its first argument is greater than or equal to its second argument and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\number_1$ is numerically greater than or equal to $\number_2$ and <code>#f</code> otherwise.</dd>
     </dl>
     <pre class="repl">&gt; (list (= -1 0) (= 0 0) (= 1 0))<br>(#f #t #f)<br><br>&gt; (list (/= -1 0) (/= 0 0) (/= 1 0))<br>(#t #f #t)<br><br>&gt; (list (&lt; -1 0) (&lt; 0 0) (&lt; 1 0))<br>(#t #f #f)<br><br>&gt; (list (&lt;= -1 0) (&lt;= 0 0) (&lt;= 1 0))<br>(#t #t #f)<br><br>&gt; (list (&gt; -1 0) (&gt; 0 0) (&gt; 1 0))<br>(#f #f #t)<br><br>&gt; (list (&gt;= -1 0) (&gt;= 0 0) (&gt;= 1 0))<br>(#f #t #t)</pre>
     <p>The names of the comparison operators do not end with a question mark because they traditionally do not (in mathematics and other programming languages).</p>
     <h3>Data Type <code>list</code></h3>
     <dl>
       <dt><code>(list? $\object$)</code></dt>
-      <dd>The function returns <code>#t</code> if its argument is of type <code>list</code> and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\object$ is of type <code>list</code> and <code>#f</code> otherwise.</dd>
     </dl>
     <pre class="repl">&gt; (list? '())<br>#t<br><br>&gt; (list? '(1 2 3))<br>#t</pre>
     <dl>
       <dt><code>(list $\object_1\ldots\object_n$)</code></dt>
-      <dd>The function collects its arguments into a list: when invoked on the arguments $\object_1$, &hellip;, $\object_n$, the function returns a list whose elements are $\object_1$, &hellip;, $\object_n$.</dd>
+      <dd>The function collects its arguments into a list: when invoked on the arguments $\object_1,\ldots,\object_n$, the function returns a list whose elements are $\object_1,\ldots,\object_n$.</dd>
     </dl>
     <pre class="repl">&gt; (list)<br>()<br><br>&gt; (list 1 2 3)<br>(1 2 3)</pre>
     <h3>Data Type <code>empty-list</code></h3>
     <dl>
       <dt><code>(empty-list? $\object$)</code></dt>
-      <dd>The function returns <code>#t</code> if its argument is of type <code>empty-list</code> and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\object$ is of type <code>empty-list</code> and <code>#f</code> otherwise.</dd>
     </dl>
     <pre class="repl">&gt; (empty-list? '())<br>#t<br><br>&gt; (empty-list? '(1 2 3))<br>#f</pre>
     <h3>Data Type <code>cons</code></h3>
     <dl>
       <dt><code>(cons? $\object$)</code></dt>
-      <dd>The function returns <code>#t</code> if its argument is of type <code>cons</code> and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\object$ is of type <code>cons</code> and <code>#f</code> otherwise.</dd>
     </dl>
     <pre class="repl">&gt; (cons? '())<br>#f<br><br>&gt; (cons? '(1 2 3))<br>#t</pre>
     <dl>
@@ -122,9 +122,9 @@
     <pre class="repl">&gt; (cons 3 '())<br>(3)<br><br>&gt; (cons 2 (cons 3 '()))<br>(2 3)<br><br>&gt; (cons 1 (cons 2 (cons 3 '())))<br>(1 2 3)</pre>
     <dl>
       <dt><code>(car $\cons$)</code></dt>
-      <dd>The function returns the first element of its argument.</dd>
+      <dd>The function returns the first element of $\cons$.</dd>
       <dt><code>(cdr $\cons$)</code></dt>
-      <dd>The function returns the second element of its argument.</dd>
+      <dd>The function returns the second element of $\cons$.</dd>
     </dl>
     <pre class="repl">&gt; (car '(1 2 3))<br>1<br><br>&gt; (cdr '(1 2 3))<br>(2 3)<br><br>&gt; (car (cdr '(1 2 3)))<br>2<br><br>&gt; (cdr (cdr '(1 2 3)))<br>(3)<br><br>&gt; (car (cdr (cdr '(1 2 3))))<br>3<br><br>&gt; (cdr (cdr (cdr '(1 2 3))))<br>()</pre>
     <h3>Equality Predicates</h3>
@@ -172,8 +172,8 @@
     <ul>
       <li>An evaluation trace is a sequence of lines.</li>
       <li>Times flows from top to bottom.</li>
-      <li>Each recorded evaluation contributes two lines to the trace: an eval-in line of the form &ldquo;The form $\form$ is evaluated with respect to $\lexenv$ and $\dynenv$.&rdquo; recording the start of the evaluation and a matching eval-out line of the form &ldquo;The form $\form$ evaluates to $\obj_1$, &hellip;, $\obj_n$.&rdquo; recording the normal completion of the evaluation.</li>
-      <li>Each recorded invocation contributes two lines to the trace: an invoke-in line of the form &ldquo;The function $\fun$ is invoked on $\obj_1$, &hellip;, $\obj_n$.&rdquo; recording the start of the invocation and a matching invoke-out line of the form &ldquo;The function $\fun$ returns $\obj_1$, &hellip;, $\obj_n$.&rdquo; recording the normal completion of the invocation.</li>
+      <li>Each recorded evaluation contributes two lines to the trace: an eval-in line of the form &ldquo;The form $\form$ is evaluated with respect to $\lexenv$ and $\dynenv$.&rdquo; recording the start of the evaluation and a matching eval-out line of the form &ldquo;The form $\form$ evaluates to $\obj_1,\ldots,\obj_n$.&rdquo; recording the normal completion of the evaluation.</li>
+      <li>Each recorded invocation contributes two lines to the trace: an invoke-in line of the form &ldquo;The function $\fun$ is invoked on $\obj_1,\ldots,\obj_n$.&rdquo; recording the start of the invocation and a matching invoke-out line of the form &ldquo;The function $\fun$ returns $\obj_1,\ldots,\obj_m$.&rdquo; recording the normal completion of the invocation.</li>
       <li>A step line is a free-form line recording a step other than an evaluation or invocation.</li>
       <li>A comment line is a free-form line in italic type containing a comment.</li>
       <li>Lexical and dynamic environments are represented as $[\binding_1,\ldots,\binding_n]$ where bindings in the value namespace are represented as $\var\vbind\obj$ and bindings in the function namespace are represented as $\var\fbind\obj$.</li>
@@ -819,7 +819,7 @@
       <li>$F_3$ is computed from $F_2$ and $F_1$</li>
       <li>&hellip;</li>
     </ul>
-    <p>Let $n_\mathrm{init}$ be the the argument of <code>fib-iter</code> and $n$, $a$, and $b$ be the arguments of the invocation of <code>fib-iter-internal</code> under consideration. When processing the invocation of <code>fib-iter-internal</code> from <code>fib-iter</code>, $n=n_\mathrm{init}$, $a=F_0$, and $b=F_1$. If $n_\mathrm{init}=0$, then <code>fib-iter-internal</code> returns $a=F_0$. Otherwise, if $n_\mathrm{init}=1$, then <code>fib-iter-internal</code> returns $b=F_1$. Otherwise, <code>fib-iter-internal</code> invokes itself recursively. On each recursive invocation of <code>fib-iter-internal</code>, $n$ is decremented by $1$, $a$ is replaced by the next Fibonacci number in the sequence $F_0$, $F_1$, $F_2$, &hellip;, and $b$ is replaced by the next Fibonacci number in the sequence $F_1$, $F_2$, $F_3$, &hellip; When processing the $(n_\mathrm{init}-1)$-th recursive invocation of <code>fib-iter-internal</code>, $n=n_\mathrm{init}-(n_\mathrm{init}-1)=1$, $a=F_{0+n_\mathrm{init}-1}=F_{n_\mathrm{init}-1}$, and $b=F_{1+n_\mathrm{init}-1}=F_{n_\mathrm{init}}$ and <code>fib-iter-internal</code> returns $b=F_{n_\mathrm{init}}$.</p>
+    <p>Let $n_\mathrm{init}$ be the the argument of <code>fib-iter</code> and $n$, $a$, and $b$ be the arguments of the invocation of <code>fib-iter-internal</code> under consideration. When processing the invocation of <code>fib-iter-internal</code> from <code>fib-iter</code>, $n=n_\mathrm{init}$, $a=F_0$, and $b=F_1$. If $n_\mathrm{init}=0$, then <code>fib-iter-internal</code> returns $a=F_0$. Otherwise, if $n_\mathrm{init}=1$, then <code>fib-iter-internal</code> returns $b=F_1$. Otherwise, <code>fib-iter-internal</code> invokes itself recursively. On each recursive invocation of <code>fib-iter-internal</code>, $n$ is decremented by $1$, $a$ is replaced by the next Fibonacci number in the sequence $F_0,F_1,F_2,\ldots$, and $b$ is replaced by the next Fibonacci number in the sequence $F_1,F_2,F_3,\ldots$ When processing the $(n_\mathrm{init}-1)$-th recursive invocation of <code>fib-iter-internal</code>, $n=n_\mathrm{init}-(n_\mathrm{init}-1)=1$, $a=F_{0+n_\mathrm{init}-1}=F_{n_\mathrm{init}-1}$, and $b=F_{1+n_\mathrm{init}-1}=F_{n_\mathrm{init}}$ and <code>fib-iter-internal</code> returns $b=F_{n_\mathrm{init}}$.</p>
     <p>Here is an invocation trace of the evaluation of the form <code>(fib-iter 6)</code>:</p>
     <div class="trace">
       <ul>

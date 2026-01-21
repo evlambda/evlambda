@@ -15,7 +15,7 @@
       $\DeclareMathOperator{\pat}{pat}$
     </div>
     <h1>Reference Manual</h1>
-    <p>The reference manual provides a detailed account of the programming language. It supplements the user manual (particularly the sections &ldquo;Programming Language&rdquo; and &ldquo;Listener Buffers&rdquo;) and the tutorial.</p>
+    <p>The reference manual provides a detailed account of the programming language. It supplements and amends the user manual (particularly the sections &ldquo;Programming Language&rdquo; and &ldquo;Listener Buffers&rdquo;) and the tutorial.</p>
     <h2>Syntax</h2>
     <h3>Introduction</h3>
     <h4>Listener Buffers</h4>
@@ -170,10 +170,10 @@
     <p>The following table summarizes the syntax of the regular expressions used in this document:</p>
     <table class="plain">
       <tr><th>Syntax</th><th>Meaning</th></tr>
-      <tr><td><code>'$\ldots$'</code></td><td>literal string (literal single quotes and backslashes must be escaped)</td></tr>
-      <tr><td><code>"$\ldots$"</code></td><td>literal string (literal double quotes and backslashes must be escaped)</td></tr>
-      <tr><td><code>[$\ldots$]</code></td><td>positive character class (literal carets, hyphens, closing square brackets, and backslashes must be escaped)</td></tr>
-      <tr><td><code>[^$\ldots$]</code></td><td>negative character class (literal carets, hyphens, closing square brackets, and backslashes must be escaped)</td></tr>
+      <tr><td><code>'&hellip;'</code></td><td>literal string (literal single quotes and backslashes must be escaped)</td></tr>
+      <tr><td><code>"&hellip;"</code></td><td>literal string (literal double quotes and backslashes must be escaped)</td></tr>
+      <tr><td><code>[&hellip;]</code></td><td>positive character class (literal carets, hyphens, closing square brackets, and backslashes must be escaped)</td></tr>
+      <tr><td><code>[^&hellip;]</code></td><td>negative character class (literal carets, hyphens, closing square brackets, and backslashes must be escaped)</td></tr>
       <tr><td><code>$\mlvar{char}_1$-$\mlvar{char}_2$</code></td><td>range of characters (inside character classes)</td></tr>
       <tr><td><code>$\mlvar{re}_1\mlvar{re}_2$</code></td><td>concatenation operation</td></tr>
       <tr><td><code>$\mlvar{re}_1$|$\mlvar{re}_2$</code></td><td>union (alternation) operation</td></tr>
@@ -213,7 +213,7 @@
       <tr><td><code>$\metavar{nonterminal}$</code></td><td>nonterminal symbol</td></tr>
       <tr><td><code>terminal</code></td><td>terminal symbol</td></tr>
       <tr><td><code>$\epsilon$</code></td><td>empty sequence of symbols</td></tr>
-      <tr><td><code>$\mlvar{rhs}_1$ | $\ldots$ | $\mlvar{rhs}_n$</code></td><td>union (alternation) operation</td></tr>
+      <tr><td><code>$\mlvar{rhs}_1$ | &hellip; | $\mlvar{rhs}_n$</code></td><td>union (alternation) operation</td></tr>
       <tr><td><code>$\mlvar{symbol}$*</code></td><td>zero-or-more-times (Kleene star) operation</td></tr>
       <tr><td><code>$\mlvar{symbol}$+</code></td><td>one-or-more-times (Kleene plus) operation</td></tr>
       <tr><td><code>$\mlvar{symbol}$?</code></td><td>zero-or-one-time (optional) operation</td></tr>
@@ -229,12 +229,12 @@
       <tr>
         <td class="lhs">$\metavar{valid-char}$</td>
         <td class="def">$\Coloneq$</td>
-        <td class="rhs"><code>[\C{L}\C{M}\C{N}\C{P}\C{S}\C{Z}\U{09}-\U{0D}\U{85}\C{Cf}\C{Co}]</code></td>
+        <td class="rhs"><code>[\C{L}\C{M}\C{N}\C{P}\C{S}\C{Z}\U{0009}-\U{000D}\U{0085}\C{Cf}\C{Co}]</code></td>
       </tr>
       <tr>
         <td class="lhs">$\metavar{whitespace-char}$</td>
         <td class="def">$\Coloneq$</td>
-        <td class="rhs"><code>[\U{09}-\U{0D}\U{20}\U{85}\U{200E}\U{200F}\U{2028}\U{2029}]</code></td>
+        <td class="rhs"><code>[\U{0009}-\U{000D}\U{0020}\U{0085}\U{200E}\U{200F}\U{2028}\U{2029}]</code></td>
       </tr>
       <tr>
         <td class="lhs">$\metavar{syntax-char}$</td>
@@ -555,7 +555,7 @@
       <!-- input -->
       <dt>$\metavar{input}\Coloneq$ <code>$\metavar{object}$</code></dt>
       <dd>$\mathcal{M}(\metavar{input})=\langle\mathcal{M}(\metavar{object})\rangle$</dd>
-      <dt>$\metavar{input}\Coloneq$ <code>$\metavarn{object}{1}$ $\ldots$ $\metavarn{object}{n\geq0}$</code></dt>
+      <dt>$\metavar{input}\Coloneq$ <code>$\metavarn{object}{1}\ldots\metavarn{object}{n\geq0}$</code></dt>
       <dd>$\mathcal{M}(\metavar{input})=\langle\mathcal{M}(\metavarn{object}{1}),\ldots,\mathcal{M}(\metavarn{object}{n})\rangle$</dd>
       <dt>$\metavar{input}\Coloneq$ <code>$\metavar{xml-comment}$* $\metavar{xml-element}$ $\metavar{xml-comment}$*</code></dt>
       <dd>$\mathcal{M}(\metavar{input})=\mathcal{M}(\metavar{xml-element})$</dd>
@@ -565,7 +565,7 @@
       <dt>$\metavar{xml-markup}\Coloneq$ <code>$\metavar{xml-comment}$</code></dt>
       <dd>$\mathcal{M}(\metavar{xml-markup})=\mathcal{M}(\metavar{xml-comment})$</dd>
       <!-- xml-element -->
-      <dt>$\metavar{xml-element}\Coloneq$ <code>xml-start-tag $\metavarn{xml-element-content}{1}$ $\ldots$ $\metavarn{xml-element-content}{n\geq0}$ xml-end-tag</code></dt>
+      <dt>$\metavar{xml-element}\Coloneq$ <code>xml-start-tag $\metavarn{xml-element-content}{1}\ldots\metavarn{xml-element-content}{n\geq0}$ xml-end-tag</code></dt>
       <dd>$\mathcal{M}(\metavar{xml-element})=\mathcal{M}(\metavarn{xml-element-content}{1})\|\cdots\|\mathcal{M}(\metavarn{xml-element-content}{n})$</dd>
       <dt>$\metavar{xml-element}\Coloneq$ <code>xml-empty-element-tag</code></dt>
       <dd>$\mathcal{M}(\metavar{xml-element})=\langle\rangle$</dd>
@@ -627,13 +627,13 @@
       <!-- proper-list -->
       <dt>$\metavar{proper-list}\Coloneq$ <code>left-parenthesis right-parenthesis</code></dt>
       <dd>$\mathcal{M}(\metavar{proper-list})=$ the empty list</dd>
-      <dt>$\metavar{proper-list}\Coloneq$ <code>left-parenthesis $\metavarn{object}{1}$ $\ldots$ $\metavarn{object}{n\geq1}$ right-parenthesis</code></dt>
+      <dt>$\metavar{proper-list}\Coloneq$ <code>left-parenthesis $\metavarn{object}{1}\ldots\metavarn{object}{n\geq1}$ right-parenthesis</code></dt>
       <dd>$\mathcal{M}(\metavar{proper-list})=$ the first cons of a chain of $n$ conses $\cons_1,\ldots,\cons_n$ such that the car of $\cons_i$ is $\mathcal{M}(\metavarn{object}{i})$, the cdr of $\cons_{i\lt n}$ is $\cons_{i+1}$, and the cdr of $\cons_n$ is the empty list</dd>
       <!-- dotted-list -->
-      <dt>$\metavar{dotted-list}\Coloneq$ <code>left-parenthesis $\metavarn{object}{1}$ $\ldots$ $\metavarn{object}{n\geq1}$ dot $\metavarn{object}{n+1}$ right-parenthesis</code></dt>
+      <dt>$\metavar{dotted-list}\Coloneq$ <code>left-parenthesis $\metavarn{object}{1}\ldots\metavarn{object}{n\geq1}$ dot $\metavarn{object}{n+1}$ right-parenthesis</code></dt>
       <dd>$\mathcal{M}(\metavar{dotted-list})=$ the first cons of a chain of $n$ conses $\cons_1,\ldots,\cons_n$ such that the car of $\cons_i$ is $\mathcal{M}(\metavarn{object}{i})$, the cdr of $\cons_{i\lt n}$ is $\cons_{i+1}$, and the cdr of $\cons_n$ is $\mathcal{M}(\metavarn{object}{n+1})$</dd>
       <!-- vector -->
-      <dt>$\metavar{vector}\Coloneq$ <code>hash-left-parenthesis $\metavarn{object}{1}$ $\ldots$ $\metavarn{object}{n\geq0}$ right-parenthesis</code></dt>
+      <dt>$\metavar{vector}\Coloneq$ <code>hash-left-parenthesis $\metavarn{object}{1}\ldots\metavarn{object}{n\geq0}$ right-parenthesis</code></dt>
       <dd>$\mathcal{M}(\metavar{vector})=$ a vector of $n$ elements $\mlvar{elem}_1,\ldots,\mlvar{elem}_n$ such that $\mlvar{elem}_i$ is $\mathcal{M}(\metavarn{object}{i})$</dd>
     </dl>
     <p>Note that the XML markup inside abbreviations, lists, and vectors cannot produce objects and has therefore been omitted from the definition of the function $\mathcal{M}$.</p>
@@ -723,9 +723,9 @@
       <li>An object matches the name of a type if and only if the object is a member of the type.</li>
       <li>An object matches a readable representation if and only if the object is (or is <code>eql</code> to) the object denoted by the readable representation.</li>
       <li>An object matches the pattern <code>()</code> if and only if the object is the empty list.</li>
-      <li>An object matches the pattern <code>($\metavarn{pattern}{1}$ $\ldots$ $\metavarn{pattern}{n\geq0}$)</code> if and only if the object is the first cons of a chain of $n$ conses $\cons_1,\ldots,\cons_n$ such that the car of $\cons_i$ matches $\metavarn{pattern}{i}$, the cdr of $\cons_{i\lt n}$ is $\cons_{i+1}$, and the cdr of $\cons_n$ is the empty list.</li>
-      <li>An object matches the pattern <code>($\metavarn{pattern}{1}$ $\ldots$ $\metavarn{pattern}{n\geq1}$ . $\metavarn{pattern}{n+1}$)</code> if and only if the object is the first cons of a chain of $n$ conses $\cons_1,\ldots,\cons_n$ such that the car of $\cons_i$ matches $\metavarn{pattern}{i}$, the cdr of $\cons_{i\lt n}$ is $\cons_{i+1}$, and the cdr of $\cons_n$ matches $\metavarn{pattern}{n+1}$.</li>
-      <li>An object matches the pattern <code>#($\metavarn{pattern}{1}$ $\ldots$ $\metavarn{pattern}{n\geq0}$)</code> if and only if the object is a vector of $n$ elements $\mlvar{elem}_1,\ldots,\mlvar{elem}_n$ such that $\mlvar{elem}_i$ matches $\metavarn{pattern}{i}$.</li>
+      <li>An object matches the pattern <code>($\metavarn{pattern}{1}\ldots\metavarn{pattern}{n\geq0}$)</code> if and only if the object is the first cons of a chain of $n$ conses $\cons_1,\ldots,\cons_n$ such that the car of $\cons_i$ matches $\metavarn{pattern}{i}$, the cdr of $\cons_{i\lt n}$ is $\cons_{i+1}$, and the cdr of $\cons_n$ is the empty list.</li>
+      <li>An object matches the pattern <code>($\metavarn{pattern}{1}\ldots\metavarn{pattern}{n\geq1}$ . $\metavarn{pattern}{n+1}$)</code> if and only if the object is the first cons of a chain of $n$ conses $\cons_1,\ldots,\cons_n$ such that the car of $\cons_i$ matches $\metavarn{pattern}{i}$, the cdr of $\cons_{i\lt n}$ is $\cons_{i+1}$, and the cdr of $\cons_n$ matches $\metavarn{pattern}{n+1}$.</li>
+      <li>An object matches the pattern <code>#($\metavarn{pattern}{1}\ldots\metavarn{pattern}{n\geq0}$)</code> if and only if the object is a vector of $n$ elements $\mlvar{elem}_1,\ldots,\mlvar{elem}_n$ such that $\mlvar{elem}_i$ matches $\metavarn{pattern}{i}$.</li>
     </ul>
     <p>By way of example, let us consider the template language specified by the following context-free grammar:</p>
     <table class="ebnf">
@@ -803,7 +803,7 @@
       <tr>
         <td class="lhs">$\metavar{special-form}$</td>
         <td class="def">$\Coloneq$</td>
-        <td class="rhs"><code>$\metavar{quote-form}$ | $\metavar{progn-form}$ | $\metavar{if-form}$ | $\metavar{lambda-abstraction}$ | $\metavar{variable-reference}$ | $\metavar{variable-assignment}$ | $\metavar{\_for-each-form}$ | $\metavar{\_catch-errors-form}$ | $\metavar{multiple-value-call-form}$ | $\metavar{apply-form}$ | $\metavar{multiple-value-apply-form}$</code></td>
+        <td class="rhs"><code>$\metavar{quote-form}$ | $\metavar{progn-form}$ | $\metavar{if-form}$ | $\metavar{lambda-abstraction}$ | $\metavar{variable-reference}$ | $\metavar{variable-assignment}$ | $\metavar{\_for-each-form}$ | $\metavar{\_catch-errors-form}$ | $\metavar{apply-form}$ | $\metavar{multiple-value-call-form}$ | $\metavar{multiple-value-apply-form}$</code></td>
       </tr>
       <tr>
         <td class="lhs">$\metavar{quote-form}$</td>
@@ -951,14 +951,14 @@
         <td class="rhs"><code>$\metavar{form}$</code></td>
       </tr>
       <tr>
-        <td class="lhs">$\metavar{multiple-value-call-form}$</td>
-        <td class="def">$\Coloneq$</td>
-        <td class="rhs"><code>(multiple-value-call $\metavar{operator-form}$ $\metavar{operand-form}$*)</code></td>
-      </tr>
-      <tr>
         <td class="lhs">$\metavar{apply-form}$</td>
         <td class="def">$\Coloneq$</td>
         <td class="rhs"><code>(apply $\metavar{operator-form}$ $\metavar{operand-form}$*)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{multiple-value-call-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>(multiple-value-call $\metavar{operator-form}$ $\metavar{operand-form}$*)</code></td>
       </tr>
       <tr>
         <td class="lhs">$\metavar{multiple-value-apply-form}$</td>
@@ -1007,7 +1007,7 @@
       <tr>
         <td class="lhs">$\metavar{special-operator}$</td>
         <td class="def">$\Coloneq$</td>
-        <td class="rhs"><code>quote | progn | if | _vlambda | _mlambda | _flambda | _dlambda | vref | fref | dref | vset! | fset! | dset! | _for-each | _catch-errors | multiple-value-call | apply | multiple-value-apply</code></td>
+        <td class="rhs"><code>quote | progn | if | _vlambda | _mlambda | _flambda | _dlambda | vref | fref | dref | vset! | fset! | dset! | _for-each | _catch-errors | apply | multiple-value-call | multiple-value-apply</code></td>
       </tr>
       <tr>
         <td class="lhs">$\metavar{call}$</td>
@@ -1017,7 +1017,7 @@
       <tr>
         <td class="lhs">$\metavar{function-call}$</td>
         <td class="def">$\Coloneq$</td>
-        <td class="rhs"><code>$\metavar{plain-function-call}$ | $\metavar{multiple-value-call-form}$ | $\metavar{apply-form}$ | $\metavar{multiple-value-apply-form}$</code></td>
+        <td class="rhs"><code>$\metavar{plain-function-call}$ | $\metavar{apply-form}$ | $\metavar{multiple-value-call-form}$ | $\metavar{multiple-value-apply-form}$</code></td>
       </tr>
     </table>
     <p>The variables <code>quasiquote</code>, <code>unquote</code>, and <code>unquote-splicing</code> are not special operators. The variable <code>quasiquote</code> is the name of a global macro and the variables <code>unquote</code> and <code>unquote-splicing</code> are variables having special meanings in the context of a call to the global macro <code>quasiquote</code>.</p>
@@ -1047,5 +1047,169 @@
     </ul>
     <p>The second step of the documentation generation process converts the XML document into the following HTML document:</p>
     <pre class="repl">&lt;html&gt;<br>  &lt;head&gt;<br>  &lt;/head&gt;<br>  &lt;body&gt;<br>    &lt;h1&gt;Recursive Functions&lt;/h1&gt;<br>    &lt;p&gt;...para...&lt;/p&gt;<br>    &lt;p&gt;...para...&lt;/p&gt;<br>    &lt;h2&gt;Factorial Function&lt;/h2&gt;<br>    &lt;p&gt;...para...&lt;/p&gt;<br>    &lt;p&gt;...para...&lt;/p&gt;<br>    &lt;pre class="blockcode"&gt;(fdef fact (n)&lt;/pre&gt;<br>    &lt;div class="indentation" style="margin-left: 2ch;"&gt;<br>      &lt;div class="blockcomment"&gt;<br>        &lt;p&gt;...block...&lt;/p&gt;<br>        &lt;p&gt;...block...&lt;/p&gt;<br>      &lt;/div&gt;<br>    &lt;/div&gt;<br>    &lt;pre class="blockcode"&gt;<br>  (if (= n 0)<br>      1 &lt;span class="eolcomment"&gt;...eol...&lt;/span&gt;<br>    (* n (fact (- n 1))))) &#x21F0;<br>&lt;span class="eolcomment"&gt;...eoll...&lt;/span&gt;&lt;/pre&gt;<br>    &lt;pre class="blockcode"&gt;(test 1 (fact 0))<br>(test 120 (fact 5))<br>(test 3628800 (fact 10))&lt;/pre&gt;<br>    &lt;h2&gt;Fibonacci Sequence&lt;/h2&gt;<br>    &lt;p&gt;...para...&lt;/p&gt;<br>    &lt;p&gt;...para...&lt;/p&gt;<br>    &lt;pre class="blockcode"&gt;(fdef fib (n)&lt;/pre&gt;<br>    &lt;div class="indentation" style="margin-left: 2ch;"&gt;<br>      &lt;div class="blockcomment"&gt;<br>        &lt;p&gt;...block...&lt;/p&gt;<br>        &lt;p&gt;...block...&lt;/p&gt;<br>      &lt;/div&gt;<br>    &lt;/div&gt;<br>    &lt;pre class="blockcode"&gt;<br>  (if (= n 0)<br>      0 &lt;span class="eolcomment"&gt;...eol...&lt;/span&gt;<br>    (if (= n 1)<br>        1 &lt;span class="eolcomment"&gt;...eol...&lt;/span&gt;<br>      (+ (fib (- n 1)) (fib (- n 2)))))) &#x21F0;<br>&lt;span class="eolcomment"&gt;...eoll...&lt;/span&gt;&lt;/pre&gt;<br>    &lt;pre class="blockcode"&gt;(test 0 (fib 0))<br>(test 5 (fib 5))<br>(test 55 (fib 10))&lt;/pre&gt;<br>  &lt;/body&gt;<br>&lt;/html&gt;</pre>
+    <h2>Semantics</h2>
+    <h3>Primitive Data Types and Primitive Functions</h3>
+    <p>This section inventories all the primitive data types and all the primitive functions.</p>
+    <p>For each primitive function, a template function call and a description of the primitive function's behavior are provided.</p>
+    <p>In template function calls, argument names imply the following type restrictions:</p>
+    <ul>
+      <li>Arguments named $\object$, with or without a subscript, can be of any type.</li>
+      <li>Arguments named $\number$, with or without a subscript, must be of type <code>number</code>.</li>
+      <li>Arguments named $\string$, with or without a subscript, must be of type <code>string</code>.</li>
+      <li>Arguments named $\variable$, with or without a subscript, must be of type <code>variable</code>.</li>
+      <li>Arguments named $\cons$, with or without a subscript, must be of type <code>cons</code>.</li>
+    </ul>
+    <p>If any argument is not of its required type, then the invocation of the primitive function completes abnormally.</p>
+    <h4>Primitive Data Types</h4>
+    <p>Here is a tree-view representation of the hierarchy of primitive data types:</p>
+    <pre>object<br>  |-void<br>  |-boolean<br>  |-number<br>  |-character<br>  |-string<br>  |-symbol<br>  |   |-keyword<br>  |   |-variable<br>  |-list<br>  |   |-empty-list<br>  |   |-cons<br>  |-vector<br>  |-function<br>  |   |-primitive-function<br>  |   |-closure</pre>
+    <h4>Primitive Data Type <code>object</code> and Related Primitive Functions</h4>
+    <dl>
+      <dt><code>(object? $\object$)</code></dt>
+      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>object</code> (which is always the case) and <code>#f</code> otherwise.</dd>
+      <dt><code>(eq? $\object_1$ $\object_2$)</code></dt>
+      <dd>The primitive function is an equality predicate. It returns <code>#t</code> if and only if the two objects are one and the same. In other words, it returns <code>#t</code> if and only if the two objects have the same address in the heap.</dd>
+      <dt><code>(eql? $\object_1$ $\object_2$)</code></dt>
+      <dd>The primitive function is an equality predicate. If both objects are of type <code>number</code>, then it returns <code>#t</code> if and only if the two objects represent the same mathematical number. Otherwise, if both objects are of type <code>character</code>, then it returns <code>#t</code> if and only if the two objects represent the same UTF-$16$ code unit. Otherwise, if both objects are of type <code>string</code>, then it returns <code>#t</code> if and only if the two objects represent the same indexed sequence of UTF-$16$ code units. Otherwise, it returns <code>#t</code> if and only if the two objects are <code>eq?</code>.</dd>
+    </dl>
+    <h4>Primitive Data Type <code>void</code> and Related Primitive Functions</h4>
+    <dl>
+      <dt><code>(void? $\object$)</code></dt>
+      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>void</code> and <code>#f</code> otherwise.</dd>
+    </dl>
+    <h4>Primitive Data Type <code>boolean</code> and Related Primitive Functions</h4>
+    <dl>
+      <dt><code>(boolean? $\object$)</code></dt>
+      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>boolean</code> and <code>#f</code> otherwise.</dd>
+    </dl>
+    <h4>Primitive Data Type <code>number</code> and Related Primitive Functions</h4>
+    <p>Objects of type <code>number</code> represent mathematical numbers using the floating-point format <a href="https://en.wikipedia.org/wiki/Double-precision_floating-point_format" target="_blank">IEEE 754 binary 64</a>.
+    <dl>
+      <dt><code>(number? $\object$)</code></dt>
+      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>number</code> and <code>#f</code> otherwise.</dd>
+      <dt><code>(_+ $\number_1$ $\number_2$)</code></dt>
+      <dd>The primitive function returns the sum $\number_1+\number_2$.</dd>
+      <dt><code>(_- $\number_1$ $\number_2$)</code></dt>
+      <dd>The primitive function returns the difference $\number_1-\number_2$.</dd>
+      <dt><code>(_* $\number_1$ $\number_2$)</code></dt>
+      <dd>The primitive function returns the product $\number_1\times\number_2$.</dd>
+      <dt><code>(_/ $\number_1$ $\number_2$)</code></dt>
+      <dd>The primitive function returns the quotient $\number_1\div\number_2$.</dd>
+      <dt><code>(% $\number_1$ $\number_2$)</code></dt>
+      <dd>The primitive function returns the remainder of the division of $\number_1$ by $\number_2$ when the quotient is forced to be an integer.</dd>
+      <dt><code>(= $\number_1$ $\number_2$)</code></dt>
+      <dd>The primitive function returns <code>#t</code> if $\number_1$ and $\number_2$ are numerically equal and <code>#f</code> otherwise.</dd>
+      <dt><code>(/= $\number_1$ $\number_2$)</code></dt>
+      <dd>The primitive function returns <code>#t</code> if $\number_1$ and $\number_2$ are numerically different and <code>#f</code> otherwise.</dd>
+      <dt><code>(&lt; $\number_1$ $\number_2$)</code></dt>
+      <dd>The primitive function returns <code>#t</code> if $\number_1$ is numerically less than $\number_2$ and <code>#f</code> otherwise.</dd>
+      <dt><code>(&lt;= $\number_1$ $\number_2$)</code></dt>
+      <dd>The primitive function returns <code>#t</code> if $\number_1$ is numerically less than or equal to $\number_2$ and <code>#f</code> otherwise.</dd>
+      <dt><code>(&gt; $\number_1$ $\number_2$)</code></dt>
+      <dd>The primitive function returns <code>#t</code> if $\number_1$ is numerically greater than $\number_2$ and <code>#f</code> otherwise.</dd>
+      <dt><code>(&gt;= $\number_1$ $\number_2$)</code></dt>
+      <dd>The primitive function returns <code>#t</code> if $\number_1$ is numerically greater than or equal to $\number_2$ and <code>#f</code> otherwise.</dd>
+    </dl>
+    <h4>Primitive Data Type <code>character</code> and Related Primitive Functions</h4>
+    <p>Contrary to what was said in the user manual, an object of type <code>character</code> represents a UTF-$16$ code unit (instead of a Unicode character).</p>
+    <dl>
+      <dt><code>(character? $\object$)</code></dt>
+      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>character</code> and <code>#f</code> otherwise.</dd>
+    </dl>
+    <h4>Primitive Data Type <code>string</code> and Related Primitive Functions</h4>
+    <p>Contrary to what was said in the user manual, an object of type <code>string</code> represents an indexed sequence of UTF-$16$ code units (instead of an indexed sequence of Unicode characters).</p>
+    <dl>
+      <dt><code>(string? $\object$)</code></dt>
+      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>string</code> and <code>#f</code> otherwise.</dd>
+    </dl>
+    <h4>Primitive Data Type <code>symbol</code> and Related Primitive Functions</h4>
+    <dl>
+      <dt><code>(symbol? $\object$)</code></dt>
+      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>symbol</code> and <code>#f</code> otherwise.</dd>
+    </dl>
+    <h4>Primitive Data Type <code>keyword</code> and Related Primitive Functions</h4>
+    <dl>
+      <dt><code>(keyword? $\object$)</code></dt>
+      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>keyword</code> and <code>#f</code> otherwise.</dd>
+      <dt><code>(make-keyword? $\string$)</code></dt>
+      <dd>The primitive function returns a new keyword whose name is $\string$. The keyword is not interned.</dd>
+    </dl>
+    <h4>Primitive Data Type <code>variable</code> and Related Primitive Functions</h4>
+    <dl>
+      <dt><code>(variable? $\object$)</code></dt>
+      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>variable</code> and <code>#f</code> otherwise.</dd>
+      <dt><code>(make-variable $\string$)</code></dt>
+      <dd>The primitive function returns a new variable whose name is $\string$. The variable is not interned.</dd>
+      <dt><code>(variable-value $\variable$)</code></dt>
+      <dd>If there exists a binding for $\variable$ in the value namespace of the global environment, then the primitive function returns the value of that binding. Otherwise, the primitive function returns <code>#v</code>.</dd>
+      <dt><code>(variable-set-value! $\variable$ $\object$)</code></dt>
+      <dd>If there exists a binding for $\variable$ in the value namespace of the global environment, then the primitive function replaces the value of that binding by $\object$. Otherwise, the primitive function adds to the value namespace of the global environment a new binding between $\variable$ and $\object$. In both cases, the primitive function returns $\object$.</dd>
+      <dt><code>(variable-value-bound? $\variable$)</code></dt>
+      <dd>If there exists a binding for $\variable$ in the value namespace of the global environment, then the primitive function returns <code>#t</code>. Otherwise, the primitive function returns <code>#f</code>.</dd>
+      <dt><code>(variable-unbind-value! $\variable$)</code></dt>
+      <dd>If there exists a binding for $\variable$ in the value namespace of the global environment, then that binding is deleted and the primitive function returns <code>#v</code>. Otherwise, the primitive function simply returns <code>#v</code>.</dd>
+      <dt><code>(variable-function $\variable$)</code></dt>
+      <dd>If there exists a binding for $\variable$ in the function namespace of the global environment, then the primitive function returns the value of that binding. Otherwise, the primitive function returns <code>#v</code>.</dd>
+      <dt><code>(variable-set-function! $\variable$ $\object$)</code></dt>
+      <dd>If there exists a binding for $\variable$ in the function namespace of the global environment, then the primitive function replaces the value of that binding by $\object$. Otherwise, the primitive function adds to the function namespace of the global environment a new binding between $\variable$ and $\object$. In both cases, the primitive function returns $\object$.</dd>
+      <dt><code>(variable-function-bound? $\variable$)</code></dt>
+      <dd>If there exists a binding for $\variable$ in the function namespace of the global environment, then the primitive function returns <code>#t</code>. Otherwise, the primitive function returns <code>#f</code>.</dd>
+      <dt><code>(variable-unbind-function! $\variable$)</code></dt>
+      <dd>If there exists a binding for $\variable$ in the function namespace of the global environment, then that binding is deleted and the primitive function returns <code>#v</code>. Otherwise, the primitive function simply returns <code>#v</code>.</dd>
+    </dl>
+    <h4>Primitive Data Type <code>list</code> and Related Primitive Functions</h4>
+    <dl>
+      <dt><code>(list? $\object$)</code></dt>
+      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>list</code> and <code>#f</code> otherwise.</dd>
+    </dl>
+    <h4>Primitive Data Type <code>empty-list</code> and Related Primitive Functions</h4>
+    <dl>
+      <dt><code>(empty-list? $\object$)</code></dt>
+      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>empty-list</code> and <code>#f</code> otherwise.</dd>
+    </dl>
+    <h4>Primitive Data Type <code>cons</code> and Related Primitive Functions</h4>
+    <dl>
+      <dt><code>(cons? $\object$)</code></dt>
+      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>cons</code> and <code>#f</code> otherwise.</dd>
+      <dt><code>(cons $\object_1$ $\object_2$)</code></dt>
+      <dd>The primitive function returns a new cons whose first element is $\object_1$ and whose second element is $\object_2$.</dd>
+      <dt><code>(car $\cons$)</code></dt>
+      <dd>The primitive function returns the first element of $\cons$.</dd>
+      <dt><code>(set-car! $\cons$ $\object$)</code></dt>
+      <dd>The primitive function replaces the first element of $\cons$ by $\object$ and returns $\object$.</dd>
+      <dt><code>(cdr $\cons$)</code></dt>
+      <dd>The primitive function returns the second element of $\cons$</dd>
+      <dt><code>(set-cdr! $\cons$ $\object$)</code></dt>
+      <dd>The primitive function replaces the second element of $\cons$ by $\object$ and returns $\object$.</dd>
+    </dl>
+    <h4>Primitive Data Type <code>vector</code> and Related Primitive Functions</h4>
+    <dl>
+      <dt><code>(vector? $\object$)</code></dt>
+      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>vector</code> and <code>#f</code> otherwise.</dd>
+    </dl>
+    <h4>Primitive Data Type <code>function</code> and Related Primitive Functions</h4>
+    <dl>
+      <dt><code>(function? $\object$)</code></dt>
+      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>function</code> and <code>#f</code> otherwise.</dd>
+    </dl>
+    <h4>Primitive Data Type <code>primitive-function</code> and Related Primitive Functions</h4>
+    <dl>
+      <dt><code>(primitive-function? $\object$)</code></dt>
+      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>primitive-function</code> and <code>#f</code> otherwise.</dd>
+    </dl>
+    <h4>Primitive Data Type <code>closure</code> and Related Primitive Functions</h4>
+    <dl>
+      <dt><code>(closure? $\object$)</code></dt>
+      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>closure</code> and <code>#f</code> otherwise.</dd>
+    </dl>
+    <h4>Miscellaneous Primitive Functions</h4>
+    <dl>
+      <dt><code>(values $\object_1\ldots\object_n$)</code></dt>
+      <dd>The primitive function converts its arguments into values: when invoked on the arguments $\object_1,\ldots,\object_n$, the primitive function returns the values $\object_1,\ldots,\object_n$.</dd>
+      <dt><code>(error $\string$)</code></dt>
+      <dd>The invocation of the primitive function always completes abnormally.</dd>
+      <dt><code>(now)</code></dt>
+      <dd>The primitive function returns the number of milliseconds elapsed since 1970-01-01 00:00:00.000 UTC.</dd>
+    </dl>
   </body>
 </html>

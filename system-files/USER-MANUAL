@@ -50,7 +50,7 @@
       <dt><code>closure</code></dt>
       <dd>Closures are input/output mappings implemented in EVLambda. Some closures are tagged as being a macro. Macros are code to code mappings used to create new language constructs. Closures have no readable representations and their printable representation is <code class="bg">#&lt;closure&gt;</code>.</dd>
     </dl>
-    <p>Each symbol has an associated sequence of characters (called the name of the symbol) that serves as its readable representation. If the name of a symbol starts with a colon, then the symbol is a keyword. Otherwise, the symbol is a variable. The reader always converts the same name into the same symbol. To that end, the reader maintains two mappings from names to symbols called packages: one package mapping the names of the previously encountered variables to the corresponding variables and one package mapping the names of the previously encountered keywords to the corresponding keywords.</p>
+    <p>Each symbol has an associated sequence of characters called the name of the symbol. The readable representation of a keyword is its name preceded by a semicolon. The readable representation of a variable is its name. The reader always converts the same readable representation of a symbol into the same symbol. To that end, the reader maintains two mappings from names to symbols called packages: one package mapping the names of the previously encountered variables to the corresponding variables and one package mapping the names of the previously encountered keywords to the corresponding keywords. Adding a symbol to its package is called interning the symbol.</p>
     <p>The printable representation of a list consists of a left parenthesis followed by the printable representations of the elements of the list separated by a single space followed by a right parenthesis. The printable representation of a list is just one of its infinitely many readable representations. In particular, other readable representations can be obtained by using sequences of at least one whitespace character instead of single spaces to separate the elements of the list.</p>
     <p>Although a macro is technically a function (because a macro is an object of type <code>closure</code> and type <code>closure</code> is a subtype of type <code>function</code>), the word &ldquo;function&rdquo; is often used to denote specifically a function other than a macro (that is, a primitive function or a closure not tagged as being a macro).</p>
     <p>Variables name objects through the use of namespaces, bindings, environments, and lookup rules:</p>
@@ -133,7 +133,7 @@
     <p>Evaluations are not all done with respect to the same lexical and dynamic environments. The lexical environment and the dynamic environments with respect to which a form is evaluated are referred to as &ldquo;the current lexical environment&rdquo; and &ldquo;the current dynamic environment&rdquo;, respectively.</p>
     <p>Top-level forms are evaluated with respect to an initial lexical environment and an initial dynamic environment that are both empty.</p>
     <p>A consequence of the evaluation rules stated later in this section is that non-top-level forms are evaluated with respect to (1) a lexical environment that is either the initial empty lexical environment or the result of extending, once or multiple times in sequence, the initial empty lexical environment and (2) a dynamic environment that is either the initial empty dynamic environment or the result of extending, once or multiple times in sequence, the initial empty dynamic environment.</p>
-    <p>Let $\env$ be an environment, $\ns$ be a namespace of the environment, $n$ be a nonnegative integer, $\var_1$, &hellip;, $\var_n$ be a sequence of $n$ distinct variables, and $\obj_1$, &hellip;, $\obj_n$ be a sequence of $n$ objects. The environment extending the environment $\env$ to bind, in the namespace $\ns$, the variable $\var_i$ to the object $\obj_i$ (for all $i$ from $1$ to $n$) is the environment obtained as follows:</p>
+    <p>Let $\env$ be an environment, $\ns$ be a namespace of the environment, $n$ be a nonnegative integer, $\var_1,\ldots,\var_n$ be a sequence of $n$ distinct variables, and $\obj_1,\ldots,\obj_n$ be a sequence of $n$ objects. The environment extending the environment $\env$ to bind, in the namespace $\ns$, the variable $\var_i$ to the object $\obj_i$ (for all $i$ from $1$ to $n$) is the environment obtained as follows:</p>
     <ol>
       <li>Copy the environment $\env$ in such a way that (1) the environment $\env$ and its copy are distinct (steps 2 and 3 below must have no effect on the environment $\env$) and (2) the environment $\env$ and its copy contain the exact same bindings (the bindings are not copied but shared between the two environments).</li>
       <li>For all $i$ from $1$ to $n$, delete from the copy of the namespace $\ns$ the binding for the variable $\var_i$, if it exists.</li>
@@ -186,6 +186,8 @@
       <li><code>(fset! $\metavar{variable}$ $\metavar{value-form}$)</code></li>
       <li><code>(dref $\metavar{variable}$)</code></li>
       <li><code>(dset! $\metavar{variable}$ $\metavar{value-form}$)</code></li>
+      <li><code>(_for-each $\metavar{function-form}$ $\metavar{list-form}$)</code></li>
+      <li><code>(_catch-errors $\metavar{try-form}$)</code></li>
       <li><code>(apply $\metavar{operator-form}$ $\metavar{operand-forms}$)</code></li>
       <li><code>(multiple-value-call $\metavar{operator-form}$ $\metavar{operand-forms}$)</code></li>
       <li><code>(multiple-value-apply $\metavar{operator-form}$ $\metavar{operand-forms}$)</code></li>
@@ -203,15 +205,18 @@
       <li>$\metavar{body}$ matches any sequence of zero or more objects</li>
       <li>$\metavar{variable}$ matches any variable</li>
       <li>$\metavar{value-form}$ matches any object</li>
-      <li>$\metavar{operator-form}$ matches any object</li>
-      <li>$\metavar{operand-forms}$ matches any sequence of zero or more objects</li>
+      <li>$\metavar{function-form}$ matches any object</li>
+      <li>$\metavar{list-form}$ matches any object</li>
+      <li>$\metavar{try-form}$ matches any object</li>
       <li>$\metavar{macro-operator}$ matches any variable naming a macro according to the lookup rule used by <code>fref</code></li>
       <li>$\metavar{macro-operands}$ matches any sequence of zero or more objects</li>
+      <li>$\metavar{operator-form}$ matches any object</li>
+      <li>$\metavar{operand-forms}$ matches any sequence of zero or more objects</li>
     </ul>
     <p>By way of example, a form matches the first pattern if and only if it is a list of two elements whose first element is the variable <code>quote</code>.</p>
     <p>The patterns are tried in sequence and the first matching pattern wins.</p>
-    <p>A form matching one of the first sixteen patterns is called a special form and the variables <code>quote</code>, <code>progn</code>, <code>if</code>, <code>_vlambda</code>, <code>_mlambda</code>, <code>_flambda</code>, <code>_dlambda</code>, <code>vref</code>, <code>vset!</code>, <code>fref</code>, <code>fset!</code>, <code>dref</code>, <code>dset!</code>, <code>apply</code>, <code>multiple-value-call</code>, and <code>multiple-value-apply</code> are called special operators.</p>
-    <p>Special forms matching patterns 4 (<code>_vlambda</code>), 5 (<code>_mlambda</code>), 6 (<code>_flambda</code>), and 7 (<code>_dlambda</code>) are called lambda abstractions. Lambda abstractions are the fundamental binding constructs from which all other binding constructs are built. Forms consisting of a variable and special forms matching patterns 8 (<code>vref</code>), 10 (<code>fref</code>), and 12 (<code>dref</code>) are called variable references. Special forms matching patterns 9 (<code>vset!</code>), 11 (<code>fset!</code>), and 13 (<code>dset!</code>) are called variable assignments. Forms matching pattern 17 are called macro calls. Forms matching pattern 18 are called plain function calls.</p>
+    <p>A form matching one of the first eighteen patterns is called a special form and the variables <code>quote</code>, <code>progn</code>, <code>if</code>, <code>_vlambda</code>, <code>_mlambda</code>, <code>_flambda</code>, <code>_dlambda</code>, <code>vref</code>, <code>vset!</code>, <code>fref</code>, <code>fset!</code>, <code>dref</code>, <code>dset!</code>, <code>_for-each</code>, <code>_catch-all</code>, <code>apply</code>, <code>multiple-value-call</code>, and <code>multiple-value-apply</code> are called special operators.</p>
+    <p>Special forms matching patterns 4 (<code>_vlambda</code>), 5 (<code>_mlambda</code>), 6 (<code>_flambda</code>), and 7 (<code>_dlambda</code>) are called lambda abstractions. Lambda abstractions are the fundamental binding constructs from which all other binding constructs are built. Forms consisting of a variable and special forms matching patterns 8 (<code>vref</code>), 10 (<code>fref</code>), and 12 (<code>dref</code>) are called variable references. Special forms matching patterns 9 (<code>vset!</code>), 11 (<code>fset!</code>), and 13 (<code>dset!</code>) are called variable assignments. Forms matching pattern 19 are called macro calls. Forms matching pattern 20 are called plain function calls.</p>
     <p>The rule regarding forms consisting of a variable is the following: If a variable $\var$ occurs in operator position, then the variable is treated as an abbreviation for <code>(fref $\var$)</code> and the function namespace is used. Otherwise, the variable is treated as an abbreviation for <code>(vref $\var$)</code> and the value namespace is used. For example, the plain function call <code>(f x)</code> would be treated as an abbreviation for <code>((fref f) (vref x))</code>. The full forms <code>(fref $\var$)</code> and <code>(vref $\var$)</code> can always be used to force the use of a specific namespace.</p>
     <p>As we will see below, the evaluation of a form containing subforms entails the evaluation of some or all of the subforms. When a subform is evaluated, the following rules apply:</p>
     <ul>
@@ -244,10 +249,14 @@
       <dd>If there exists a binding for the variable in the value namespace of the current dynamic environment, then the dref-form evaluates to the value of that binding. Otherwise, if there exists a binding for the variable in the value namespace of the global environment, then the dref-form evaluates to the value of that binding. Otherwise, the evaluation of the dref-form completes abnormally.</dd>
       <dt><code>(dset! $\metavar{variable}$ $\metavar{value-form}$)</code></dt>
       <dd>The value-form is evaluated. Let $\primval$ be the primary value of the value-form. If there exists a binding for the variable in the value namespace of the current dynamic environment, then the value of that binding is replaced by $\primval$. Otherwise, if there exists a binding for the variable in the value namespace of the global environment, then the value of that binding is replaced by $\primval$. Otherwise, a new binding between the variable and $\primval$ is added to the value namespace of the global environment. In all three cases, the dset-form evaluates to $\primval$.</dd>
+      <dt><code>(_for-each $\metavar{function-form}$ $\metavar{list-form}$)</code></dt>
+      <dd>This special form is described in the reference manual.</dd>
+      <dt><code>(_catch-errors $\metavar{try-form}$)</code></dt>
+      <dd>This special form is described in the reference manual.</dd>
       <dt><code>(apply $\metavar{operator-form}$ $\metavar{operand-forms}$)</code></dt>
       <dt><code>(multiple-value-call $\metavar{operator-form}$ $\metavar{operand-forms}$)</code></dt>
       <dt><code>(multiple-value-apply $\metavar{operator-form}$ $\metavar{operand-forms}$)</code></dt>
-      <dd>Variants of the plain function call described below. Those variants are described in the reference manual.</dd>
+      <dd>These special forms are variants of the plain function call described below. They are described in the reference manual.</dd>
       <dt><code>($\metavar{macro-operator}$ $\metavar{macro-operands}$)</code></dt>
       <dd>Following the definition of a macro call, the macro-operator matches a variable naming a macro according to the lookup rule used by <code>fref</code>. That macro is invoked on the unevaluated macro-operands. If the invocation completes abnormally, then the evaluation of the macro call also completes abnormally. Otherwise, if the invocation does not complete, then the evaluation of the macro call does not complete either. Otherwise, the primary value of the invocation, which is called the expansion of the macro call, is evaluated with respect to the current lexical and dynamic environments. If the evaluation of the expansion completes abnormally, then the evaluation of the macro call also completes abnormally. Otherwise, if the evaluation of the expansion does not complete, then the evaluation of the macro call does not complete either. Otherwise, the macro call evaluates to the values of the expansion.</dd>
       <dt><code>($\metavar{operator-form}$ $\metavar{operand-forms}$)</code></dt>
@@ -265,7 +274,7 @@
     <blockquote>Let's assume that, as is the case with all the evaluators currently available, the primitive function is implemented by a JavaScript function accepting (an encoding of) the arguments of the invocation of the primitive function and returning (an encoding of) the values of the invocation of the primitive function. The JavaScript function is invoked on the arguments. If the invocation of the JavaScript function completes abnormally, then the invocation of the primitive function also completes abnormally. Otherwise, if the invocation of the JavaScript function does not complete, then the invocation of the primitive function does not complete either. Otherwise, the primitive function returns the values returned by the JavaScript function.</blockquote>
     <p>A closure is invoked as follows:</p>
     <blockquote>
-      <p>If the number of variables in the parameter list of the lambda abstraction recorded by the closure and the number of arguments are different, then the invocation completes abnormally. (As we will see in the reference manual, it is actually possible to create closures accepting a variable number of arguments.) Otherwise, let $\var_1$, &hellip;, $\var_n$ be the variables composing the parameter list of the lambda abstraction recorded by the closure, $\arg_1$, &hellip;, $\arg_n$ be the arguments, and $\lexenv$ and $\dynenv$ be the following environments:</p>
+      <p>If the number of variables in the parameter list of the lambda abstraction recorded by the closure and the number of arguments are different, then the invocation completes abnormally. (As we will see in the reference manual, it is actually possible to create closures accepting a variable number of arguments.) Otherwise, let $\var_1,\ldots,\var_n$ be the variables composing the parameter list of the lambda abstraction recorded by the closure, $\arg_1,\ldots,\arg_n$ be the arguments, and $\lexenv$ and $\dynenv$ be the following environments:</p>
       <ul>
         <li>If the closure results from the evaluation of a _vlambda-form or an _mlambda-form, then $\lexenv$ is the environment extending the lexical environment recorded by the closure to bind, in the value namespace, the variable $\var_i$ to the argument $\arg_i$ (for all $i$ from $1$ to $n$) and $\dynenv$ is the current dynamic environment.</li>
         <li>If the closure results from the evaluation of an _flambda-form, then $\lexenv$ is the environment extending the lexical environment recorded by the closure to bind, in the function namespace, the variable $\var_i$ to the argument $\arg_i$ (for all $i$ from $1$ to $n$) and $\dynenv$ is the current dynamic environment.</li>
@@ -310,22 +319,22 @@
       <li>If the evaluation does not complete, then you must abort the evaluation or restart the evaluator in order to get a new prompt.</li>
     </ul>
     <p>We will now illustrate some of the concepts introduced in the section <a href="#programming-language">Programming Language</a> by providing a commented transcript of a sequence of evaluations conducted in a listener buffer. If you want to reproduce the evaluations, be sure to start with a fresh Trampoline++ evaluator. To get a fresh Trampoline++ evaluator, restart the evaluator (using the Restart Evaluator&hellip; command from the Eval menu) with Trampoline++ selected as the evaluator type.</p>
-    <p>The global functions used in the evaluations are listed below. For each function, a template function call and a description of the function are provided. The variable in operator position is the name of the function (i.e., the variable bound to the function in the function namespace of the global environment).</p>
+    <p>The global functions used in the evaluations are listed below. For each function, a template function call and a description of the function's behavior are provided. The variable in operator position is the name of the function (i.e., the variable bound to the function in the function namespace of the global environment).</p>
     <dl>
       <dt><code>(car $\cons$)</code></dt>
-      <dd>The function <code>car</code> returns the first element of its argument, which must be of type <code>cons</code>.</dd>
+      <dd>The function <code>car</code> returns the first element of $\cons$, which must be of type <code>cons</code>.</dd>
       <dt><code>(cdr $\cons$)</code></dt>
-      <dd>The function <code>cdr</code> returns the second element of its argument, which must be of type <code>cons</code>.</dd>
+      <dd>The function <code>cdr</code> returns the second element of $\cons$, which must be of type <code>cons</code>.</dd>
       <dt><code>(list $\object_1\ldots\object_n$)</code></dt>
-      <dd>The function <code>list</code> collects its arguments, which can be of any types, into a list: when invoked on the arguments $\object_1$, &hellip;, $\object_n$, the function returns a list whose elements are $\object_1$, &hellip;, $\object_n$.</dd>
+      <dd>The function <code>list</code> collects its arguments, which can be of any types, into a list: when invoked on the arguments $\object_1,\ldots,\object_n$, the function returns a list whose elements are $\object_1,\ldots,\object_n$.</dd>
       <dt><code>(+ $\number_1\ldots\number_n$)</code></dt>
       <dd>The function <code>+</code> returns the sum of its arguments, which must be of type <code>number</code>.</dd>
       <dt><code>(* $\number_1\ldots\number_n$)</code></dt>
       <dd>The function <code>*</code> returns the product of its arguments, which must be of type <code>number</code>.</dd>
       <dt><code>(values $\object_1\ldots\object_n$)</code></dt>
-      <dd>The function <code>values</code> converts its arguments, which can be of any types, into values: when invoked on the arguments $\object_1$, &hellip;, $\object_n$, the function returns the values $\object_1$, &hellip;, $\object_n$.</dd>
+      <dd>The function <code>values</code> converts its arguments, which can be of any types, into values: when invoked on the arguments $\object_1,\ldots,\object_n$, the function returns the values $\object_1,\ldots,\object_n$.</dd>
     </dl>
-    <p>The global macros used in the evaluations are listed below. For each macro, a template macro call and a description of the macro are provided. The variable in operator position is the name of the macro (i.e., the variable bound to the macro in the function namespace of the global environment).</p>
+    <p>The global macros used in the evaluations are listed below. For each macro, a template macro call and a description of the macro's behavior are provided. The variable in operator position is the name of the macro (i.e., the variable bound to the macro in the function namespace of the global environment).</p>
     <dl>
       <dt><code>(vdef $\metavar{variable}$ $\metavar{value-form}$)</code></dt>
       <dd>The purpose of the macro <code>vdef</code> is to define a global variable by ensuring that the variable is bound in the value namespace of the global environment to the primary value of the value-form. The macro call evaluates to the variable.</dd>
