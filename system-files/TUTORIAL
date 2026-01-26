@@ -168,12 +168,22 @@
       <dd>The purpose of the macro is to define a global macro by ensuring that the variable is bound in the function namespace of the global environment to the closure resulting from the evaluation of the _mlambda-form <code>(_mlambda $\metavar{parameter-list}$ $\metavar{body}$)</code>. The macro call evaluates to the variable.</dd>
     </dl>
     <h2>Evaluation and Invocation Traces</h2>
-    <p>An evaluation trace is a structured recording of some or all of the evaluations, invocations, and various steps performed by the evaluator to evaluate a form. It is assumed that the evaluation of the form completes normally, which implies that all evaluations and invocations entailed by the evaluation of the form also complete normally. Evaluation traces have the following format:</p>
+    <p>An evaluation trace is a structured recording of some or all of the evaluations, invocations, and various steps performed by the evaluator to evaluate a form. Evaluation traces have the following format:</p>
     <ul>
       <li>An evaluation trace is a sequence of lines.</li>
       <li>Times flows from top to bottom.</li>
-      <li>Each recorded evaluation contributes two lines to the trace: an eval-in line of the form &ldquo;The form $\form$ is evaluated with respect to $\lexenv$ and $\dynenv$.&rdquo; recording the start of the evaluation and a matching eval-out line of the form &ldquo;The form $\form$ evaluates to $\obj_1,\ldots,\obj_n$.&rdquo; recording the normal completion of the evaluation.</li>
-      <li>Each recorded invocation contributes two lines to the trace: an invoke-in line of the form &ldquo;The function $\fun$ is invoked on $\obj_1,\ldots,\obj_n$.&rdquo; recording the start of the invocation and a matching invoke-out line of the form &ldquo;The function $\fun$ returns $\obj_1,\ldots,\obj_m$.&rdquo; recording the normal completion of the invocation.</li>
+      <li>Each recorded evaluation contributes two lines to the trace: an eval-in line of the form &ldquo;The form $\form$ is evaluated with respect to $\lexenv$ and $\dynenv$.&rdquo; recording the start of the evaluation and a matching eval-out line recording the completion of the evaluation. The eval-out line can take the following forms:
+        <ul>
+          <li>&ldquo;The form $\form$ evaluates to $\obj_1,\ldots,\obj_n$.&rdquo;, which records the normal completion of the evaluation</li>
+          <li>&ldquo;The evaluation of the form $\form$ completes abruptly.&rdquo;, which records the abrupt completion of the evaluation</li>
+        </ul>
+      </li>
+      <li>Each recorded invocation contributes two lines to the trace: an invoke-in line of the form &ldquo;The function $\fun$ is invoked on $\obj_1,\ldots,\obj_n$.&rdquo; recording the start of the invocation and a matching invoke-out line recording the completion of the invocation. The invoke-out line can take the following forms:
+        <ul>
+          <li>&ldquo;The function $\fun$ returns $\obj_1,\ldots,\obj_m$.&rdquo;, which records the normal completion of the invocation</li>
+          <li>&ldquo;The invocation of the function $\fun$ completes abruptly.&rdquo;, which records the abrupt completion of the invocation</li>
+        </ul>
+      </li>
       <li>A step line is a free-form line recording a step other than an evaluation or invocation.</li>
       <li>A comment line is a free-form line in italic type containing a comment.</li>
       <li>Lexical and dynamic environments are represented as $[\binding_1,\ldots,\binding_n]$ where bindings in the value namespace are represented as $\var\vbind\obj$ and bindings in the function namespace are represented as $\var\fbind\obj$.</li>

@@ -13,13 +13,14 @@
       $\newcommand{\unicode}[1]{U{+}\code{#1}}$
       $\DeclareMathOperator{\lex}{lex}$
       $\DeclareMathOperator{\pat}{pat}$
+      $\DeclareMathOperator{\spread}{spread}$
     </div>
     <h1>Reference Manual</h1>
     <p>The reference manual provides a detailed account of the programming language. It supplements and amends the user manual (particularly the sections &ldquo;Programming Language&rdquo; and &ldquo;Listener Buffers&rdquo;) and the tutorial.</p>
     <h2>Syntax</h2>
     <h3>Introduction</h3>
     <h4>Listener Buffers</h4>
-    <p>Let's examine what happens when the form <code>(+ 123 456)</code> is evaluated in a listener buffer:</p>
+    <p>Let us examine what happens when the form <code>(+ 123 456)</code> is evaluated in a listener buffer:</p>
     <pre class="repl">&gt; (+ 123 456)<br>579</pre>
     <p>The process can be broken down into the following five steps:</p>
     <p><b>Step 1</b> The sequence of characters <span class="charseq"><span class="char">(</span><span class="char">+</span><span class="char">&nbsp;</span><span class="char">1</span><span class="char">2</span><span class="char">3</span><span class="char">&nbsp;</span><span class="char">4</span><span class="char">5</span><span class="char">6</span><span class="char">)</span></span> is read from the listener buffer.</p>
@@ -550,13 +551,13 @@
         <td class="rhs"><code>hash-left-parenthesis {$\metavar{xml-markup}$* $\metavar{object}$}* $\metavar{xml-markup}$* right-parenthesis</code></td>
       </tr>
     </table>
-    <p>Let us denote by $\mathcal{M}$ the function assigning a meaning to a derivation tree. The function $\mathcal{M}$ is defined by specifying, for each production rule, how the meaning of the nonterminal symbol on the left-hand side is computed from (1) the meanings of the nonterminal symbols on the right-hand side and (2) the terminal symbols on the right-hand side. Here is the definition of the function $\mathcal{M}$ (pairs of angle brackets denote sequence formation and $\|$ denotes sequence concatenation):</p>
+    <p>Let us denote by $\mathcal{M}$ the function assigning a meaning to a derivation tree. The function $\mathcal{M}$ is defined by specifying, for each production rule, how the meaning of the nonterminal symbol on the left-hand side is computed from (1) the meanings of the nonterminal symbols on the right-hand side and (2) the terminal symbols on the right-hand side. Here is the definition of the function $\mathcal{M}$, where a pair of square brackets denotes sequence formation and $\|$ denotes sequence concatenation):</p>
     <dl>
       <!-- input -->
       <dt>$\metavar{input}\Coloneq$ <code>$\metavar{object}$</code></dt>
-      <dd>$\mathcal{M}(\metavar{input})=\langle\mathcal{M}(\metavar{object})\rangle$</dd>
+      <dd>$\mathcal{M}(\metavar{input})=[\mathcal{M}(\metavar{object})]$</dd>
       <dt>$\metavar{input}\Coloneq$ <code>$\metavarn{object}{1}\ldots\metavarn{object}{n\geq0}$</code></dt>
-      <dd>$\mathcal{M}(\metavar{input})=\langle\mathcal{M}(\metavarn{object}{1}),\ldots,\mathcal{M}(\metavarn{object}{n})\rangle$</dd>
+      <dd>$\mathcal{M}(\metavar{input})=[\mathcal{M}(\metavarn{object}{1}),\ldots,\mathcal{M}(\metavarn{object}{n})]$</dd>
       <dt>$\metavar{input}\Coloneq$ <code>$\metavar{xml-comment}$* $\metavar{xml-element}$ $\metavar{xml-comment}$*</code></dt>
       <dd>$\mathcal{M}(\metavar{input})=\mathcal{M}(\metavar{xml-element})$</dd>
       <!-- xml-markup -->
@@ -568,15 +569,15 @@
       <dt>$\metavar{xml-element}\Coloneq$ <code>xml-start-tag $\metavarn{xml-element-content}{1}\ldots\metavarn{xml-element-content}{n\geq0}$ xml-end-tag</code></dt>
       <dd>$\mathcal{M}(\metavar{xml-element})=\mathcal{M}(\metavarn{xml-element-content}{1})\|\cdots\|\mathcal{M}(\metavarn{xml-element-content}{n})$</dd>
       <dt>$\metavar{xml-element}\Coloneq$ <code>xml-empty-element-tag</code></dt>
-      <dd>$\mathcal{M}(\metavar{xml-element})=\langle\rangle$</dd>
+      <dd>$\mathcal{M}(\metavar{xml-element})=[]$</dd>
       <!-- xml-element-content -->
       <dt>$\metavar{xml-element-content}\Coloneq$ <code>$\metavar{xml-markup}$</code></dt>
       <dd>$\mathcal{M}(\metavar{xml-element-content})=\mathcal{M}(\metavar{xml-markup})$</dd>
       <dt>$\metavar{xml-element-content}\Coloneq$ <code>$\metavar{object}$</code></dt>
-      <dd>$\mathcal{M}(\metavar{xml-element-content})=\langle\mathcal{M}(\metavar{object})\rangle$</dd>
+      <dd>$\mathcal{M}(\metavar{xml-element-content})=[\mathcal{M}(\metavar{object})]$</dd>
       <!-- xml-comment -->
       <dt>$\metavar{xml-comment}\Coloneq$ <code>xml-comment</code></dt>
-      <dd>$\mathcal{M}(\metavar{xml-comment})=\langle\rangle$</dd>
+      <dd>$\mathcal{M}(\metavar{xml-comment})=[]$</dd>
       <!-- object -->
       <dt>$\metavar{object}\Coloneq$ <code>void</code></dt>
       <dd>$\mathcal{M}(\metavar{object})=$ the value of the token of category <code>void</code></dd>
@@ -1020,6 +1021,13 @@
         <td class="rhs"><code>$\metavar{plain-function-call}$ | $\metavar{apply-form}$ | $\metavar{multiple-value-call-form}$ | $\metavar{multiple-value-apply-form}$</code></td>
       </tr>
     </table>
+    <p>The parameters of a parameter list fall into two categories: the required parameters, of which there can be any number, and the rest parameters, of which there can be zero or one. Here are the required and rest parameters for the different forms of parameter lists:</p>
+    <table class="plain">
+      <tr><th>Parameter list</th><th>Required parameters</th><th>Rest parameters</th></tr>
+      <tr><td><code>$\var$</code></td><td>none</td><td>$\var$</td></tr>
+      <tr><td><code>($\var_1\ldots\var_{n\ge0}$)</code></td><td>$\var_1,\ldots,\var_n$</td><td>none</td></tr>
+      <tr><td><code>($\var_1\ldots\var_{n\ge1}$ . $\var_{n+1}$)</code></td><td>$\var_1,\ldots,\var_n$</td><td>$\var_{n+1}$</td></tr>
+    </table>
     <p>The variables <code>quasiquote</code>, <code>unquote</code>, and <code>unquote-splicing</code> are not special operators. The variable <code>quasiquote</code> is the name of a global macro and the variables <code>unquote</code> and <code>unquote-splicing</code> are variables having special meanings in the context of a call to the global macro <code>quasiquote</code>.</p>
     <p>A form consisting of a variable $\var$ is treated as an abbreviation. If it appears in operator position, then it is treated as an abbreviation for the special form <code>(fref $\var$)</code>. Otherwise, it is treated as an abbreviation for the special form <code>(vref $\var$)</code>.</p>
     <p>Classifying a form is the first step in evaluating a form. If the classification fails, then the evaluation fails.</p>
@@ -1059,7 +1067,7 @@
       <li>Arguments named $\variable$, with or without a subscript, must be of type <code>variable</code>.</li>
       <li>Arguments named $\cons$, with or without a subscript, must be of type <code>cons</code>.</li>
     </ul>
-    <p>If any argument is not of its required type, then the invocation of the primitive function completes abnormally.</p>
+    <p>If any argument is not of its required type, then the invocation of the primitive function completes abruptly with a reason of type <code>error</code>.</p>
     <h4>Primitive Data Types</h4>
     <p>Here is a tree-view representation of the hierarchy of primitive data types:</p>
     <pre>object<br>  |-void<br>  |-boolean<br>  |-number<br>  |-character<br>  |-string<br>  |-symbol<br>  |   |-keyword<br>  |   |-variable<br>  |-list<br>  |   |-empty-list<br>  |   |-cons<br>  |-vector<br>  |-function<br>  |   |-primitive-function<br>  |   |-closure</pre>
@@ -1083,7 +1091,7 @@
       <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>boolean</code> and <code>#f</code> otherwise.</dd>
     </dl>
     <h4>Primitive Data Type <code>number</code> and Related Primitive Functions</h4>
-    <p>Objects of type <code>number</code> represent mathematical numbers using the floating-point format <a href="https://en.wikipedia.org/wiki/Double-precision_floating-point_format" target="_blank">IEEE 754 binary 64</a>.
+    <p>Objects of type <code>number</code> represent mathematical numbers using the floating-point format <a href="https://en.wikipedia.org/wiki/Double-precision_floating-point_format" target="_blank">IEEE 754 binary 64</a>. Some (but not all) of the integers that can be represented exactly by an object of type <code>number</code> are the integers between $-2^{53}=−9,007,199,254,740,992$ and $2^{53}=9,007,199,254,740,992$ (bounds included).</p>
     <dl>
       <dt><code>(number? $\object$)</code></dt>
       <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>number</code> and <code>#f</code> otherwise.</dd>
@@ -1110,6 +1118,7 @@
       <dt><code>(&gt;= $\number_1$ $\number_2$)</code></dt>
       <dd>The primitive function returns <code>#t</code> if $\number_1$ is numerically greater than or equal to $\number_2$ and <code>#f</code> otherwise.</dd>
     </dl>
+    <p>The primitive functions <code>_+</code>, <code>_-</code>, <code>_*</code>, and <code>_/</code> have an underscore at the beginning of their names to distinguish them from the similarly named nonprimitive functions <code>+</code>, <code>-</code>, <code>*</code>, and <code>/</code>, which all accept a variable number of arguments.</p>
     <h4>Primitive Data Type <code>character</code> and Related Primitive Functions</h4>
     <p>Contrary to what was said in the user manual, an object of type <code>character</code> represents a UTF-$16$ code unit (instead of a Unicode character).</p>
     <dl>
@@ -1207,9 +1216,57 @@
       <dt><code>(values $\object_1\ldots\object_n$)</code></dt>
       <dd>The primitive function converts its arguments into values: when invoked on the arguments $\object_1,\ldots,\object_n$, the primitive function returns the values $\object_1,\ldots,\object_n$.</dd>
       <dt><code>(error $\string$)</code></dt>
-      <dd>The invocation of the primitive function always completes abnormally.</dd>
+      <dd>The invocation of the primitive function completes abruptly with a reason of type <code>error</code> whose payload is $\string$.</dd>
       <dt><code>(now)</code></dt>
       <dd>The primitive function returns the number of milliseconds elapsed since 1970-01-01 00:00:00.000 UTC.</dd>
     </dl>
+    <h3>Forms</h3>
+    <p>This section supplements and amends the evaluation rules stated in the user manual.</p>
+    <h4>Special Form <code>_for-each</code></h4>
+    <p>The special form <code>_for-each</code> is evaluated as follows:</p>
+    <dl>
+      <dt><code>(_for-each $\metavar{function-form}$ $\metavar{list-form}$)</code></dt>
+      <dd>The function-form and the list-form are evaluated, in that order. Let $\primval_1$ be the primary value of the function-form and $\primval_2$ be the primary value of the list-form. If $\primval_1$ is not a function or $\primval_2$ is not a proper list, then the evaluation of the _for-each-form completes abruptly with a reason of type <code>error</code>. Otherwise, the function $\primval_1$ is invoked on each element of the proper list $\primval_2$, from the first element to the last element. If any invocation completes abruptly for any reason, then the evaluation of the _for-each-form completes abruptly for the same reason. Otherwise, if any invocation does not complete, then the evaluation of the _for-each-form does not complete either. Otherwise, the _for-each-form evaluates to <code>#v</code>.</dd>
+    </dl>
+    <h4>Special Form <code>_catch-errors</code></h4>
+    <p>The special form <code>_catch-errors</code> is evaluated as follows:</p>
+    <dl>
+      <dt><code>(_catch-errors $\metavar{try-form}$)</code></dt>
+      <dd>The try-form is evaluated. If the evaluation of the try-form completes abruptly for a reason of type <code>error</code>, then the evaluation of the _catch-errors-form completes normally and the _catch-errors-form evaluates to <code>#v</code>. Otherwise, if the evaluation of the try-form completes abruptly for a reason of type <code>exit</code>, then the evaluation of the _catch-errors-form completes abruptly for the same reason. Otherwise, if the evaluation of the try-form does not complete, then the evaluation of the _catch-errors-form does not complete either. Otherwise, the _catch-errors-form evaluates to the values of the try-form.</dd>
+    </dl>
+    <h4>Function Calls</h4>
+    <p>A spreadable sequence of objects is a nonempty sequence of objects such that the last element of the sequence is a proper list of objects. Let $\mlvar{seq}=[\obj_1,\ldots,\obj_n,\code{(}\obj'_1\ldots\obj'_m\code{)}]$, where $n$ and $m$ are nonnegative integers, be a spreadable sequence of objects. We will denote by $\spread(\mlvar{seq})$ the sequence of objects $[\obj_1,\ldots,\obj_n,\obj'_1,\ldots,\obj'_m]$.</p>
+    <p>The function calls are evaluated as follows (the differences in behavior between the different types of function calls are highlighted with a gray background):</p>
+    <dl>
+      <dt><code>($\metavar{operator-form}$ $\metavar{operand-forms}$)</code></dt>
+      <dd>The operator-form and the operand-forms are evaluated in sequence from left to right. If the primary value of the operator-form is not a function, then the evaluation of the plain function call completes abruptly with a reason of type <code>error</code>. <span class="bg">Otherwise, the primary values of the operand-forms are collected into a sequence $\mlvar{seq}$ and the primary value of the operator-form is invoked on $\mlvar{seq}$.</span> If the invocation completes abruptly for any reason, then the evaluation of the plain function call also completes abruptly for the same reason. Otherwise, if the invocation does not complete, then the evaluation of the plain function call does not complete either. Otherwise, the plain function call evaluates to the values of the invocation. (The behavior described here is identical to the behavior described in the user manual.)</dd>
+      <dt><code>(apply $\metavar{operator-form}$ $\metavar{operand-forms}$)</code></dt>
+      <dd>The operator-form and the operand-forms are evaluated in sequence from left to right. If the primary value of the operator-form is not a function, then the evaluation of the apply-form completes abruptly with a reason of type <code>error</code>. <span class="bg">Otherwise, the primary values of the operand-forms are collected into a sequence $\mlvar{seq}$ and the primary value of the operator-form is invoked on $\spread(\mlvar{seq})$. (The evaluation of the apply-form completes abruptly with a reason of type <code>error</code> if $\mlvar{seq}$ is not a spreadable sequence of objects.)</span> If the invocation completes abruptly for any reason, then the evaluation of the apply-form also completes abruptly for the same reason. Otherwise, if the invocation does not complete, then the evaluation of the apply-form does not complete either. Otherwise, the apply-form evaluates to the values of the invocation.</dd>
+      <dt><code>(multiple-value-call $\metavar{operator-form}$ $\metavar{operand-forms}$)</code></dt>
+      <dd>The operator-form and the operand-forms are evaluated in sequence from left to right. If the primary value of the operator-form is not a function, then the evaluation of the multiple-value-call-form completes abruptly with a reason of type <code>error</code>. <span class="bg">Otherwise, all the values of the operand-forms are collected into a sequence $\mlvar{seq}$ and the primary value of the operator-form is invoked on the sequence $\mlvar{seq}$.</span> If the invocation completes abruptly for any reason, then the evaluation of the multiple-value-call-form also completes abruptly for the same reason. Otherwise, if the invocation does not complete, then the evaluation of the multiple-value-call-form does not complete either. Otherwise, the multiple-value-call-form evaluates to the values of the invocation.</dd>
+      <dt><code>(multiple-value-apply $\metavar{operator-form}$ $\metavar{operand-forms}$)</code></dt>
+      <dd>The operator-form and the operand-forms are evaluated in sequence from left to right. If the primary value of the operator-form is not a function, then the evaluation of the multiple-value-apply-form completes abruptly with a reason of type <code>error</code>. <span class="bg">Otherwise, all the values of the operand-forms are collected into a sequence $\mlvar{seq}$ and the primary value of the operator-form is invoked on $\spread(\mlvar{seq})$. (The evaluation of the multiple-value-apply-form completes abruptly with a reason of type <code>error</code> if $\mlvar{seq}$ is not a spreadable sequence of objects.)</span> If the invocation completes abruptly for any reason, then the evaluation of the multiple-value-apply-form also completes abruptly for the same reason. Otherwise, if the invocation does not complete, then the evaluation of the multiple-value-apply-form does not complete either. Otherwise, the multiple-value-apply-form evaluates to the values of the invocation.</dd>
+    </dl>
+    <p>A primitive function is invoked as described in the user manual. A closure is invoked as described in the user manual except for the way the parameters and the arguments are paired in order to extend the value namespace of the lexical environment captured by the closure (when the corresponding lambda abstraction is a _vlambda-form or an _mlambda-form), the function namespace of the lexical environment captured by the closure (when the corresponding lambda abstraction is an _flambda-form), or the value namespace of the current dynamic environment (when the corresponding lambda abstraction is a _dlambda-form). Let $\arg_1,\ldots,\arg_n$ be the arguments and $var_1,\ldots,\var_m$ be the required parameters. The way the parameters and the arguments are paired depends on the absence or presence of a rest parameter:</p>
+    <dl>
+      <dt>Case 1, there is no rest parameter:</dt>
+      <dd>If $n\neq m$, then the invocation completes abruptly with a reason of type <code>error</code>. Otherwise, the appropriate namespace of the appropriate environment is extended to bind $\var_i$ to $\arg_i$ for all $i$ from $1$ to $m$. (This is the behavior described in the user manual.)</dd>
+      <dt>Case 2, there is a rest parameter $\var_{m+1}$:</dt>
+      <dd>If $n\lt m$, then the invocation completes abruptly with a reason of type <code>error</code>. Otherwise, the appropriate namespace of the appropriate environment is extended to bind $\var_i$ to $\arg_i$ for all $i$ from $1$ to $m$ and $\var_{m+1}$ to a proper list whose elements are $\arg_{m+1},\ldots,arg_{n}$. The conses used to build the proper list are not necessarily new conses. When the function call is an apply-form or a multiple-value-apply-form, the proper list actually reuses some or all of the conses constituting the last element of the spreadable sequence of objects.</dd>
+    </dl>
+    <p>Here are some examples, where the bindings are assumed to belong to the value namespace:</p>
+    <table class="plain">
+      <tr><th>Parameter list</th><th>Arguments</th><th>Bindings</th></tr>
+      <tr><td><code>(a b)</code></td><td>$[\code{1},\code{2},\code{3}]$</td><td>N/A (error: too many arguments)</td></tr>
+      <tr><td><code>(a b c)</code></td><td>$[\code{1},\code{2},\code{3}]$</td><td>$[\vbinding{a}{1},\vbinding{b}{2},\vbinding{c}{3}]$</td></tr>
+      <tr><td><code>(a b c d)</code></td><td>$[\code{1},\code{2},\code{3}]$</td><td>N/A (error: too few arguments)</td></tr>
+      <tr><td><code>a</code></td><td>$[\code{1},\code{2},\code{3}]$</td><td>$[\vbinding{a}{(1 2 3)}]$</td></tr>
+      <tr><td><code>(a . b)</code></td><td>$[\code{1},\code{2},\code{3}]$</td><td>$[\vbinding{a}{1},\vbinding{b}{(2 3)}]$</td></tr>
+      <tr><td><code>(a b . c)</code></td><td>$[\code{1},\code{2},\code{3}]$</td><td>$[\vbinding{a}{1},\vbinding{b}{2},\vbinding{c}{(3)}]$</td></tr>
+      <tr><td><code>(a b c . d)</code></td><td>$[\code{1},\code{2},\code{3}]$</td><td>$[\vbinding{a}{1},\vbinding{b}{2},\vbinding{c}{3},\vbinding{d}{()}]$</td></tr>
+      <tr><td><code>(a b c d . e)</code></td><td>$[\code{1},\code{2},\code{3}]$</td><td>N/A (error: too few arguments)</td></tr>
+    </table>
+    <p>Here is one way to reproduce the preceding examples using plain function calls and _vlambda-forms:</p>
+    <pre class="repl">&gt; ((_vlambda (a b) (list a b)) 1 2 3)<br>ERROR: Too many arguments.<br><br>&gt; ((_vlambda (a b c) (list a b c)) 1 2 3)<br>(1 2 3)<br><br>&gt; ((_vlambda (a b c d) (list a b c d)) 1 2 3)<br>ERROR: Too few arguments.<br><br>&gt; ((_vlambda a (list a)) 1 2 3)<br>((1 2 3))<br><br>&gt; ((_vlambda (a . b) (list a b)) 1 2 3)<br>(1 (2 3))<br><br>&gt; ((_vlambda (a b . c) (list a b c)) 1 2 3)<br>(1 2 (3))<br><br>&gt; ((_vlambda (a b c . d) (list a b c d)) 1 2 3)<br>(1 2 3 ())<br><br>&gt; ((_vlambda (a b c d . e) (list a b c d e)) 1 2 3)<br>ERROR: Too few arguments.</pre>
   </body>
 </html>
