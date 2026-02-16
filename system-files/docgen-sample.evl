@@ -1,0 +1,37 @@
+<chapter>
+<title>Recursive Functions</title>
+<para>...para...</para>
+<para>...para...</para>
+<section>
+<title>Factorial Function</title>
+<para>...para...</para>
+<para>...para...</para>
+(fdef fact (n)
+  <para>...block...</para>
+  <para>...block...</para>
+  (if (= n 0)
+      1 <comment>...eol...</comment>
+    (* n (fact (- n 1))))) <comment>...eoll...</comment>
+
+(test 1 (fact 0))
+(test 120 (fact 5))
+(test 3628800 (fact 10))
+</section>
+<section>
+<title>Fibonacci Sequence</title>
+<para>...para...</para>
+<para>...para...</para>
+(fdef fib (n)
+  <para>...block...</para>
+  <para>...block...</para>
+  (if (= n 0)
+      0 <comment>...eol...</comment>
+    (if (= n 1)
+        1 <comment>...eol...</comment>
+      (+ (fib (- n 1)) (fib (- n 2)))))) <comment>...eoll...</comment>
+
+(test 0 (fib 0))
+(test 5 (fib 5))
+(test 55 (fib 10))
+</section>
+</chapter>

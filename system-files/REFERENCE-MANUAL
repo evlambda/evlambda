@@ -4,6 +4,7 @@
 <html>
   <head>
     <meta charset="utf-8">
+    <title>Reference Manual</title>
     <link rel="stylesheet" href="___cssURL___"/>
     <script src="___jsURL___"></script>
     <script>const windowId = ___windowId___;</script>
@@ -37,14 +38,14 @@
     </ul>
     <p>Note that some whitespace is needed to separate the lexeme <span class="charseq"><span class="char">+</span></span> from the lexeme <span class="charseq"><span class="char">1</span><span class="char">2</span><span class="char">3</span></span> and the lexeme <span class="charseq"><span class="char">1</span><span class="char">2</span><span class="char">3</span></span> from the lexeme <span class="charseq"><span class="char">4</span><span class="char">5</span><span class="char">6</span></span> but no whitespace is needed to separate the lexeme <span class="charseq"><span class="char">(</span></span> from the lexeme <span class="charseq"><span class="char">+</span></span> or the lexeme <span class="charseq"><span class="char">4</span><span class="char">5</span><span class="char">6</span></span> from the lexeme <span class="charseq"><span class="char">)</span></span>.</p>
     <p><b>Step 2.2</b> A component of the reader called the parser converts the sequence of tokens from step 2.1 (minus the tokens of category <code>whitespace</code>, which are ignored by the parser) into a cons whose car is the variable from step 2.1 and whose cdr is a cons whose car is the first number from step 2.1 and whose cdr is a cons whose car is the second number from step 2.1 and whose cdr is the empty list. Together, those three conses represent the list <code>(+ 123 456)</code>.</p>
-    <p><b>Step 3</b> The evaluator evaluates the list <code>(+ 123 456)</code> to the number <code>579</code>. The evaluation of the top-level form <code>(+ 123 456)</code> entails the evaluation of other non-top-level forms. Each form must be classified in order to determine how it should be evaluated. The form <code>(+ 123 456)</code> is classified as a plain function call. The variable <code>+</code> is treated as an abbreviation for the form <code>(fref +)</code>. The form <code>(fref +)</code> is classified as an fref-form. The forms <code>123</code> and <code>456</code> are classified as self-evaluating objects. Because the global function <code>+</code> is a closure, its invocation entails the evaluation (and thus the classification) of other forms. The component of the evaluator responsible for classifying forms is called the syntax analyzer.</p>
+    <p><b>Step 3</b> The evaluator evaluates the list <code>(+ 123 456)</code> to the number <code>579</code>. The evaluation of the top-level form <code>(+ 123 456)</code> entails the evaluation of other non-top-level forms. Each form must be analyzed in order to determine how it should be evaluated. The form <code>(+ 123 456)</code> is analyzed as a plain function call. The variable <code>+</code> is treated as an abbreviation for the form <code>(fref +)</code>. The form <code>(fref +)</code> is analyzed as an fref-form. The forms <code>123</code> and <code>456</code> are analyzed as self-evaluating objects. Because the global function <code>+</code> is a closure, its invocation entails the evaluation (and thus the analysis) of other forms. The component of the evaluator responsible for analyzing forms is called the form analyzer.</p>
     <p><b>Step 4</b> The printer converts the number <code>579</code> into the sequence of characters <span class="charseq"><span class="char">5</span><span class="char">7</span><span class="char">9</span></span>. (The sequence of characters is the printable representation of the number.)</p>
     <p><b>Step 5</b> The sequence of characters <span class="charseq"><span class="char">5</span><span class="char">7</span><span class="char">9</span></span> is written into the listener buffer.</p>
     <p>EVLambda has three levels of syntax:</p>
     <ul>
       <li>The token level contains the rules used by the tokenizer to convert a sequence of characters into a sequence of tokens.</li>
       <li>The object level contains the rules used by the parser to convert a sequence of tokens into a sequence of objects.</li>
-      <li>The form level contains the rules used by the syntax analyzer to classify forms.</li>
+      <li>The form level contains the rules used by the form analyzer to analyze forms.</li>
     </ul>
     <p>Each level of syntax is described later in its own section.</p>
     <h4>EVLambda Source Files</h4>
@@ -206,7 +207,7 @@
     <p>References to named regular expressions can be used wherever regular expressions can be used. References to named regular expressions denoting classes of characters can also be used inside character classes. Circular definitions are not allowed.</p>
     <p>Except for the parts referencing named regular expressions, regular expressions are typeset in a monospaced typeface. Spaces can be added freely outside literal strings and character classes without modifying the meaning of a regular expression.</p>
     <h4>Extended Backus-Naur Form (EBNF)</h4>
-    <p>The parser and the syntax analyzer use a variant of the <a href="https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form" target="_blank">extended Backus-Naur form</a> (EBNF) notation to define various <a href="https://en.wikipedia.org/wiki/Context-free_grammar" target="_blank">context-free grammars</a>.</p>
+    <p>The parser and the form analyzer use a variant of the <a href="https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form" target="_blank">extended Backus-Naur form</a> (EBNF) notation to define various <a href="https://en.wikipedia.org/wiki/Context-free_grammar" target="_blank">context-free grammars</a>.</p>
     <p>The following table summarizes the syntax of the variant of the EBNF notation used in this document:</p>
     <table class="plain">
       <tr><th>Syntax</th><th>Meaning</th></tr>
@@ -644,7 +645,7 @@
       <li>Define a grammar $G$ whose sentences are also sentences of the pattern language.</li>
       <li>Declare that the objects belonging to $S$ are the objects matching at least one sentence of $G$.</li>
     </ul>
-    <p>The language specified by a grammar such as $G$ is called a template language. Template languages will be used to specify the forms recognized by the syntax analyzer, to specify template macro calls, to specify data structures, &hellip;</p>
+    <p>The language specified by a grammar such as $G$ is called a template language. Template languages will be used to specify the forms recognized by the form analyzer, to specify template macro calls, to specify data structures, &hellip;</p>
     <p>Here are the terminal symbols of the context-free grammar specifying the pattern language:</p>
     <ul>
       <li>The names of the types: $\object$, $\void$, $\boolean$, $\number$, $\character$, $\string$, $symbol$, $\keyword$, $\variable$, $\list$, $\emptylist$, $\cons$, $\vector$, $\function$, $\primitivefunction$, and $\closure$.</li>
@@ -793,8 +794,8 @@
     <p>By way of example, let us consider the following sequence of characters:</p>
     <blockquote><code>(1 . #+foo 2 #-foo 3)</code></blockquote>
     <p>If the symbol <code>foo</code> belongs to the value of the global variable <code>*features*</code>, then the sequence of characters is parsed as the dotted list <code>(1 . 2)</code>. Otherwise, the sequence of characters is parsed as the dotted list <code>(1 . 3)</code>.</p>
-    <h3>Syntax Analyzer</h3>
-    <p>The forms recognized by the syntax analyzer are specified by the template language specified by the following context-free grammar:</p>
+    <h3>Form Analyzer</h3>
+    <p>The forms recognized by the form analyzer are specified by the template language specified by the following context-free grammar:</p>
     <table class="ebnf">
       <tr>
         <td class="lhs">$\metavar{form}$</td>
@@ -1030,13 +1031,13 @@
     </table>
     <p>The variables <code>quasiquote</code>, <code>unquote</code>, and <code>unquote-splicing</code> are not special operators. The variable <code>quasiquote</code> is the name of a global macro and the variables <code>unquote</code> and <code>unquote-splicing</code> are variables having special meanings in the context of a call to the global macro <code>quasiquote</code>.</p>
     <p>A form consisting of a variable $\var$ is treated as an abbreviation. If it appears in operator position, then it is treated as an abbreviation for the special form <code>(fref $\var$)</code>. Otherwise, it is treated as an abbreviation for the special form <code>(vref $\var$)</code>.</p>
-    <p>Classifying a form is the first step in evaluating a form. If the classification fails, then the evaluation fails.</p>
-    <p>Some syntax analyzers classify forms without checking that the components that must be forms are actually forms. Syntax analyzers associated with interpreters usually function this way. With this kind of syntax analyzer, the components that must be forms are classified if and when they are evaluated.</p>
+    <p>Analyzing a form is the first step in evaluating a form. If the analysis fails, then the evaluation fails.</p>
+    <p>Some form analyzers analyze a form without analyzing the subforms of the form. With such form analyzers, the subforms of the form are analyzed if and when they are evaluated. Form analyzers associated with interpreters usually function this way.</p>
     <p>According to the template language, some objects can simultaneously be a special form, a macro call, and a plain function call. Additional rules are needed to disambiguate the situation.</p>
-    <p>The following rules used by the syntax analyzer are not expressed by the template language:</p>
+    <p>The following rules used by the form analyzer are not expressed by the template language:</p>
     <ul>
-      <li>A list whose first element is a special operator is never classified as a call. Either the list is successfully classified as a special form or the classification fails.</li>
-      <li>A list whose first element is a variable (other than a special operator) naming a macro according to the lookup rule used by <code>fref</code> is never classified as a plain function call. Either the list is successfully classified as a macro call or the classification fails.</li>
+      <li>A list whose first element is a special operator is never analyzed as a call. Either the list is successfully analyzed as a special form or the analysis fails.</li>
+      <li>A list whose first element is a variable (other than a special operator) naming a macro according to the lookup rule used by <code>fref</code> is never analyzed as a plain function call. Either the list is successfully analyzed as a macro call or the analysis fails.</li>
       <li>The variables of a parameter list must be distinct.</li>
     </ul>
     <h3>Documentation Generator</h3>
@@ -1247,12 +1248,12 @@
       <dt><code>(multiple-value-apply $\metavar{operator-form}$ $\metavar{operand-forms}$)</code></dt>
       <dd>The operator-form and the operand-forms are evaluated in sequence from left to right. If the primary value of the operator-form is not a function, then the evaluation of the multiple-value-apply-form completes abruptly with a reason of type <code>error</code>. <span class="bg">Otherwise, all the values of the operand-forms are collected into a sequence $\mlvar{seq}$ and the primary value of the operator-form is invoked on $\spread(\mlvar{seq})$. (The evaluation of the multiple-value-apply-form completes abruptly with a reason of type <code>error</code> if $\mlvar{seq}$ is not a spreadable sequence of objects.)</span> If the invocation completes abruptly for any reason, then the evaluation of the multiple-value-apply-form also completes abruptly for the same reason. Otherwise, if the invocation does not complete, then the evaluation of the multiple-value-apply-form does not complete either. Otherwise, the multiple-value-apply-form evaluates to the values of the invocation.</dd>
     </dl>
-    <p>A primitive function is invoked as described in the user manual. A closure is invoked as described in the user manual except for the way the parameters and the arguments are paired in order to extend the value namespace of the lexical environment captured by the closure (when the corresponding lambda abstraction is a _vlambda-form or an _mlambda-form), the function namespace of the lexical environment captured by the closure (when the corresponding lambda abstraction is an _flambda-form), or the value namespace of the current dynamic environment (when the corresponding lambda abstraction is a _dlambda-form). Let $\arg_1,\ldots,\arg_n$ be the arguments and $var_1,\ldots,\var_m$ be the required parameters. The way the parameters and the arguments are paired depends on the absence or presence of a rest parameter:</p>
+    <p>A primitive function is invoked as described in the user manual. A closure is invoked as described in the user manual except for the way the parameters are paired with the arguments in order to extend the value namespace of the lexical environment captured by the closure (when the corresponding lambda abstraction is a _vlambda-form or an _mlambda-form), the function namespace of the lexical environment captured by the closure (when the corresponding lambda abstraction is an _flambda-form), or the value namespace of the current dynamic environment (when the corresponding lambda abstraction is a _dlambda-form). Let $\arg_1,\ldots,\arg_n$ be the arguments and $var_1,\ldots,\var_m$ be the required parameters. The way the parameters are paired with the arguments depends on the absence or presence of a rest parameter:</p>
     <dl>
       <dt>Case 1, there is no rest parameter:</dt>
       <dd>If $n\neq m$, then the invocation completes abruptly with a reason of type <code>error</code>. Otherwise, the appropriate namespace of the appropriate environment is extended to bind $\var_i$ to $\arg_i$ for all $i$ from $1$ to $m$. (This is the behavior described in the user manual.)</dd>
       <dt>Case 2, there is a rest parameter $\var_{m+1}$:</dt>
-      <dd>If $n\lt m$, then the invocation completes abruptly with a reason of type <code>error</code>. Otherwise, the appropriate namespace of the appropriate environment is extended to bind $\var_i$ to $\arg_i$ for all $i$ from $1$ to $m$ and $\var_{m+1}$ to a proper list whose elements are $\arg_{m+1},\ldots,arg_{n}$. The conses used to build the proper list are not necessarily new conses. When the function call is an apply-form or a multiple-value-apply-form, the proper list actually reuses some or all of the conses constituting the last element of the spreadable sequence of objects.</dd>
+      <dd>If $n\lt m$, then the invocation completes abruptly with a reason of type <code>error</code>. Otherwise, the appropriate namespace of the appropriate environment is extended to bind $\var_i$ to $\arg_i$ for all $i$ from $1$ to $m$ and $\var_{m+1}$ to a proper list whose elements are $\arg_{m+1},\ldots,arg_{n}$. The conses used to build the proper list are not necessarily new conses. When the function call is an apply-form or a multiple-value-apply-form, the proper list and the last element of the spreadable sequence of objects can share conses.</dd>
     </dl>
     <p>Here are some examples, where the bindings are assumed to belong to the value namespace:</p>
     <table class="plain">

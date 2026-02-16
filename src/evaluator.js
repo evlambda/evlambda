@@ -6,15 +6,15 @@ import {
 } from './utilities.js';
 
 const FOUND_NO_FORM = 0;
-const COMPLETED_NORMALLY = 1;
-const COMPLETED_ABNORMALLY = 2;
+const SUCCESS = 1;
+const ERROR = 2;
 const ABORTED = 3;
 const TERMINATED = 4;
 
 const INITIALIZE = 0;
 const EVALUATE_FIRST_FORM = 1;
 const EVALUATE_ALL_FORMS = 2;
-const CONVERT_TO_XML = 3;
+const CONVERT_EVL_TO_XML = 3;
 
 export const evaluatorNames = new Map([
   ['plainrec', 'Plain Recursive'],
@@ -28,10 +28,10 @@ export const evaluatorNames = new Map([
 let evaluator = null;
 let jobId = 0;
 const jobs = new Map();
-const signalBuffer = new SharedArrayBuffer(1);
-const signalArray = new Uint8Array(signalBuffer);
+const abortSignalBuffer = new SharedArrayBuffer(1);
+const abortSignalArray = new Uint8Array(abortSignalBuffer);
 
-signalArray[0] = 0;
+abortSignalArray[0] = 0;
 
 // => {id, action, input}
 // <= {id, status, output}
@@ -66,7 +66,7 @@ export function createEvaluator(jsFile, selectedEvaluator, evlFiles, callback) {
       callback(event.data);
     }
   }
-  sendRequest(INITIALIZE, {signalBuffer, selectedEvaluator, evlFiles}, callback);
+  sendRequest(INITIALIZE, {abortSignalBuffer, selectedEvaluator, evlFiles}, callback);
 }
 
 export function evaluateFirstForm(text, callback) {
@@ -77,12 +77,12 @@ export function evaluateAllForms(text, callback) {
   sendRequest(EVALUATE_ALL_FORMS, text, callback);
 }
 
-export function convertToHTML(text, xsltString, cssURL, jsURL, windowId, callback) {
-  sendRequest(CONVERT_TO_XML, text, response => {
+export function convertEVLToHTML(text, xsltString, cssURL, jsURL, windowId, callback) {
+  sendRequest(CONVERT_EVL_TO_XML, text, response => {
     let result = null;
     try {
       switch (response.status) {
-        case COMPLETED_NORMALLY:
+        case SUCCESS:
           const parser = new DOMParser();
           const processor = new XSLTProcessor();
           const serializer = new XMLSerializer();
@@ -99,7 +99,7 @@ export function convertToHTML(text, xsltString, cssURL, jsURL, windowId, callbac
           //console.log(htmlString);
           result = htmlString;
           break;
-        case COMPLETED_ABNORMALLY:
+        case ERROR:
           result = errorPage(`ERROR: ${response.output}`, cssURL, jsURL, windowId);
           break;
         case ABORTED:
@@ -137,13 +137,13 @@ export function formatForListener(response) {
   switch (response.status) {
     case FOUND_NO_FORM:
       return null;
-    case COMPLETED_NORMALLY:
+    case SUCCESS:
       let text = '';
       for (const value of response.output) {
         text = text + value + '\n';
       }
       return text;
-    case COMPLETED_ABNORMALLY:
+    case ERROR:
       return `ERROR: ${response.output}\n`;
     case ABORTED:
       return 'ABORTED\n';
@@ -156,7 +156,7 @@ export function formatForMinibuffer(response) {
   switch (response.status) {
     case FOUND_NO_FORM:
       return 'FOUND NO FORM';
-    case COMPLETED_NORMALLY:
+    case SUCCESS:
       let text = '';
       let first = true;
       for (const value of response.output) {
@@ -168,7 +168,7 @@ export function formatForMinibuffer(response) {
         text = text + value.replaceAll('\n', '\u2424'); // SYMBOL FOR NEWLINE
       }
       return text;
-    case COMPLETED_ABNORMALLY:
+    case ERROR:
       return `ERROR: ${response.output}`;
     case ABORTED:
       return 'ABORTED';
@@ -178,5 +178,5 @@ export function formatForMinibuffer(response) {
 }
 
 export function abortEvaluation() {
-  signalArray[0] = 1;
+  abortSignalArray[0] = 1;
 }

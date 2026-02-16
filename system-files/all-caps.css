@@ -7,6 +7,12 @@ html {
   line-height: 1.4;
 }
 
+@media print {
+  html {
+    font-size: 12pt;
+  }
+}
+
 div.preamble {
   display: none;
 }

@@ -54,7 +54,29 @@ How to run the evaluator from the terminal
 ==========================================
 
 Execute the following command from <EVLAMBDA_HOME>:
-node system-files/core.js { -l <file> | -e <form> }*
+node system-files/core.js { --plainrec | --cps | --oocps | --sboocps | --trampoline | --trampoliepp }? { -l <file> | -e <form> }*
 
-Example:
+--plainrec: selects the plain recursive evaluator
+--cps: selects the continuation passing style evaluator
+--oocps: selects the object-oriented CPS evaluator
+--sboocps: selects the stack-based object-oriented CPS evaluator
+--trampoline: selects the trampoline evaluator
+--trampolinepp: selects the trampoline++ evaluator (DEFAULT)
+-l <file>: loads the EVL file
+-e <form>: evaluates the form
+
+Examples:
 node system-files/core.js -l system-files/mantle.evl -e '(test-loop 1000000)'
+node system-files/core.js --plainrec -l system-files/mantle.evl -e '(test-loop 1000000)'
+
+How to run the EVL to XML converter from the terminal
+=====================================================
+
+Execute the following command from <EVLAMBDA_HOME>:
+node system-files/core.js --convert <file>
+
+--convert <file>: converts the EVL file to XML
+
+Examples:
+node system-files/core.js --convert system-files/docgen-sample.evl
+node system-files/core.js --convert system-files/docgen-sample.evl | xsltproc system-files/evl2html.xslt -

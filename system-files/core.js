@@ -1,25 +1,31 @@
 // SPDX-FileCopyrightText: Copyright (c) 2024-2025 Raphaël Van Dyck
 // SPDX-License-Identifier: BSD-3-Clause
 
-/*************/
-/* Interface */
-/*************/
+/********************/
+/* Global Variables */
+/********************/
+
+const isRunningInsideNode = (typeof process !== 'undefined') && (process.release.name === 'node');
+
+let abortSignalArray = null;
+let selectedEvaluator = null;
+
+/*******************/
+/* Interface (IDE) */
+/*******************/
 
 const FOUND_NO_FORM = 0;
-const COMPLETED_NORMALLY = 1;
-const COMPLETED_ABNORMALLY = 2;
+const SUCCESS = 1;
+const ERROR = 2;
 const ABORTED = 3;
 const TERMINATED = 4;
 
 const INITIALIZE = 0;
 const EVALUATE_FIRST_FORM = 1;
 const EVALUATE_ALL_FORMS = 2;
-const CONVERT_TO_XML = 3;
+const CONVERT_EVL_TO_XML = 3;
 
-let signalArray = null;
-let selectedEvaluator = null;
-
-if (typeof onmessage !== 'undefined') { // web worker
+if (!isRunningInsideNode) {
   onmessage = (event) => {
     const {id, action, input} = event.data;
     let response = null;
@@ -33,9 +39,11 @@ if (typeof onmessage !== 'undefined') { // web worker
       case EVALUATE_ALL_FORMS:
         response = evaluateAllForms(input);
         break;
-      case CONVERT_TO_XML:
-        response = convertToXML(input);
+      case CONVERT_EVL_TO_XML:
+        response = convertEVLToXML(input);
         break;
+      default:
+        throw new CannotHappen('onmessage');
     }
     if (response !== null) {
       postMessage({id: id, ...response});
@@ -47,23 +55,22 @@ function foundNoForm() {
   return {status: FOUND_NO_FORM};
 }
 
-function completedNormally(output) {
-  return {status: COMPLETED_NORMALLY, output: output};
+function success(output) {
+  return {status: SUCCESS, output: output};
 }
 
-function completedAbnormally(exception) {
+function abortedOrError(exception) {
   if (exception instanceof Aborted) {
     return {status: ABORTED};
   } else {
-    return {status: COMPLETED_ABNORMALLY, output: exception.message};
+    return {status: ERROR, output: exception.message};
   }
 }
 
 function initialize(input) {
-  signalArray = new Uint8Array(input.signalBuffer);
-  signalArray[0] = 0;
+  abortSignalArray = new Uint8Array(input.abortSignalBuffer);
   selectedEvaluator = input.selectedEvaluator;
-  GlobalEnv.set(VAL_NS, internVariable('*features*'), new EVLCons(internVariable(selectedEvaluator), EVLEmptyList.NIL));
+  initializeFeatureList([selectedEvaluator]);
   let lastResult = EVLVoid.VOID;
   for (const evlFile of input.evlFiles) {
     const tokenizer = new Tokenizer(evlFile);
@@ -73,7 +80,7 @@ function initialize(input) {
       try {
         object = read(tokenizer);
       } catch(exception) {
-        return completedAbnormally(exception);
+        return abortedOrError(exception);
       }
       if (object === null) {
         break;
@@ -81,26 +88,28 @@ function initialize(input) {
         try {
           lastResult = genericEval(object);
         } catch(exception) {
-          return completedAbnormally(exception);
+          return abortedOrError(exception);
         }
       }
     }
   }
   const output = lastResult.allValues().map(object => object.toString());
-  return completedNormally(output);
+  return success(output);
 }
 
 function evaluateFirstForm(text) {
-  signalArray[0] = 0;
+  if (abortSignalArray !== null) {
+    abortSignalArray[0] = 0;
+  }
   const tokenizer = new Tokenizer(text);
   let object = null;
   try {
     object = read(tokenizer);
   } catch(exception) {
-    if (exception instanceof TruncatedToken || exception instanceof UnexpectedEndOfFile) {
+    if (exception instanceof TruncatedToken || exception instanceof UnexpectedEndOfInput) {
       return foundNoForm();
     } else {
-      return completedAbnormally(exception);
+      return abortedOrError(exception);
     }
   }
   if (object === null) {
@@ -110,15 +119,17 @@ function evaluateFirstForm(text) {
     try {
       result = genericEval(object);
     } catch(exception) {
-      return completedAbnormally(exception);
+      return abortedOrError(exception);
     }
     const output = result.allValues().map(object => object.toString());
-    return completedNormally(output);
+    return success(output);
   }
 }
 
 function evaluateAllForms(text) {
-  signalArray[0] = 0;
+  if (abortSignalArray !== null) {
+    abortSignalArray[0] = 0;
+  }
   let lastResult = EVLVoid.VOID;
   const tokenizer = new Tokenizer(text);
   tokenizer.callback = object => lastResult = genericEval(object);
@@ -127,7 +138,7 @@ function evaluateAllForms(text) {
     try {
       object = read(tokenizer);
     } catch(exception) {
-      return completedAbnormally(exception);
+      return abortedOrError(exception);
     }
     if (object === null) {
       break;
@@ -135,24 +146,23 @@ function evaluateAllForms(text) {
       try {
         lastResult = genericEval(object);
       } catch(exception) {
-        return completedAbnormally(exception);
+        return abortedOrError(exception);
       }
     }
   }
   const output = lastResult.allValues().map(object => object.toString());
-  return completedNormally(output);
+  return success(output);
 }
 
-function convertToXML(text) {
-  signalArray[0] = 0;
+function convertEVLToXML(text) {
   const tokenizer = new Tokenizer(text, true);
   let xml = null;
   try {
-    xml = doConvertToXML(tokenizer);
+    xml = doConvertEVLToXML(tokenizer);
   } catch(exception) {
-    return completedAbnormally(exception);
+    return abortedOrError(exception);
   }
-  return completedNormally(xml);
+  return success(xml);
 }
 
 /**********/
@@ -187,17 +197,17 @@ class ReaderError extends Error {
   }
 }
 
-class ConverterError extends Error {
+class EVLToXMLConverterError extends Error {
   constructor(message) {
     super(message);
-    this.name = 'ConverterError';
+    this.name = 'EVLToXMLConverterError';
   }
 }
 
-class SyntaxAnalyzerError extends Error {
+class FormAnalyzerError extends Error {
   constructor(message) {
     super(message);
-    this.name = 'SyntaxAnalyzerError';
+    this.name = 'FormAnalyzerError';
   }
 }
 
@@ -219,7 +229,7 @@ class TruncatedToken extends TokenizerError {
   }
 }
 
-// token types
+// token categories
 const QUOTE = 0;
 const QUASIQUOTE = 1;
 const UNQUOTE = 2;
@@ -233,15 +243,16 @@ const HASH_MINUS = 9;
 const VOID = 10; // value is EVLVoid.VOID
 const BOOLEAN = 11; // value is EVLBoolean.TRUE or EVLBoolean.FALSE
 const CHARACTER = 12; // value is an EVLCharacter
-const XML_START_TAG = 13; // value is an XML element name (javascript string)
-const XML_END_TAG = 14; // value is an XML element name (javascript string)
-const XML_EMPTY_ELEMENT_TAG = 15; // value is an XML element name (javascript string)
+const XML_START_TAG = 13; // value is an XML element name
+const XML_END_TAG = 14; // value is an XML element name
+const XML_EMPTY_ELEMENT_TAG = 15; // value is an XML element name
 const XML_COMMENT = 16;
 const DOT = 17; // the dot of dotted lists
 const NUMBER = 18; // value is an EVLNumber
 const KEYWORD = 19; // value is an EVLKeyword
 const VARIABLE = 20; // value is an EVLVariable
-const EOF = 21;
+const BOI = 21; // beginning of input
+const EOI = 22; // end of input
 
 const codePointRegExp = /^[a-fA-F0-9]+$/;
 const numberRegExp = /^[+-]?[0-9]+(?:\.[0-9]+)?$/;
@@ -262,15 +273,17 @@ function isSurrogate(codeUnit) {
 
 function ensureCodePoint (charOrCodePoint) {
   if (typeof charOrCodePoint === "number") {
+    // charOrCodePoint is a JavaScript number
     return charOrCodePoint;
   } else {
+    // charOrCodePoint is a JavaScript string of one or two UTF-16 code units
     return charOrCodePoint.codePointAt(0);
   }
 }
 
 function isControlCharacter(charOrCodePoint) {
   const codePoint = ensureCodePoint(charOrCodePoint);
-  return (0x00 <= codePoint && codePoint <= 0x1F) || (0x7F <= codePoint && codePoint <= 0x9F);
+  return (0x0000 <= codePoint && codePoint <= 0x001F) || (0x007F <= codePoint && codePoint <= 0x009F);
 }
 
 function isNoncharacter(charOrCodePoint) {
@@ -281,7 +294,27 @@ function isNoncharacter(charOrCodePoint) {
 
 function isWhitespaceCharacter(charOrCodePoint) {
   // https://www.unicode.org/Public/UCD/latest/ucd/PropList.txt
-  // Pattern_White_Space
+  // Whitespace =
+  // 0009..000D   <control-0009>..<control-000D>
+  // 0020         SPACE
+  // 0085         <control-0085>
+  // 00A0         NO-BREAK SPACE
+  // 1680         OGHAM SPACE MARK
+  // 2000..200A   EN QUAD..HAIR SPACE
+  // 2028         LINE SEPARATOR
+  // 2029         PARAGRAPH SEPARATOR
+  // 202F         NARROW NO-BREAK SPACE
+  // 205F         MEDIUM MATHEMATICAL SPACE
+  // 3000         IDEOGRAPHIC SPACE
+  // https://www.unicode.org/L2/L2005/05012r-pattern.html
+  // Pattern_Whitespace = Whitespace + Left-to-Right Mark + Right-to-Left Mark -
+  // 00A0         NO-BREAK SPACE
+  // 1680         OGHAM SPACE MARK
+  // 180E         MONGOLIAN VOWEL SEPARATOR
+  // 2000..200A   EN QUAD..HAIR SPACE
+  // 202F         NARROW NO-BREAK SPACE
+  // 205F         MEDIUM MATHEMATICAL SPACE
+  // 3000         IDEOGRAPHIC SPACE
   const codePoint = ensureCodePoint(charOrCodePoint);
   return (
     codePoint === 0x0009 || // Horizontal Tab
@@ -322,15 +355,15 @@ function isDecimalDigit(charOrCodePoint) {
 }
 
 class Tokenizer {
-  constructor(text, convertToXML = false) {
+  constructor(text, convertEVLToXML = false) {
     this.text = text;
-    this.convertToXML = convertToXML;
+    this.convertEVLToXML = convertEVLToXML;
     this.position = 0;
-    this.xmlStack = []; // element: XML element name
+    this.xmlStack = []; // array of XML element names
     this.savedCodeUnits = '';
   }
   peekCharacter(position = this.position) {
-    let char = null; // one or two UTF-16 code units
+    let char = null; // JavaScript string of one or two UTF-16 code units
     const codeUnit = this.text.charCodeAt(position);
     if (isTrailingSurrogate(codeUnit)) {
       throw new TokenizerError('Lone surrogate.');
@@ -362,20 +395,20 @@ class Tokenizer {
     this.position += char.length;
   }
   nextToken() {
-    this.whitespace = ''; // whitespace preceding the lexeme
+    this.whitespace = '';
     this.lexeme = '';
     if (this.savedCodeUnits.length !== 0) {
-      this.type = CHARACTER;
+      this.category = CHARACTER;
       this.value = new EVLCharacter(this.savedCodeUnits.charAt(0));
       this.savedCodeUnits = this.savedCodeUnits.substring(1);
     } else {
-      this.type = null;
+      this.category = null;
       this.value = null;
       const pureXML = this.xmlStack.length !== 0 && !['chapter', 'section'].includes(this.xmlStack[this.xmlStack.length - 1]);
-      while (this.type === null) {
+      while (this.category === null) {
         this.skipWhitespace(pureXML);
         if (this.position === this.text.length) {
-          this.type = EOF;
+          this.category = EOI;
         } else {
           this.readToken(pureXML);
         }
@@ -383,7 +416,7 @@ class Tokenizer {
     }
   }
   skipWhitespace(pureXML) {
-    // When pure XML is true, XML character data is treated as whitespace.
+    // When pureXML is true, XML character data is treated as whitespace.
     while (true) {
       if (this.position === this.text.length) {
         break;
@@ -401,39 +434,39 @@ class Tokenizer {
     switch (char) {
       case "'":
         this.consumeCharacter(char);
-        this.type = QUOTE;
+        this.category = QUOTE;
         break;
       case '`':
         this.consumeCharacter(char);
-        this.type = QUASIQUOTE;
+        this.category = QUASIQUOTE;
         break;
       case ',':
         this.consumeCharacter(char);
         if (this.position === this.text.length) {
-          this.type = UNQUOTE;
+          this.category = UNQUOTE;
         } else {
           const char2 = this.peekCharacter();
           if (char2 === '@') {
             this.consumeCharacter(char2);
-            this.type = UNQUOTE_SPLICING;
+            this.category = UNQUOTE_SPLICING;
           } else {
-            this.type = UNQUOTE;
+            this.category = UNQUOTE;
           }
         }
         break;
       case '"':
         this.consumeCharacter(char);
         const string = readString(this);
-        this.type = STRING;
+        this.category = STRING;
         this.value = new EVLString(string);
         break;
       case '(':
         this.consumeCharacter(char);
-        this.type = OPENING_PARENTHESIS;
+        this.category = OPENING_PARENTHESIS;
         break;
       case ')':
         this.consumeCharacter(char);
-        this.type = CLOSING_PARENTHESIS;
+        this.category = CLOSING_PARENTHESIS;
         break;
       case '#':
         this.consumeCharacter(char);
@@ -450,15 +483,15 @@ class Tokenizer {
       default:
         const protoToken = readProtoToken(this);
         if (protoToken === '.') {
-          this.type = DOT;
+          this.category = DOT;
         } else if (numberRegExp.test(protoToken)) {
-          this.type = NUMBER;
+          this.category = NUMBER;
           this.value = new EVLNumber(Number.parseFloat(protoToken));
         } else if (keywordRegExp.test(protoToken)) {
-          this.type = KEYWORD;
+          this.category = KEYWORD;
           this.value = internKeyword(protoToken.substring(1));
         } else if (variableRegExp.test(protoToken)) {
-          this.type = VARIABLE;
+          this.category = VARIABLE;
           this.value = internVariable(protoToken);
         } else {
           throw new TokenizerError('Malformed proto-token.');
@@ -473,7 +506,7 @@ function escapeCharacters(chars, escapeCharacter) {
   let position = 0;
   const length = chars.length;
   while (position < length) {
-    let char = null; // one or two UTF-16 code units
+    let char = null; // JavaScript string of one or two UTF-16 code units
     const codeUnit = chars.charCodeAt(position);
     if (isTrailingSurrogate(codeUnit)) {
       escapedChars += unicodeEscape(codeUnit);
@@ -518,6 +551,7 @@ function unicodeEscape(charOrCodePoint) {
 }
 
 function readEscapeSequence(tokenizer) {
+  // reads {xyz}, returns xyz
   let chars = '';
   if (tokenizer.position === tokenizer.text.length) {
     throw new TruncatedToken('Truncated escape sequence.');
@@ -635,41 +669,41 @@ function readHashConstruct(tokenizer) {
   }
   switch (char) {
     case '(':
-      tokenizer.type = HASH_OPENING_PARENTHESIS;
+      tokenizer.category = HASH_OPENING_PARENTHESIS;
       break;
     case '+':
-      tokenizer.type = HASH_PLUS;
+      tokenizer.category = HASH_PLUS;
       break;
     case '-':
-      tokenizer.type = HASH_MINUS;
+      tokenizer.category = HASH_MINUS;
       break;
     case 'v':
-      tokenizer.type = VOID;
+      tokenizer.category = VOID;
       tokenizer.value = EVLVoid.VOID;
       break;
     case 't':
-      tokenizer.type = BOOLEAN;
+      tokenizer.category = BOOLEAN;
       tokenizer.value = EVLBoolean.TRUE;
       break;
     case 'f':
-      tokenizer.type = BOOLEAN;
+      tokenizer.category = BOOLEAN;
       tokenizer.value = EVLBoolean.FALSE;
       break;
     case '"':
       const string = readString(tokenizer);
-      if (tokenizer.convertToXML) {
-        tokenizer.type = CHARACTER;
-        tokenizer.value = new EVLCharacter(string);
+      if (tokenizer.convertEVLToXML) {
+        tokenizer.category = CHARACTER;
+        tokenizer.value = null; // the value is ignored by the EVL to XML converter
       } else if (arg !== '') {
         const index = Number.parseInt(arg);
         if (index < string.length) {
-          tokenizer.type = CHARACTER;
+          tokenizer.category = CHARACTER;
           tokenizer.value = new EVLCharacter(string.charAt(index));
         } else {
           throw new TokenizerError('Index out of bounds.');
         }
       } else if (string.length !== 0) {
-        tokenizer.type = CHARACTER;
+        tokenizer.category = CHARACTER;
         tokenizer.value = new EVLCharacter(string.charAt(0));
         tokenizer.savedCodeUnits = string.substring(1);
       }
@@ -735,7 +769,7 @@ function readXMLMarkup(tokenizer, consume) {
     tokenizer.lexeme = tokenizer.text.slice(tokenizer.position, position);
     tokenizer.position = position;
     if (isXMLComment) {
-      tokenizer.type = XML_COMMENT;
+      tokenizer.category = XML_COMMENT;
     } else if (isXMLEndTag) {
       if (tokenizer.xmlStack.length === 0) {
         throw new TokenizerError('Unexpected XML end tag.');
@@ -744,14 +778,14 @@ function readXMLMarkup(tokenizer, consume) {
         throw new TokenizerError('Unmatched XML tags.');
       }
       tokenizer.xmlStack.pop();
-      tokenizer.type = XML_END_TAG;
+      tokenizer.category = XML_END_TAG;
       tokenizer.value = name;
     } else if (isXMLEmptyElementTag) {
-      tokenizer.type = XML_EMPTY_ELEMENT_TAG;
+      tokenizer.category = XML_EMPTY_ELEMENT_TAG;
       tokenizer.value = name;
     } else {
       tokenizer.xmlStack.push(name);
-      tokenizer.type = XML_START_TAG;
+      tokenizer.category = XML_START_TAG;
       tokenizer.value = name;
     }
   }
@@ -842,10 +876,10 @@ class UnexpectedXMLEndTag extends ReaderError {
   }
 }
 
-class UnexpectedEndOfFile extends ReaderError {
+class UnexpectedEndOfInput extends ReaderError {
   constructor() {
-    super('Unexpected end-of-file.');
-    this.name = 'UnexpectedEndOfFile';
+    super('Unexpected end-of-input.');
+    this.name = 'UnexpectedEndOfInput';
   }
 }
 
@@ -858,7 +892,7 @@ function read(tokenizer) {
       throw new UnexpectedClosingParenthesis();
     case XML_END_TAG:
       throw new UnexpectedXMLEndTag();
-    case EOF:
+    case EOI:
       return null;
     default:
       return object;
@@ -866,11 +900,11 @@ function read(tokenizer) {
 }
 
 function readObject(tokenizer) {
-  // Returns DOT, CLOSING_PARENTHESIS, XML_END_TAG, EOF, or an object.
+  // Returns DOT, CLOSING_PARENTHESIS, XML_END_TAG, EOI, or an object.
   // XML elements are skipped because they are treated as comments.
   while (true) {
     tokenizer.nextToken();
-    switch (tokenizer.type) {
+    switch (tokenizer.category) {
       case VOID:
       case BOOLEAN:
       case NUMBER:
@@ -920,8 +954,8 @@ function readObject(tokenizer) {
         break; // skip
       case XML_COMMENT:
         break; // skip
-      case EOF:
-        return EOF;
+      case EOI:
+        return EOI;
       default:
         throw new CannotHappen('readObject');
     }
@@ -937,23 +971,24 @@ function readAbbreviation(tokenizer, variable) {
       throw new UnexpectedClosingParenthesis();
     case XML_END_TAG:
       throw new UnexpectedXMLEndTag();
-    case EOF:
-      throw new UnexpectedEndOfFile();
+    case EOI:
+      throw new UnexpectedEndOfInput();
     default:
       return new EVLCons(variable, new EVLCons(object, EVLEmptyList.NIL));
   }
 }
 
 function readReadTimeConditional(tokenizer, polarity) {
-  const featureExpression = readReadTimeConditionalFeatureExpression(tokenizer);
+  const featureExpression = readFeatureExpression(tokenizer);
+  const conditionalizedObject = readConditionalizedObject(tokenizer)
   if (evaluateFeatureExpression(featureExpression) === polarity) {
-    return readReadTimeConditionalObject(tokenizer);
+    return conditionalizedObject;
   } else {
-    return readReadTimeConditionalObject(tokenizer), null;
+    return null;
   }
 }
 
-function readReadTimeConditionalFeatureExpression(tokenizer) {
+function readFeatureExpression(tokenizer) {
   const object = readObject(tokenizer);
   switch (object) {
     case DOT:
@@ -962,14 +997,14 @@ function readReadTimeConditionalFeatureExpression(tokenizer) {
       throw new UnexpectedClosingParenthesis();
     case XML_END_TAG:
       throw new UnexpectedXMLEndTag();
-    case EOF:
-      throw new UnexpectedEndOfFile();
+    case EOI:
+      throw new UnexpectedEndOfInput();
     default:
       return object;
   }
 }
 
-function readReadTimeConditionalObject(tokenizer) {
+function readConditionalizedObject(tokenizer) {
   const object = readObject(tokenizer);
   switch (object) {
     case DOT:
@@ -978,8 +1013,8 @@ function readReadTimeConditionalObject(tokenizer) {
       throw new UnexpectedClosingParenthesis();
     case XML_END_TAG:
       throw new UnexpectedXMLEndTag();
-    case EOF:
-      throw new UnexpectedEndOfFile();
+    case EOI:
+      throw new UnexpectedEndOfInput();
     default:
       return object;
   }
@@ -1002,6 +1037,21 @@ function evaluateFeatureExpression(featureExpression) {
   } else {
     throw new ReaderError('Malformed feature expression.');
   }
+}
+
+function initializeFeatureList(features) {
+  let list = EVLEmptyList.NIL;
+  let lastCons = null;
+  for (const feature of features) {
+    const newCons = new EVLCons(internVariable(feature), EVLEmptyList.NIL);
+    if (lastCons === null) {
+      list = newCons;
+    } else {
+      lastCons.cdr = newCons;
+    }
+    lastCons = newCons;
+  }
+  GlobalEnv.set(VAL_NS, internVariable('*features*'), list);
 }
 
 function evaluateSymbolFeatureExpression(featureExpression) {
@@ -1072,8 +1122,8 @@ function readList(tokenizer) {
         break loop;
       case XML_END_TAG:
         throw new UnexpectedXMLEndTag();
-      case EOF:
-        throw new UnexpectedEndOfFile();
+      case EOI:
+        throw new UnexpectedEndOfInput();
       default:
         const newCons = new EVLCons(object, EVLEmptyList.NIL);
         if (lastCons === null) {
@@ -1100,8 +1150,8 @@ function readDottedList(tokenizer, list, lastCons) {
       throw new ReaderError('Malformed dotted list.');
     case XML_END_TAG:
       throw new UnexpectedXMLEndTag();
-    case EOF:
-      throw new UnexpectedEndOfFile();
+    case EOI:
+      throw new UnexpectedEndOfInput();
     default:
       lastCons.cdr = object;
       break
@@ -1114,8 +1164,8 @@ function readDottedList(tokenizer, list, lastCons) {
       return list;
     case XML_END_TAG:
       throw new UnexpectedXMLEndTag();
-    case EOF:
-      throw new UnexpectedEndOfFile();
+    case EOI:
+      throw new UnexpectedEndOfInput();
     default:
       throw new ReaderError('Malformed dotted list.');
   }
@@ -1132,8 +1182,8 @@ function readVector(tokenizer) {
         break loop;
       case XML_END_TAG:
         throw new UnexpectedXMLEndTag();
-      case EOF:
-        throw new UnexpectedEndOfFile();
+      case EOI:
+        throw new UnexpectedEndOfInput();
       default:
         elements.push(object);
         break;
@@ -1158,8 +1208,8 @@ function readXMLElement(tokenizer) {
         } else {
           throw new ReaderError('Unmatched XML tags.');
         }
-      case EOF:
-        throw new UnexpectedEndOfFile();
+      case EOI:
+        throw new UnexpectedEndOfInput();
       default:
         const callback = tokenizer.callback;
         if (callback !== undefined) {
@@ -1174,69 +1224,38 @@ function readXMLElement(tokenizer) {
 /* EVL to XML Converter */
 /************************/
 
-const TOPLEVEL = 100; // top level context
-const ABBREVIATION = 101; // abbreviation context
-const RTC1 = 102; // context between #+ or #- and feature expression
-const RTC2 = 103; // context between feature expression and object
-const SEQUENCE = 104; // list or vector context
+const XML_TOKEN = 100;
+const EVL_TOKEN = 101;
+const EOL_COMMENT = 102;
 
-const ABSTRACT_BOF = 0; // beginning-of-file abstract token
-const ABSTRACT_EVL = 1; // EVL abstract token
-const ABSTRACT_XML = 2; // XML abstract token
-const ABSTRACT_EOL_COMMENT = 3; // end-of-line comment
-const ABSTRACT_EOF = 4; // end-of-file abstract token
+const XML_CONTEXT = 0;
+const EVL_CONTEXT = 1;
 
-function doConvertToXML(tokenizer) {
+function doConvertEVLToXML(tokenizer) {
   let xml = '';
-  const contextStack = [TOPLEVEL]; // element: TOPLEVEL, ABBREVIATION, RTC1, RTC2, SEQUENCE, or XML element name
-  let previousAbstractToken = ABSTRACT_BOF;
-  let context = TOPLEVEL;
-  let abstractToken = null;
-  while ((abstractToken = abstractRead(tokenizer, contextStack)) !== ABSTRACT_EOF) {
-    if (context === TOPLEVEL) {
-      // BOF   <evl-object|xml-element>   <evl-object|xml-element>   EOF
-      //    ^^^                        ^^^                        ^^^
-      xml += tokenizer.whitespace; // whitespace is written as is
-    } else if ([ABBREVIATION, RTC1, RTC2, SEQUENCE].includes(context)) {
-      // '   <xml-element>   <xml-element>   <evl-object>
-      //  ^^^             ^^^             ^^^
-      // #+   <xml-element>   <xml-element>   <evl-object>   <xml-element>   <xml-element>   <evl-object>
-      //   ^^^             ^^^             ^^^
-      // #+   <xml-element>   <xml-element>   <evl-object>   <xml-element>   <xml-element>   <evl-object>
-      //                                                  ^^^             ^^^             ^^^
-      // (   <evl-object|xml-element>   <xml-element|xml-element>   )
-      //  ^^^                        ^^^                         ^^^
-      xml += convertEVL(previousAbstractToken, tokenizer.whitespace, abstractToken); // whitespace is converted by convertEVL
-    } else if (['chapter', 'section'].includes(context)) {
-      // <chapter>   <evl-object|xml-element>   <evl-object|xml-element>   </chapter>
-      //          ^^^                        ^^^                        ^^^
-      // <section>   <evl-object|xml-element>   <evl-object|xml-element>   </section>
-      //          ^^^                        ^^^                        ^^^
-      xml += convertXML(previousAbstractToken, tokenizer.whitespace, abstractToken); // whitespace is converted by convertXML
-    } else {
-      // <para>   <xml-element>   <xml-element>   </para>
-      //       ^^^             ^^^             ^^^
-      xml += tokenizer.whitespace; // whitespace (= character data) is written as is
+  const contextStack = [];
+  let previousToken = BOI;
+  let context = contextStack[contextStack.length - 1];
+  let token = null;
+  while ((token = sketchyRead(tokenizer, contextStack)) !== EOI) {
+    if (context === XML_CONTEXT) {
+      xml += convertXMLWhitespace(previousToken, tokenizer.whitespace, token);
+    } else if (context = EVL_CONTEXT) {
+      xml += convertEVLWhitespace(previousToken, tokenizer.whitespace, token);
+    } else { // top-level context
+      xml += tokenizer.whitespace;
     }
-    if (abstractToken === ABSTRACT_EVL) {
-      xml += xmlEscape(tokenizer.lexeme); // lexeme is xml escaped
-    } else {
-      xml += tokenizer.lexeme; // lexeme is written as is
+    if (token === EVL_TOKEN) {
+      xml += xmlEscape(tokenizer.lexeme);
+    } else { // XML_TOKEN or EOL_COMMENT
+      xml += tokenizer.lexeme;
     }
-    previousAbstractToken = abstractToken;
+    previousToken = token;
     context = contextStack[contextStack.length - 1];
   }
-  xml += tokenizer.whitespace; // whitespace is written as is
+  xml += tokenizer.whitespace;
   return xml;
 }
-
-// Example: BOF[1]<chapter>[2]([3]xxx[4])[5]</chapter>[6]EOF
-// whitespace [1] is processed in top level context
-// whitespace [2] is processed in chapter context
-// whitespace [3] is processed in sequence context
-// whitespace [4] is processed in sequence context
-// whitespace [5] is processed in chapter context
-// whitespace [6] is processed in top level context
 
 function xmlEscape(string) {
   return string.replace(/[<>&]/g, function (char) {
@@ -1251,147 +1270,111 @@ function xmlEscape(string) {
   });
 }
 
-function abstractRead(tokenizer, contextStack) {
+function sketchyRead(tokenizer, contextStack) {
   tokenizer.nextToken();
-  switch (tokenizer.type) {
+  switch (tokenizer.category) {
     case VOID:
     case BOOLEAN:
     case NUMBER:
-    case CHARACTER:
+    case CHARACTER: // full hash-string construct
     case STRING:
     case KEYWORD:
     case VARIABLE:
-      updateContextStackForEVLObject(contextStack);
-      return ABSTRACT_EVL;
     case QUOTE:
     case QUASIQUOTE:
     case UNQUOTE:
     case UNQUOTE_SPLICING:
-      contextStack.push(ABBREVIATION); // enter abbreviation context
-      return ABSTRACT_EVL;
     case HASH_PLUS:
     case HASH_MINUS:
-      contextStack.push(RTC1); // enter rtc1 context
-      return ABSTRACT_EVL;
+    case DOT:
+      return EVL_TOKEN;
     case OPENING_PARENTHESIS:
     case HASH_OPENING_PARENTHESIS:
-      contextStack.push(SEQUENCE); // enter sequence context
-      return ABSTRACT_EVL;
-    case DOT:
-      return ABSTRACT_EVL;
+      contextStack.push(EVL_CONTEXT);
+      return EVL_TOKEN;
     case CLOSING_PARENTHESIS:
-      if (contextStack[contextStack.length - 1] !== SEQUENCE) {
-        throw new ConverterError('Unexpected closing parenthesis.');
+      if (contextStack[contextStack.length - 1] !== EVL_CONTEXT) {
+        throw new EVLToXMLConverterError('Unexpected closing parenthesis.');
       }
-      contextStack.pop(); // exit sequence context
-      updateContextStackForEVLObject(contextStack);
-      return ABSTRACT_EVL;
+      contextStack.pop();
+      return EVL_TOKEN;
     case XML_START_TAG:
       if (tokenizer.value === 'comment') {
-        abstractReadEndOfLineComment(tokenizer, contextStack);
-        return ABSTRACT_EOL_COMMENT;
+        readEndOfLineComment(tokenizer);
+        return EOL_COMMENT;
       } else {
-        contextStack.push(tokenizer.value); // enter XML element name context
-        return ABSTRACT_XML;
+        contextStack.push(XML_CONTEXT);
+        return XML_TOKEN;
       }
     case XML_END_TAG:
-      if (typeof contextStack[contextStack.length - 1] !== 'string') {
-        throw new ConverterError('Unexpected XML end tag.');
+      if (contextStack[contextStack.length - 1] !== XML_CONTEXT) {
+        throw new EVLToXMLConverterError('Unexpected XML end tag.');
       }
-      if (contextStack[contextStack.length - 1] !== tokenizer.value) {
-        throw new ConverterError('Unmatched XML tags.');
-      }
-      contextStack.pop(); // exit XML element name context
-      return ABSTRACT_XML;
+      contextStack.pop();
+      return XML_TOKEN;
     case XML_EMPTY_ELEMENT_TAG:
-      return ABSTRACT_XML;
     case XML_COMMENT:
-      return ABSTRACT_XML;
-    case EOF:
-      if (contextStack[contextStack.length - 1] !== TOPLEVEL) {
-        throw new ConverterError('Unexpected end-of-file.');
+      return XML_TOKEN;
+    case EOI:
+      if (contextStack.length !== 0) {
+        throw new EVLToXMLConverterError('Unexpected end-of-input.');
       }
-      contextStack.pop(); // exit top level context
-      return ABSTRACT_EOF;
+      return EOI;
     default:
-      throw new CannotHappen('abstractRead');
+      throw new CannotHappen('sketchyRead');
   }
 }
 
-function updateContextStackForEVLObject(contextStack) {
-  while (true) {
-    switch (contextStack[contextStack.length - 1]) {
-      case ABBREVIATION:
-        contextStack.pop(); // exit abbreviation context
-        break;
-      case RTC1:
-        contextStack.pop(); // exit rtc1 context
-        contextStack.push(RTC2); // enter rtc2 context
-        return;
-      case RTC2:
-        contextStack.pop(); // exit rtc2 context
-        break;
-      default:
-        return;
-    }
-  }
-}
-
-function abstractReadEndOfLineComment(tokenizer) {
+function readEndOfLineComment(tokenizer) {
   const whitespace = tokenizer.whitespace;
   let lexeme = tokenizer.lexeme;
-  const contextStack = [tokenizer.value]; // local stack
+  const contextStack = [];
   while (true) {
     tokenizer.nextToken();
-    switch (tokenizer.type) {
+    switch (tokenizer.category) {
       case XML_START_TAG:
         lexeme += tokenizer.whitespace;
         lexeme += tokenizer.lexeme;
-        contextStack.push(tokenizer.value);
+        contextStack.push(XML_CONTEXT);
         break;
       case XML_END_TAG:
-        if (contextStack[contextStack.length - 1] !== tokenizer.value) {
-          throw new ConverterError('Unmatched XML tags.');
-        }
         lexeme += tokenizer.whitespace;
         lexeme += tokenizer.lexeme;
-        contextStack.pop();
         if (contextStack.length === 0) {
-          tokenizer.whitespace = whitespace; // whitespace before end-of-line comment
+          tokenizer.whitespace = whitespace; // run of whitespace before end-of-line comment
           tokenizer.lexeme = lexeme; // end-of-line comment
           return;
+        } else {
+          contextStack.pop();
+          break;
         }
-        break;
       case XML_EMPTY_ELEMENT_TAG:
-        lexeme += tokenizer.whitespace;
-        lexeme += tokenizer.lexeme;
-        break;
       case XML_COMMENT:
         lexeme += tokenizer.whitespace;
         lexeme += tokenizer.lexeme;
         break;
-      case EOF:
-        throw new ConverterError('Unexpected end-of-file.');
+      case EOI:
+        throw new EVLToXMLConverterError('Unexpected end-of-input.');
       default:
-        throw new CannotHappen('abstractReadEndOfLineComment');
+        throw new CannotHappen('readEndOfLineComment');
     }
   }
 }
 
-function isXMLAbstractToken(abstractToken) {
-  return abstractToken === ABSTRACT_XML;
+function isXMLToken(token) {
+  return token === XML_TOKEN;
 }
 
-function isEVLAbstractToken(abstractToken) {
-  return abstractToken === ABSTRACT_EVL || abstractToken === ABSTRACT_EOL_COMMENT;
+function isEVLToken(token) {
+  return token === EVL_TOKEN || token === EOL_COMMENT;
 }
 
-function convertXML(previousAbstractToken, whitespace, abstractToken) {
+function convertXMLWhitespace(previousToken, whitespace, token) {
   let xml = '';
-  if (isXMLAbstractToken(previousAbstractToken) && isEVLAbstractToken(abstractToken)) {
+  if (isXMLToken(previousToken) && isEVLToken(token)) {
     xml += whitespace;
     xml += '<toplevelcode><blockcode>';
-  } else if (isEVLAbstractToken(previousAbstractToken) && isEVLAbstractToken(abstractToken)) {
+  } else if (isEVLToken(previousToken) && isEVLToken(token)) {
     if (countNewlines(whitespace) >= 2) {
       xml += '</blockcode></toplevelcode>';
       xml += whitespace;
@@ -1399,7 +1382,7 @@ function convertXML(previousAbstractToken, whitespace, abstractToken) {
     } else {
       xml += whitespace;
     }
-  } else if (isEVLAbstractToken(previousAbstractToken) && isXMLAbstractToken(abstractToken)) {
+  } else if (isEVLToken(previousToken) && isXMLToken(token)) {
     xml += '</blockcode></toplevelcode>';
     xml += whitespace;
   } else {
@@ -1418,14 +1401,14 @@ function countNewlines(string) {
   return count;
 }
 
-function convertEVL(previousAbstractToken, whitespace, abstractToken) {
+function convertEVLWhitespace(previousToken, whitespace, token) {
   let xml = '';
-  if (isEVLAbstractToken(previousAbstractToken) && isXMLAbstractToken(abstractToken)) {
+  if (isEVLToken(previousToken) && isXMLToken(token)) {
     xml += '</blockcode><indentation style="margin-left: ';
     xml += countSpacesAfterFirstNewline(whitespace);
     xml += 'ch;"><blockcomment>';
     xml += whitespace;
-  } else if (isXMLAbstractToken(previousAbstractToken) && isEVLAbstractToken(abstractToken)) {
+  } else if (isXMLToken(previousToken) && isEVLToken(token)) {
     xml += '</blockcomment></indentation><blockcode>';
     xml += whitespace;
   } else {
@@ -1453,19 +1436,19 @@ function countSpacesAfterFirstNewline(string) {
   return count;
 }
 
-/*******************/
-/* Syntax Analyzer */
-/*******************/
+/*****************/
+/* Form Analyzer */
+/*****************/
 
-function syntaxAnalyzerError(formName) {
-  throw new SyntaxAnalyzerError(`Malformed ${formName} form.`);
+function formAnalyzerError(formName) {
+  throw new FormAnalyzerError(`Malformed ${formName} form.`);
 }
 
-function checkCons(object, formName) {
-  if (object instanceof EVLCons) {
+function checkVariable(object, formName) {
+  if (object instanceof EVLVariable) {
     return object;
   } else {
-    syntaxAnalyzerError(formName);
+    formAnalyzerError(formName);
   }
 }
 
@@ -1473,7 +1456,15 @@ function checkEmptyList(object, formName) {
   if (object instanceof EVLEmptyList) {
     return object;
   } else {
-    syntaxAnalyzerError(formName);
+    formAnalyzerError(formName);
+  }
+}
+
+function checkCons(object, formName) {
+  if (object instanceof EVLCons) {
+    return object;
+  } else {
+    formAnalyzerError(formName);
   }
 }
 
@@ -1483,7 +1474,7 @@ function checkProperList(object, formName) {
     if (list instanceof EVLCons) {
       list = list.cdr;
     } else {
-      syntaxAnalyzerError(formName);
+      formAnalyzerError(formName);
     }
   }
   return object;
@@ -1493,48 +1484,40 @@ function checkParameterList(object, formName) {
   if (object instanceof EVLVariable) {
     return [[object], true];
   } else {
-    const variables = [];
-    let variadic = false;
+    const parameters = [];
+    let rest = false;
     let list = object
     while (list !== EVLEmptyList.NIL) {
       if (list instanceof EVLCons) {
         if (list.car instanceof EVLVariable) {
-          variables.push(list.car);
+          parameters.push(list.car);
         } else {
-          syntaxAnalyzerError(formName);
+          formAnalyzerError(formName);
         }
         if (list.cdr instanceof EVLVariable) {
-          variables.push(list.cdr);
-          variadic = true;
+          parameters.push(list.cdr);
+          rest = true;
           break;
         } else {
           list = list.cdr;
         }
       } else {
-        syntaxAnalyzerError(formName);
+        formAnalyzerError(formName);
       }
     }
-    if (new Set(variables).size !== variables.length) {
-      syntaxAnalyzerError(formName);
+    if (new Set(parameters).size !== parameters.length) {
+      formAnalyzerError(formName);
     }
-    return [variables, variadic];
-  }
-}
-
-function checkVariable(object, formName) {
-  if (object instanceof EVLVariable) {
-    return object;
-  } else {
-    syntaxAnalyzerError(formName);
+    return [parameters, rest];
   }
 }
 
 function analyzeQuote(form) {
   let cons = form;
   cons = checkCons(cons.cdr, 'quote');
-  const object = cons.car;
+  const literal = cons.car;
   checkEmptyList(cons.cdr, 'quote');
-  return [object];
+  return [literal];
 }
 
 function analyzeProgn(form) {
@@ -1558,9 +1541,9 @@ function analyzeIf(form) {
 function analyzeLambda(form) {
   let cons = form;
   cons = checkCons(cons.cdr, '_lambda');
-  const [variables, variadic] = checkParameterList(cons.car, '_lambda');
+  const [parameters, rest] = checkParameterList(cons.car, '_lambda');
   const forms = checkProperList(cons.cdr, '_lambda');
-  return [variables, variadic, forms];
+  return [parameters, rest, forms];
 }
 
 function analyzeRef(form) {
@@ -1600,22 +1583,22 @@ function analyzeCatchErrors(form) {
   return [tryForm];
 }
 
-function analyzeApplication(mv, apply, form) {
+function analyzeCall(mv, apply, form) {
   let cons = form;
   if (mv || apply) {
-    cons = checkCons(cons.cdr, 'application');
+    cons = checkCons(cons.cdr, 'call');
   }
   const operator = cons.car;
-  const operands = checkProperList(cons.cdr, 'application');
+  const operands = checkProperList(cons.cdr, 'call');
   return [operator, operands];
 }
 
-/**********/
-/* Scopes */
-/**********/
+/*****************************/
+/* Scope-Extent Combinations */
+/*****************************/
 
-const LEX_SCOPE = 0; // lexical scope
-const DYN_SCOPE = 1; // dynamic scope
+const LEX_SCOPE = 0; // lexical scope and indefinite extent
+const DYN_SCOPE = 1; // indefinite scope and dynamic extent
 
 /**************/
 /* Namespaces */
@@ -1643,7 +1626,7 @@ class GlobalEnv {
         if (value !== null) {
           return value;
         } else {
-          throw new UnboundVariable(variable, 'VALUE');
+          throw new UnboundVariable(variable, 'value');
         }
       }
       case FUN_NS: {
@@ -1651,7 +1634,7 @@ class GlobalEnv {
         if (value !== null) {
           return value;
         } else {
-          throw new UnboundVariable(variable, 'FUNCTION');
+          throw new UnboundVariable(variable, 'function');
         }
       }
       default:
@@ -1685,14 +1668,14 @@ class GlobalEnv {
   }
 }
 
-/*********************/
-/* Local Environment */
-/*********************/
+/************************************/
+/* Lexical and Dynamic Environments */
+/************************************/
 
-class LocalEnv { // abstract class
+class DefiniteEnv { // abstract class
 }
 
-class NullLocalEnv extends LocalEnv {
+class NullDefiniteEnv extends DefiniteEnv {
   constructor() {
     super();
   }
@@ -1708,9 +1691,9 @@ class NullLocalEnv extends LocalEnv {
   }
 }
 
-const nullLocalEnv = new NullLocalEnv();
+const nullDefiniteEnv = new NullDefiniteEnv();
 
-class Frame extends LocalEnv {
+class Frame extends DefiniteEnv {
   constructor(namespace, variables, values, next) {
     super();
     this.namespace = namespace;
@@ -1751,9 +1734,9 @@ class Frame extends LocalEnv {
   }
 }
 
-/**********************************/
-/* Mapping Arguments to Variables */
-/**********************************/
+/*************************************/
+/* Pairing Parameters with Arguments */
+/*************************************/
 
 class TooFewArguments extends EvaluatorError {
   constructor() {
@@ -1769,96 +1752,104 @@ class TooManyArguments extends EvaluatorError {
   }
 }
 
-class MalformedSpreadableArgumentList extends EvaluatorError {
+class MalformedSpreadableSequenceOfObjects extends EvaluatorError {
   constructor() {
-    super('Malformed spreadable argument list.');
-    this.name = 'MalformedSpreadableArgumentList';
+    super('Malformed spreadable sequence of objects.');
+    this.name = 'MalformedSpreadableSequenceOfObjects';
   }
 }
 
-function mapPrimFunArgs(apply, args, arityMin, arityMax) {
+function pairPrimFunParameters(apply, args, arityMin, arityMax) {
   if (!apply) {
-    const nargs = args.length;
-    if (nargs < arityMin) {
-      throw new TooFewArguments();
-    }
-    if (arityMax !== null && nargs > arityMax) {
-      throw new TooManyArguments();
-    }
-    return args;
+    return pairPrimFunParametersNoApply(args, arityMin, arityMax);
   } else {
-    const nargs = args.length;
-    const spreadArgs = [];
-    let i = 0;
-    while (i < nargs - 1) {
-      if (arityMax === null || i < arityMax) {
-        spreadArgs.push(args[i]);
-        i++;
-      } else {
-        throw new TooManyArguments();
-      }
-    }
-    if (nargs === 0 || !(args[nargs - 1] instanceof EVLList)) {
-      throw new MalformedSpreadableArgumentList();
-    }
-    let argList = args[nargs - 1];
-    while (argList !== EVLEmptyList.NIL) {
-      if (argList instanceof EVLCons) {
-        if (arityMax === null || i < arityMax) {
-          spreadArgs.push(argList.car);
-          i++;
-        } else {
-          throw new TooManyArguments();
-        }
-        argList = argList.cdr;
-      } else {
-        throw new MalformedSpreadableArgumentList();
-      }
-    }
-    if (i < arityMin) {
-      throw new TooFewArguments();
-    }
-    return spreadArgs;
+    return pairPrimFunParametersApply(args, arityMin, arityMax);
   }
 }
 
-function mapClosureArgs(apply, args, vars, variadic) {
-  if (!apply) {
-    if (!variadic) {
-      return mapClosureArgsForFixedArityCall(args, vars);
-    } else {
-      return mapClosureArgsForVariableArityCall(args, vars);
-    }
-  } else {
-    if (!variadic) {
-      return mapClosureArgsForFixedArityApply(args, vars);
-    } else {
-      return mapClosureArgsForVariableArityApply(args, vars);
-    }
-  }
-}
-
-function mapClosureArgsForFixedArityCall(args, vars) {
+function pairPrimFunParametersNoApply(args, arityMin, arityMax) {
   const nargs = args.length;
-  const nvars = vars.length;
-  if (nargs < nvars) {
+  if (nargs < arityMin) {
     throw new TooFewArguments();
   }
-  if (nargs > nvars) {
+  if (arityMax !== null && nargs > arityMax) {
     throw new TooManyArguments();
   }
   return args;
 }
 
-function mapClosureArgsForVariableArityCall(args, vars) {
+function pairPrimFunParametersApply(args, arityMin, arityMax) {
   const nargs = args.length;
-  const nvars = vars.length;
-  const values = new Array(nvars);
+  const spreadArgs = [];
+  let i = 0;
+  while (i < nargs - 1) {
+    if (arityMax === null || i < arityMax) {
+      spreadArgs.push(args[i]);
+      i++;
+    } else {
+      throw new TooManyArguments();
+    }
+  }
+  if (nargs === 0 || !(args[nargs - 1] instanceof EVLList)) {
+    throw new MalformedSpreadableSequenceOfObjects();
+  }
+  let argList = args[nargs - 1];
+  while (argList !== EVLEmptyList.NIL) {
+    if (argList instanceof EVLCons) {
+      if (arityMax === null || i < arityMax) {
+        spreadArgs.push(argList.car);
+        i++;
+      } else {
+        throw new TooManyArguments();
+      }
+      argList = argList.cdr;
+    } else {
+      throw new MalformedSpreadableSequenceOfObjects();
+    }
+  }
+  if (i < arityMin) {
+    throw new TooFewArguments();
+  }
+  return spreadArgs;
+}
+
+function pairClosureParameters(apply, args, parameters, rest) {
+  if (!apply) {
+    if (!rest) {
+      return pairClosureParametersNoApplyNoRest(args, parameters);
+    } else {
+      return pairClosureParametersNoApplyRest(args, parameters);
+    }
+  } else {
+    if (!rest) {
+      return pairClosureParametersApplyNoRest(args, parameters);
+    } else {
+      return pairClosureParametersApplyRest(args, parameters);
+    }
+  }
+}
+
+function pairClosureParametersNoApplyNoRest(args, parameters) {
+  const nargs = args.length;
+  const nparameters = parameters.length;
+  if (nargs < nparameters) {
+    throw new TooFewArguments();
+  }
+  if (nargs > nparameters) {
+    throw new TooManyArguments();
+  }
+  return args;
+}
+
+function pairClosureParametersNoApplyRest(args, parameters) {
+  const nargs = args.length;
+  const nparameters = parameters.length;
+  const values = new Array(nparameters);
   let list = EVLEmptyList.NIL;
   let lastCons = null;
   let i = 0;
   while (i < nargs) {
-    if (i < nvars - 1) {
+    if (i < nparameters - 1) {
       values[i] = args[i];
       i++;
     } else {
@@ -1872,20 +1863,20 @@ function mapClosureArgsForVariableArityCall(args, vars) {
       i++;
     }
   }
-  if (i < nvars - 1) {
+  if (i < nparameters - 1) {
     throw new TooFewArguments();
   }
-  values[nvars - 1] = list;
+  values[nparameters - 1] = list;
   return values;
 }
 
-function mapClosureArgsForFixedArityApply(args, vars) {
+function pairClosureParametersApplyNoRest(args, parameters) {
   const nargs = args.length;
-  const nvars = vars.length;
-  const values = new Array(nvars);
+  const nparameters = parameters.length;
+  const values = new Array(nparameters);
   let i = 0;
   while (i < nargs - 1) {
-    if (i < nvars) {
+    if (i < nparameters) {
       values[i] = args[i];
       i++;
     } else {
@@ -1893,12 +1884,12 @@ function mapClosureArgsForFixedArityApply(args, vars) {
     }
   }
   if (nargs === 0 || !(args[nargs - 1] instanceof EVLList)) {
-    throw new MalformedSpreadableArgumentList();
+    throw new MalformedSpreadableSequenceOfObjects();
   }
   let argList = args[nargs - 1];
   while (argList !== EVLEmptyList.NIL) {
     if (argList instanceof EVLCons) {
-      if (i < nvars) {
+      if (i < nparameters) {
         values[i] = argList.car;
         i++;
       } else {
@@ -1906,24 +1897,24 @@ function mapClosureArgsForFixedArityApply(args, vars) {
       }
       argList = argList.cdr;
     } else {
-      throw new MalformedSpreadableArgumentList();
+      throw new MalformedSpreadableSequenceOfObjects();
     }
   }
-  if (i < nvars) {
+  if (i < nparameters) {
     throw new TooFewArguments();
   }
   return values;
 }
 
-function mapClosureArgsForVariableArityApply(args, vars) {
+function pairClosureParametersApplyRest(args, parameters) {
   const nargs = args.length;
-  const nvars = vars.length;
-  const values = new Array(nvars);
+  const nparameters = parameters.length;
+  const values = new Array(nparameters);
   let list = EVLEmptyList.NIL;
   let lastCons = null;
   let i = 0;
   while (i < nargs - 1) {
-    if (i < nvars - 1) {
+    if (i < nparameters - 1) {
       values[i] = args[i];
       i++;
     } else {
@@ -1938,12 +1929,12 @@ function mapClosureArgsForVariableArityApply(args, vars) {
     }
   }
   if (nargs === 0 || !(args[nargs - 1] instanceof EVLList)) {
-    throw new MalformedSpreadableArgumentList();
+    throw new MalformedSpreadableSequenceOfObjects();
   }
   let argList = args[nargs - 1];
   while (argList !== EVLEmptyList.NIL) {
     if (argList instanceof EVLCons) {
-      if (i < nvars - 1) {
+      if (i < nparameters - 1) {
         values[i] = argList.car;
         i++;
       } else {
@@ -1956,13 +1947,13 @@ function mapClosureArgsForVariableArityApply(args, vars) {
       }
       argList = argList.cdr;
     } else {
-      throw new MalformedSpreadableArgumentList();
+      throw new MalformedSpreadableSequenceOfObjects();
     }
   }
-  if (i < nvars - 1) {
+  if (i < nparameters - 1) {
     throw new TooFewArguments();
   }
-  values[nvars - 1] = list;
+  values[nparameters - 1] = list;
   return values;
 }
 
@@ -1999,7 +1990,7 @@ function genericEval(form) {
 }
 
 function emptyListError() {
-  throw new EvaluatorError('The empty list is not a form.');
+  throw new EvaluatorError('The empty list does not evaluate.');
 }
 
 function ifTestFormError() {
@@ -2007,7 +1998,7 @@ function ifTestFormError() {
 }
 
 function forEachNotImplemented() {
-  throw new EvaluatorError('_for-each is not implemented.');
+  throw new EvaluatorError('The _for-each-form is not implemented.');
 }
 
 function forEachFunctionFormError() {
@@ -2018,7 +2009,7 @@ function forEachListFormError() {
   throw new EvaluatorError('The list-form does not evaluate to a proper list.');
 }
 
-function applicationOperatorFormError() {
+function callOperatorFormError() {
   throw new EvaluatorError('The operator-form does not evaluate to a function.');
 }
 
@@ -2027,7 +2018,7 @@ function applicationOperatorFormError() {
 /*****************************/
 
 function plainrecEval(form) {
-  return plainrecEvalForm(form, nullLocalEnv, nullLocalEnv);
+  return plainrecEvalForm(form, nullDefiniteEnv, nullDefiniteEnv);
 }
 
 function plainrecEvalForm(form, lenv, denv) {
@@ -2066,13 +2057,13 @@ function plainrecEvalForm(form, lenv, denv) {
       case _catchErrorsVariable:
         return plainrecEvalCatchErrors(form, lenv, denv);
       case applyVariable:
-        return plainrecEvalApplication(false, true, form, lenv, denv);
+        return plainrecEvalCall(false, true, form, lenv, denv);
       case multipleValueCallVariable:
-        return plainrecEvalApplication(true, false, form, lenv, denv);
+        return plainrecEvalCall(true, false, form, lenv, denv);
       case multipleValueApplyVariable:
-        return plainrecEvalApplication(true, true, form, lenv, denv);
+        return plainrecEvalCall(true, true, form, lenv, denv);
       default:
-        return plainrecEvalApplication(false, false, form, lenv, denv);
+        return plainrecEvalCall(false, false, form, lenv, denv);
     }
   } else if (form instanceof EVLVariable) {
     return lenv.ref(VAL_NS, form);
@@ -2082,8 +2073,8 @@ function plainrecEvalForm(form, lenv, denv) {
 }
 
 function plainrecEvalQuote(form, lenv, denv) {
-  const [object] = analyzeQuote(form);
-  return object;
+  const [literal] = analyzeQuote(form);
+  return literal;
 }
 
 function plainrecEvalProgn(form, lenv, denv) {
@@ -2116,8 +2107,8 @@ function plainrecEvalIf(form, lenv, denv) {
 }
 
 function plainrecEvalLambda(scope, namespace, macro, form, lenv, denv) {
-  const [variables, variadic, forms] = analyzeLambda(form);
-  return new EVLClosure(scope, namespace, macro, variables, variadic, forms, lenv);
+  const [parameters, rest, forms] = analyzeLambda(form);
+  return new EVLClosure(scope, namespace, macro, parameters, rest, forms, lenv);
 }
 
 function plainrecEvalRef(scope, namespace, form, lenv, denv) {
@@ -2155,8 +2146,8 @@ function plainrecEvalCatchErrors(form, lenv, denv) {
   return EVLVoid.VOID;
 }
 
-function plainrecEvalApplication(mv, apply, form, lenv, denv) {
-  const [operator, operands] = analyzeApplication(mv, apply, form);
+function plainrecEvalCall(mv, apply, form, lenv, denv) {
+  const [operator, operands] = analyzeCall(mv, apply, form);
   const fn = plainrecEvalOperator(operator, lenv, denv).primaryValue();
   const macro = operator instanceof EVLVariable && fn instanceof EVLClosure && fn.macro;
   const args = plainrecEvalOperands(mv, macro, operands, [], lenv, denv);
@@ -2192,13 +2183,13 @@ function plainrecEvalOperands(mv, macro, operands, args, lenv, denv) {
 
 function plainrecInvokeFun(apply, macro, fn, args, lenv, denv) {
   if (fn instanceof EVLPrimitiveFunction) {
-    const values = mapPrimFunArgs(apply, args, fn.arityMin, fn.arityMax);
+    const values = pairPrimFunParameters(apply, args, fn.arityMin, fn.arityMax);
     return fn.jsFunction(values);
   } else if (fn instanceof EVLClosure) {
-    const values = mapClosureArgs(apply, args, fn.variables, fn.variadic);
+    const values = pairClosureParameters(apply, args, fn.parameters, fn.rest);
     switch (fn.scope) {
       case LEX_SCOPE:
-        const elenv = new Frame(fn.namespace, fn.variables, values, fn.lenv);
+        const elenv = new Frame(fn.namespace, fn.parameters, values, fn.lenv);
         if (macro) {
           const expansion = plainrecEvalForms(fn.forms, elenv, denv).primaryValue();
           return plainrecEvalForm(expansion, lenv, denv);
@@ -2206,13 +2197,13 @@ function plainrecInvokeFun(apply, macro, fn, args, lenv, denv) {
           return plainrecEvalForms(fn.forms, elenv, denv);
         }
       case DYN_SCOPE:
-        const edenv = new Frame(fn.namespace, fn.variables, values, denv);
+        const edenv = new Frame(fn.namespace, fn.parameters, values, denv);
         return plainrecEvalForms(fn.forms, fn.lenv, edenv);
       default:
         throw new CannotHappen('plainrecInvokeFun');
     }
   } else {
-    applicationOperatorFormError();
+    callOperatorFormError();
   }
 }
 
@@ -2221,7 +2212,7 @@ function plainrecInvokeFun(apply, macro, fn, args, lenv, denv) {
 /****************************************/
 
 function cpsEval(form) {
-  return cpsEvalForm(form, nullLocalEnv, nullLocalEnv, cpsEndCont);
+  return cpsEvalForm(form, nullDefiniteEnv, nullDefiniteEnv, cpsEndCont);
 }
 
 function cpsEvalForm(form, lenv, denv, k) {
@@ -2260,13 +2251,13 @@ function cpsEvalForm(form, lenv, denv, k) {
       case _catchErrorsVariable:
         return cpsEvalCatchErrors(form, lenv, denv, k);
       case applyVariable:
-        return cpsEvalApplication(false, true, form, lenv, denv, k);
+        return cpsEvalCall(false, true, form, lenv, denv, k);
       case multipleValueCallVariable:
-        return cpsEvalApplication(true, false, form, lenv, denv, k);
+        return cpsEvalCall(true, false, form, lenv, denv, k);
       case multipleValueApplyVariable:
-        return cpsEvalApplication(true, true, form, lenv, denv, k);
+        return cpsEvalCall(true, true, form, lenv, denv, k);
       default:
-        return cpsEvalApplication(false, false, form, lenv, denv, k);
+        return cpsEvalCall(false, false, form, lenv, denv, k);
     }
   } else if (form instanceof EVLVariable) {
     return k(lenv.ref(VAL_NS, form));
@@ -2278,8 +2269,8 @@ function cpsEvalForm(form, lenv, denv, k) {
 const cpsEndCont = result => result;
 
 function cpsEvalQuote(form, lenv, denv, k) {
-  const [object] = analyzeQuote(form);
-  return k(object);
+  const [literal] = analyzeQuote(form);
+  return k(literal);
 }
 
 function cpsEvalProgn(form, lenv, denv, k) {
@@ -2321,8 +2312,8 @@ function cpsEvalIf(form, lenv, denv, k) {
 }
 
 function cpsEvalLambda(scope, namespace, macro, form, lenv, denv, k) {
-  const [variables, variadic, forms] = analyzeLambda(form);
-  return k(new EVLClosure(scope, namespace, macro, variables, variadic, forms, lenv));
+  const [parameters, rest, forms] = analyzeLambda(form);
+  return k(new EVLClosure(scope, namespace, macro, parameters, rest, forms, lenv));
 }
 
 function cpsEvalRef(scope, namespace, form, lenv, denv, k) {
@@ -2393,8 +2384,8 @@ function cpsEvalCatchErrors(form, lenv, denv, k) {
   return k(EVLVoid.VOID);
 }
 
-function cpsEvalApplication(mv, apply, form, lenv, denv, k) {
-  const [operator, operands] = analyzeApplication(mv, apply, form);
+function cpsEvalCall(mv, apply, form, lenv, denv, k) {
+  const [operator, operands] = analyzeCall(mv, apply, form);
   return cpsEvalOperator(
     operator, lenv, denv,
     result => { // OperatorCont
@@ -2443,13 +2434,13 @@ function cpsEvalOperands(mv, macro, operands, args, lenv, denv, k) {
 
 function cpsInvokeFun(apply, macro, fn, args, lenv, denv, k) {
   if (fn instanceof EVLPrimitiveFunction) {
-    const values = mapPrimFunArgs(apply, args, fn.arityMin, fn.arityMax);
+    const values = pairPrimFunParameters(apply, args, fn.arityMin, fn.arityMax);
     return k(fn.jsFunction(values));
   } else if (fn instanceof EVLClosure) {
-    const values = mapClosureArgs(apply, args, fn.variables, fn.variadic);
+    const values = pairClosureParameters(apply, args, fn.parameters, fn.rest);
     switch (fn.scope) {
       case LEX_SCOPE:
-        const elenv = new Frame(fn.namespace, fn.variables, values, fn.lenv);
+        const elenv = new Frame(fn.namespace, fn.parameters, values, fn.lenv);
         if (macro) {
           const expansion = cpsEvalForms(fn.forms, elenv, denv, cpsEndCont).primaryValue();
           return cpsEvalForm(expansion, lenv, denv, k);
@@ -2457,13 +2448,13 @@ function cpsInvokeFun(apply, macro, fn, args, lenv, denv, k) {
           return cpsEvalForms(fn.forms, elenv, denv, k);
         }
       case DYN_SCOPE:
-        const edenv = new Frame(fn.namespace, fn.variables, values, denv);
+        const edenv = new Frame(fn.namespace, fn.parameters, values, denv);
         return cpsEvalForms(fn.forms, fn.lenv, edenv, k);
       default:
         throw new CannotHappen('cpsInvokeFun');
     }
   } else {
-    applicationOperatorFormError();
+    callOperatorFormError();
   }
 }
 
@@ -2472,7 +2463,7 @@ function cpsInvokeFun(apply, macro, fn, args, lenv, denv, k) {
 /*********************************/
 
 function oocpsEval(form) {
-  return oocpsEvalForm(form, nullLocalEnv, nullLocalEnv, oocpsEndCont);
+  return oocpsEvalForm(form, nullDefiniteEnv, nullDefiniteEnv, oocpsEndCont);
 }
 
 function oocpsEvalForm(form, lenv, denv, k) {
@@ -2511,13 +2502,13 @@ function oocpsEvalForm(form, lenv, denv, k) {
       case _catchErrorsVariable:
         return oocpsEvalCatchErrors(form, lenv, denv, k);
       case applyVariable:
-        return oocpsEvalApplication(false, true, form, lenv, denv, k);
+        return oocpsEvalCall(false, true, form, lenv, denv, k);
       case multipleValueCallVariable:
-        return oocpsEvalApplication(true, false, form, lenv, denv, k);
+        return oocpsEvalCall(true, false, form, lenv, denv, k);
       case multipleValueApplyVariable:
-        return oocpsEvalApplication(true, true, form, lenv, denv, k);
+        return oocpsEvalCall(true, true, form, lenv, denv, k);
       default:
-        return oocpsEvalApplication(false, false, form, lenv, denv, k);
+        return oocpsEvalCall(false, false, form, lenv, denv, k);
     }
   } else if (form instanceof EVLVariable) {
     return k.invoke(lenv.ref(VAL_NS, form));
@@ -2546,8 +2537,8 @@ class OOCPSEndCont extends OOCPSCont {
 const oocpsEndCont = new OOCPSEndCont();
 
 function oocpsEvalQuote(form, lenv, denv, k) {
-  const [object] = analyzeQuote(form);
-  return k.invoke(object);
+  const [literal] = analyzeQuote(form);
+  return k.invoke(literal);
 }
 
 function oocpsEvalProgn(form, lenv, denv, k) {
@@ -2608,8 +2599,8 @@ class OOCPSIfTestFormCont extends OOCPSCont {
 }
 
 function oocpsEvalLambda(scope, namespace, macro, form, lenv, denv, k) {
-  const [variables, variadic, forms] = analyzeLambda(form);
-  return k.invoke(new EVLClosure(scope, namespace, macro, variables, variadic, forms, lenv));
+  const [parameters, rest, forms] = analyzeLambda(form);
+  return k.invoke(new EVLClosure(scope, namespace, macro, parameters, rest, forms, lenv));
 }
 
 function oocpsEvalRef(scope, namespace, form, lenv, denv, k) {
@@ -2709,8 +2700,8 @@ function oocpsEvalCatchErrors(form, lenv, denv, k) {
   return k.invoke(EVLVoid.VOID);
 }
 
-function oocpsEvalApplication(mv, apply, form, lenv, denv, k) {
-  const [operator, operands] = analyzeApplication(mv, apply, form);
+function oocpsEvalCall(mv, apply, form, lenv, denv, k) {
+  const [operator, operands] = analyzeCall(mv, apply, form);
   return oocpsEvalOperator(
     operator, lenv, denv,
     new OOCPSOperatorCont(mv, apply, operator, operands, lenv, denv, k)
@@ -2794,13 +2785,13 @@ class OOCPSOperandsCont extends OOCPSCont {
 
 function oocpsInvokeFun(apply, macro, fn, args, lenv, denv, k) {
   if (fn instanceof EVLPrimitiveFunction) {
-    const values = mapPrimFunArgs(apply, args, fn.arityMin, fn.arityMax);
+    const values = pairPrimFunParameters(apply, args, fn.arityMin, fn.arityMax);
     return k.invoke(fn.jsFunction(values));
   } else if (fn instanceof EVLClosure) {
-    const values = mapClosureArgs(apply, args, fn.variables, fn.variadic);
+    const values = pairClosureParameters(apply, args, fn.parameters, fn.rest);
     switch (fn.scope) {
       case LEX_SCOPE:
-        const elenv = new Frame(fn.namespace, fn.variables, values, fn.lenv);
+        const elenv = new Frame(fn.namespace, fn.parameters, values, fn.lenv);
         if (macro) {
           const expansion = oocpsEvalForms(fn.forms, elenv, denv, oocpsEndCont).primaryValue();
           return oocpsEvalForm(expansion, lenv, denv, k);
@@ -2808,13 +2799,13 @@ function oocpsInvokeFun(apply, macro, fn, args, lenv, denv, k) {
           return oocpsEvalForms(fn.forms, elenv, denv, k);
         }
       case DYN_SCOPE:
-        const edenv = new Frame(fn.namespace, fn.variables, values, denv);
+        const edenv = new Frame(fn.namespace, fn.parameters, values, denv);
         return oocpsEvalForms(fn.forms, fn.lenv, edenv, k);
       default:
         throw new CannotHappen('oocpsInvokeFun');
     }
   } else {
-    applicationOperatorFormError();
+    callOperatorFormError();
   }
 }
 
@@ -2825,7 +2816,7 @@ function oocpsInvokeFun(apply, macro, fn, args, lenv, denv, k) {
 function sboocpsEval(form) {
   const kStack = new SBOOCPSControlStack();
   kStack.push(sboocpsEndCont);
-  return sboocpsEvalForm(form, nullLocalEnv, kStack);
+  return sboocpsEvalForm(form, nullDefiniteEnv, kStack);
 }
 
 class SBOOCPSControlStack {
@@ -2913,13 +2904,13 @@ function sboocpsEvalForm(form, lenv, kStack) {
       case _catchErrorsVariable:
         return sboocpsEvalCatchErrors(form, lenv, kStack);
       case applyVariable:
-        return sboocpsEvalApplication(false, true, form, lenv, kStack);
+        return sboocpsEvalCall(false, true, form, lenv, kStack);
       case multipleValueCallVariable:
-        return sboocpsEvalApplication(true, false, form, lenv, kStack);
+        return sboocpsEvalCall(true, false, form, lenv, kStack);
       case multipleValueApplyVariable:
-        return sboocpsEvalApplication(true, true, form, lenv, kStack);
+        return sboocpsEvalCall(true, true, form, lenv, kStack);
       default:
-        return sboocpsEvalApplication(false, false, form, lenv, kStack);
+        return sboocpsEvalCall(false, false, form, lenv, kStack);
     }
   } else if (form instanceof EVLVariable) {
     return kStack.invokeCont(lenv.ref(VAL_NS, form));
@@ -2947,8 +2938,8 @@ class SBOOCPSEndCont extends SBOOCPSCont {
 const sboocpsEndCont = new SBOOCPSEndCont();
 
 function sboocpsEvalQuote(form, lenv, kStack) {
-  const [object] = analyzeQuote(form);
-  return kStack.invokeCont(object);
+  const [literal] = analyzeQuote(form);
+  return kStack.invokeCont(literal);
 }
 
 function sboocpsEvalProgn(form, lenv, kStack) {
@@ -3005,8 +2996,8 @@ class SBOOCPSIfTestFormCont extends SBOOCPSCont {
 }
 
 function sboocpsEvalLambda(scope, namespace, macro, form, lenv, kStack) {
-  const [variables, variadic, forms] = analyzeLambda(form);
-  return kStack.invokeCont(new EVLClosure(scope, namespace, macro, variables, variadic, forms, lenv));
+  const [parameters, rest, forms] = analyzeLambda(form);
+  return kStack.invokeCont(new EVLClosure(scope, namespace, macro, parameters, rest, forms, lenv));
 }
 
 function sboocpsEvalRef(scope, namespace, form, lenv, kStack) {
@@ -3104,8 +3095,8 @@ function sboocpsEvalCatchErrors(form, lenv, kStack) {
   return kStack.invokeCont(EVLVoid.VOID);
 }
 
-function sboocpsEvalApplication(mv, apply, form, lenv, kStack) {
-  const [operator, operands] = analyzeApplication(mv, apply, form);
+function sboocpsEvalCall(mv, apply, form, lenv, kStack) {
+  const [operator, operands] = analyzeCall(mv, apply, form);
   kStack.push(new SBOOCPSOperatorCont(mv, apply, operator, operands, lenv, kStack));
   return sboocpsEvalOperator(operator, lenv, kStack);
 }
@@ -3183,13 +3174,13 @@ class SBOOCPSOperandsCont extends SBOOCPSCont {
 
 function sboocpsInvokeFun(apply, macro, fn, args, lenv, kStack) {
   if (fn instanceof EVLPrimitiveFunction) {
-    const values = mapPrimFunArgs(apply, args, fn.arityMin, fn.arityMax);
+    const values = pairPrimFunParameters(apply, args, fn.arityMin, fn.arityMax);
     return kStack.invokeCont(fn.jsFunction(values));
   } else if (fn instanceof EVLClosure) {
-    const values = mapClosureArgs(apply, args, fn.variables, fn.variadic);
+    const values = pairClosureParameters(apply, args, fn.parameters, fn.rest);
     switch (fn.scope) {
       case LEX_SCOPE:
-        const elenv = new Frame(fn.namespace, fn.variables, values, fn.lenv);
+        const elenv = new Frame(fn.namespace, fn.parameters, values, fn.lenv);
         if (macro) {
           kStack.push(sboocpsEndCont);
           const expansion = sboocpsEvalForms(fn.forms, elenv, kStack).primaryValue();
@@ -3198,13 +3189,13 @@ function sboocpsInvokeFun(apply, macro, fn, args, lenv, kStack) {
           return sboocpsEvalForms(fn.forms, elenv, kStack);
         }
       case DYN_SCOPE:
-        kStack.push(new Frame(fn.namespace, fn.variables, values, undefined));
+        kStack.push(new Frame(fn.namespace, fn.parameters, values, undefined));
         return sboocpsEvalForms(fn.forms, fn.lenv, kStack);
       default:
         throw new CannotHappen('sboocpsInvokeFun');
     }
   } else {
-    applicationOperatorFormError();
+    callOperatorFormError();
   }
 }
 
@@ -3215,9 +3206,9 @@ function sboocpsInvokeFun(apply, macro, fn, args, lenv, kStack) {
 function trampolineEval(form) {
   const kStack = new TrampolineControlStack();
   kStack.push(trampolineEndCont);
-  let bounce = new EvalReq(form, nullLocalEnv);
+  let bounce = new EvalReq(form, nullDefiniteEnv);
   while (true) {
-    if (signalArray[0] === 1) {
+    if (abortSignalArray !== null && abortSignalArray[0] === 1) {
       throw new Aborted();
     }
     if (bounce instanceof EvalReq) {
@@ -3328,13 +3319,13 @@ function trampolineEvalForm(form, lenv, kStack) {
       case _catchErrorsVariable:
         return trampolineEvalCatchErrors(form, lenv, kStack);
       case applyVariable:
-        return trampolineEvalApplication(false, true, form, lenv, kStack);
+        return trampolineEvalCall(false, true, form, lenv, kStack);
       case multipleValueCallVariable:
-        return trampolineEvalApplication(true, false, form, lenv, kStack);
+        return trampolineEvalCall(true, false, form, lenv, kStack);
       case multipleValueApplyVariable:
-        return trampolineEvalApplication(true, true, form, lenv, kStack);
+        return trampolineEvalCall(true, true, form, lenv, kStack);
       default:
-        return trampolineEvalApplication(false, false, form, lenv, kStack);
+        return trampolineEvalCall(false, false, form, lenv, kStack);
     }
   } else if (form instanceof EVLVariable) {
     return lenv.ref(VAL_NS, form);
@@ -3359,8 +3350,8 @@ class TrampolineEndCont extends TrampolineCont {
 const trampolineEndCont = new TrampolineEndCont();
 
 function trampolineEvalQuote(form, lenv, kStack) {
-  const [object] = analyzeQuote(form);
-  return object;
+  const [literal] = analyzeQuote(form);
+  return literal;
 }
 
 function trampolineEvalProgn(form, lenv, kStack) {
@@ -3417,8 +3408,8 @@ class TrampolineIfTestFormCont extends TrampolineCont {
 }
 
 function trampolineEvalLambda(scope, namespace, macro, form, lenv, kStack) {
-  const [variables, variadic, forms] = analyzeLambda(form);
-  return new EVLClosure(scope, namespace, macro, variables, variadic, forms, lenv);
+  const [parameters, rest, forms] = analyzeLambda(form);
+  return new EVLClosure(scope, namespace, macro, parameters, rest, forms, lenv);
 }
 
 function trampolineEvalRef(scope, namespace, form, lenv, kStack) {
@@ -3480,8 +3471,8 @@ class TrampolineCatchErrorsTryFormCont extends TrampolineCont {
   }
 }
 
-function trampolineEvalApplication(mv, apply, form, lenv, kStack) {
-  const [operator, operands] = analyzeApplication(mv, apply, form);
+function trampolineEvalCall(mv, apply, form, lenv, kStack) {
+  const [operator, operands] = analyzeCall(mv, apply, form);
   kStack.push(new TrampolineOperatorCont(mv, apply, operator, operands, lenv, kStack));
   return trampolineEvalOperator(operator, lenv, kStack);
 }
@@ -3559,25 +3550,25 @@ class TrampolineOperandsCont extends TrampolineCont {
 
 function trampolineInvokeFun(apply, macro, fn, args, lenv, kStack) {
   if (fn instanceof EVLPrimitiveFunction) {
-    const values = mapPrimFunArgs(apply, args, fn.arityMin, fn.arityMax);
+    const values = pairPrimFunParameters(apply, args, fn.arityMin, fn.arityMax);
     return fn.jsFunction(values);
   } else if (fn instanceof EVLClosure) {
-    const values = mapClosureArgs(apply, args, fn.variables, fn.variadic);
+    const values = pairClosureParameters(apply, args, fn.parameters, fn.rest);
     switch (fn.scope) {
       case LEX_SCOPE:
-        const elenv = new Frame(fn.namespace, fn.variables, values, fn.lenv);
+        const elenv = new Frame(fn.namespace, fn.parameters, values, fn.lenv);
         if (macro) {
           kStack.push(new TrampolineMacroCont(lenv, kStack));
         }
         return trampolineEvalForms(fn.forms, elenv, kStack);
       case DYN_SCOPE:
-        kStack.push(new Frame(fn.namespace, fn.variables, values, undefined));
+        kStack.push(new Frame(fn.namespace, fn.parameters, values, undefined));
         return trampolineEvalForms(fn.forms, fn.lenv, kStack);
       default:
         throw new CannotHappen('trampolineInvokeFun');
     }
   } else {
-    applicationOperatorFormError();
+    callOperatorFormError();
   }
 }
 
@@ -3598,14 +3589,14 @@ class TrampolineMacroCont extends TrampolineCont {
 
 function trampolineppEval(form, lenv = null) {
   if (lenv === null) {
-    form = trampolineppPreprocessForm(form, nullLocalEnv);
-    lenv = nullLocalEnv;
+    form = trampolineppPreprocessForm(form, nullDefiniteEnv);
+    lenv = nullDefiniteEnv;
   }
   const kStack = new TrampolineppControlStack();
   kStack.push(trampolineppEndCont);
   let bounce = new EvalReq(form, lenv);
   while (true) {
-    if (signalArray[0] === 1) {
+    if (abortSignalArray !== null && abortSignalArray[0] === 1) {
       throw new Aborted();
     }
     if (bounce instanceof EvalReq) {
@@ -3716,13 +3707,13 @@ function trampolineppPreprocessForm(form, lenv) {
       case _catchErrorsVariable:
         return trampolineppPreprocessCatchErrors(form, lenv);
       case applyVariable:
-        return trampolineppPreprocessApplication(false, true, form, lenv);
+        return trampolineppPreprocessCall(false, true, form, lenv);
       case multipleValueCallVariable:
-        return trampolineppPreprocessApplication(true, false, form, lenv);
+        return trampolineppPreprocessCall(true, false, form, lenv);
       case multipleValueApplyVariable:
-        return trampolineppPreprocessApplication(true, true, form, lenv);
+        return trampolineppPreprocessCall(true, true, form, lenv);
       default:
-        return trampolineppPreprocessApplication(false, false, form, lenv);
+        return trampolineppPreprocessCall(false, false, form, lenv);
     }
   } else if (form instanceof EVLVariable) {
     return trampolineppPreprocessRef2(LEX_SCOPE, VAL_NS, form, lenv);
@@ -3761,18 +3752,18 @@ class TrampolineppForm { // abstract class
 }
 
 function trampolineppPreprocessQuote(form, lenv) {
-  const [object] = analyzeQuote(form);
-  return new TrampolineppQuote(object);
+  const [literal] = analyzeQuote(form);
+  return new TrampolineppQuote(literal);
 }
 
 class TrampolineppQuote extends TrampolineppForm {
-  constructor(object) {
+  constructor(literal) {
     super();
-    this.object = object;
+    this.literal = literal;
   }
   eval(lenv, kStack) {
-    const {object} = this;
-    return object;
+    const {literal} = this;
+    return literal;
   }
 }
 
@@ -3858,16 +3849,16 @@ class TrampolineppIfTestFormCont extends TrampolineppCont {
 }
 
 function trampolineppPreprocessLambda(scope, namespace, macro, form, lenv) {
-  const [variables, variadic, forms] = analyzeLambda(form);
+  const [parameters, rest, forms] = analyzeLambda(form);
   switch (scope) {
     case LEX_SCOPE: {
-      const elenv = new Frame(namespace, variables, new Array(variables.length).fill(null), lenv);
+      const elenv = new Frame(namespace, parameters, new Array(parameters.length).fill(null), lenv);
       const preprocessedForms = trampolineppPreprocessForms(forms, elenv);
-      return new TrampolineppLambda(scope, namespace, macro, variables, variadic, preprocessedForms);
+      return new TrampolineppLambda(scope, namespace, macro, parameters, rest, preprocessedForms);
     }
     case DYN_SCOPE: {
       const preprocessedForms = trampolineppPreprocessForms(forms, lenv);
-      return new TrampolineppLambda(scope, namespace, macro, variables, variadic, preprocessedForms);
+      return new TrampolineppLambda(scope, namespace, macro, parameters, rest, preprocessedForms);
     }
     default:
       throw new CannotHappen('trampolineppPreprocessLambda');
@@ -3875,18 +3866,18 @@ function trampolineppPreprocessLambda(scope, namespace, macro, form, lenv) {
 }
 
 class TrampolineppLambda extends TrampolineppForm {
-  constructor(scope, namespace, macro, variables, variadic, forms) {
+  constructor(scope, namespace, macro, parameters, rest, forms) {
     super();
     this.scope = scope;
     this.namespace = namespace;
     this.macro = macro;
-    this.variables = variables;
-    this.variadic = variadic;
+    this.parameters = parameters;
+    this.rest = rest;
     this.forms = forms;
   }
   eval(lenv, kStack) {
-    const {scope, namespace, macro, variables, variadic, forms} = this;
-    return new EVLClosure(scope, namespace, macro, variables, variadic, forms, lenv);
+    const {scope, namespace, macro, parameters, rest, forms} = this;
+    return new EVLClosure(scope, namespace, macro, parameters, rest, forms, lenv);
   }
 }
 
@@ -4174,32 +4165,32 @@ class TrampolineppCatchErrorsTryFormCont extends TrampolineppCont {
   }
 }
 
-function trampolineppPreprocessApplication(mv, apply, form, lenv) {
-  const [operator, operands] = analyzeApplication(mv, apply, form);
+function trampolineppPreprocessCall(mv, apply, form, lenv) {
+  const [operator, operands] = analyzeCall(mv, apply, form);
   if (operator instanceof EVLVariable) {
     const [i, j, fn] = lenv.preprocessorRef(FUN_NS, operator, 0);
     if (fn instanceof EVLClosure && fn.macro) {
-      const values = mapClosureArgs(false, listToArray(operands), fn.variables, fn.variadic);
-      const elenv = new Frame(fn.namespace, fn.variables, values, fn.lenv);
+      const values = pairClosureParameters(false, listToArray(operands), fn.parameters, fn.rest);
+      const elenv = new Frame(fn.namespace, fn.parameters, values, fn.lenv);
       const expansion = trampolineppEval(new TrampolineppProgn(fn.forms), elenv).primaryValue();
       return trampolineppPreprocessForm(expansion, lenv);
     } else {
       const preprocessedOperator = trampolineppPreprocessRef2(LEX_SCOPE, FUN_NS, operator, lenv);
       const preprocessedOperands = trampolineppPreprocessForms(operands, lenv);
-      return new TrampolineppApplication(mv, apply, preprocessedOperator, preprocessedOperands);
+      return new TrampolineppCall(mv, apply, preprocessedOperator, preprocessedOperands);
     }
   } else if (isMacroLet(operator, operands)) {
     const preprocessedOperands = trampolineppPreprocessForms(operands, lenv);
-    const [variables, variadic, forms] = analyzeLambda(operator);
-    const values = listToArray(preprocessedOperands).map(preprocessedOperand => preprocessedOperand.eval(nullLocalEnv, null));
-    const elenv = new Frame(FUN_NS, variables, values, lenv);
+    const [parameters, rest, forms] = analyzeLambda(operator);
+    const values = listToArray(preprocessedOperands).map(preprocessedOperand => preprocessedOperand.eval(nullDefiniteEnv, null));
+    const elenv = new Frame(FUN_NS, parameters, values, lenv);
     const preprocessedForms = trampolineppPreprocessForms(forms, elenv);
-    const preprocessedOperator = new TrampolineppLambda(LEX_SCOPE, FUN_NS, false, variables, variadic, preprocessedForms);
-    return new TrampolineppApplication(mv, apply, preprocessedOperator, preprocessedOperands);
+    const preprocessedOperator = new TrampolineppLambda(LEX_SCOPE, FUN_NS, false, parameters, rest, preprocessedForms);
+    return new TrampolineppCall(mv, apply, preprocessedOperator, preprocessedOperands);
   } else {
     const preprocessedOperator = trampolineppPreprocessForm(operator, lenv);
     const preprocessedOperands = trampolineppPreprocessForms(operands, lenv);
-    return new TrampolineppApplication(mv, apply, preprocessedOperator, preprocessedOperands);
+    return new TrampolineppCall(mv, apply, preprocessedOperator, preprocessedOperands);
   }
 }
 
@@ -4215,7 +4206,7 @@ function isMacroLet(operator, operands) {
   return true;
 }
 
-class TrampolineppApplication extends TrampolineppForm {
+class TrampolineppCall extends TrampolineppForm {
   constructor(mv, apply, operator, operands) {
     super();
     this.mv = mv;
@@ -4290,28 +4281,28 @@ class TrampolineppOperandsCont extends TrampolineppCont {
 
 function trampolineppInvokeFun(apply, fn, args, lenv, kStack) {
   if (fn instanceof EVLPrimitiveFunction) {
-    const values = mapPrimFunArgs(apply, args, fn.arityMin, fn.arityMax);
+    const values = pairPrimFunParameters(apply, args, fn.arityMin, fn.arityMax);
     return fn.jsFunction(values);
   } else if (fn instanceof EVLClosure) {
-    const values = mapClosureArgs(apply, args, fn.variables, fn.variadic);
+    const values = pairClosureParameters(apply, args, fn.parameters, fn.rest);
     switch (fn.scope) {
       case LEX_SCOPE:
-        const elenv = new Frame(fn.namespace, fn.variables, values, fn.lenv);
+        const elenv = new Frame(fn.namespace, fn.parameters, values, fn.lenv);
         return trampolineppEvalForms(fn.forms, elenv, kStack);
       case DYN_SCOPE:
-        kStack.push(new Frame(fn.namespace, fn.variables, values, undefined));
+        kStack.push(new Frame(fn.namespace, fn.parameters, values, undefined));
         return trampolineppEvalForms(fn.forms, fn.lenv, kStack);
       default:
         throw new CannotHappen('trampolineppInvokeFun');
     }
   } else {
-    applicationOperatorFormError();
+    callOperatorFormError();
   }
 }
 
-/**********************************/
-/* Primitive Function Definer (1) */
-/**********************************/
+/**************************************/
+/* Primitive Function Definitions (1) */
+/**************************************/
 
 const primitiveFunctions = new Map();
 
@@ -4425,6 +4416,7 @@ class EVLVoid extends EVLObject {
   }
 }
 
+// the only object of type void
 EVLVoid.VOID = new EVLVoid();
 
 function nullToVoid(x) {
@@ -4442,14 +4434,16 @@ primitiveFunction('void?', 1, 1, function(args) {
 class EVLBoolean extends EVLObject {
   constructor(jsValue) {
     super();
-    this.jsValue = jsValue; // javascript boolean
+    this.jsValue = jsValue; // JavaScript boolean
   }
   toString() {
     return this.jsValue ? '#t' : '#f';
   }
 }
 
+// the only object of type boolean representing true
 EVLBoolean.TRUE = new EVLBoolean(true);
+// the only object of type boolean representing false
 EVLBoolean.FALSE = new EVLBoolean(false);
 
 function evlBoolean(jsBoolean) {
@@ -4467,7 +4461,7 @@ primitiveFunction('boolean?', 1, 1, function(args) {
 class EVLNumber extends EVLObject {
   constructor(jsValue) {
     super();
-    this.jsValue = jsValue; // javascript number
+    this.jsValue = jsValue; // JavaScript number
   }
   eql(that) {
     if (that instanceof EVLNumber) {
@@ -4558,7 +4552,7 @@ primitiveFunction('>=', 2, 2, function(args) {
 class EVLCharacter extends EVLObject {
   constructor(jsValue) {
     super();
-    this.jsValue = jsValue; // javascript string of one UTF-16 code unit
+    this.jsValue = jsValue; // JavaScript string of one UTF-16 code unit
   }
   eql(that) {
     if (that instanceof EVLCharacter) {
@@ -4583,7 +4577,7 @@ primitiveFunction('character?', 1, 1, function(args) {
 class EVLString extends EVLObject {
   constructor(jsValue) {
     super();
-    this.jsValue = jsValue; // javascript string of zero or more UTF-16 code units
+    this.jsValue = jsValue; // JavaScript string
   }
   eql(that) {
     if (that instanceof EVLString) {
@@ -4608,7 +4602,7 @@ primitiveFunction('string?', 1, 1, function(args) {
 class EVLSymbol extends EVLObject { // abstract class
   constructor(name) {
     super();
-    this.name = name; // javascipt string of zero or more UTF-16 code units
+    this.name = name; // JavaScript string
   }
 }
 
@@ -4655,8 +4649,8 @@ primitiveFunction('make-keyword', 1, 1, function(args) {
 class EVLVariable extends EVLSymbol {
   constructor(name) {
     super(name);
-    this.value = null;
-    this.function = null;
+    this.value = null; // EVLObject or null
+    this.function = null; // EVLObject or null
   }
   toString() {
     return escapeCharacters(this.name, escapeProtoTokenCharacter);
@@ -4684,7 +4678,7 @@ const prognVariable = internVariable('progn');
 const ifVariable = internVariable('if');
 const _vlambdaVariable = internVariable('_vlambda');
 const _mlambdaVariable = internVariable('_mlambda');
-const mlambdaVariable = internVariable('mlambda');
+const mlambdaVariable = internVariable('mlambda'); // mlet
 const _flambdaVariable = internVariable('_flambda');
 const _dlambdaVariable = internVariable('_dlambda');
 const vrefVariable = internVariable('vref');
@@ -4794,6 +4788,7 @@ class EVLEmptyList extends EVLList {
   }
 }
 
+// the only object of type empty-list
 EVLEmptyList.NIL = new EVLEmptyList();
 
 primitiveFunction('empty-list?', 1, 1, function(args) {
@@ -4847,7 +4842,7 @@ primitiveFunction('set-cdr!', 2, 2, function(args) {
 class EVLVector extends EVLObject {
   constructor(elements) {
     super();
-    this.elements = elements; // javascript array of EVLObject or null elements
+    this.elements = elements; // JavaScript array of EVLObject's and/or null's
   }
   toString() {
     let string = '';
@@ -4893,7 +4888,7 @@ class EVLPrimitiveFunction extends EVLFunction {
     super();
     this.arityMin = arityMin;
     this.arityMax = arityMax;
-    this.jsFunction = jsFunction; // javascript function
+    this.jsFunction = jsFunction; // JavaScript function
   }
   toString() {
     return '#<primitive-function>';
@@ -4909,13 +4904,13 @@ primitiveFunction('primitive-function?', 1, 1, function(args) {
 /**************/
 
 class EVLClosure extends EVLFunction {
-  constructor(scope, namespace, macro, variables, variadic, forms, lenv) {
+  constructor(scope, namespace, macro, parameters, rest, forms, lenv) {
     super();
     this.scope = scope;
     this.namespace = namespace;
     this.macro = macro;
-    this.variables = variables;
-    this.variadic = variadic;
+    this.parameters = parameters;
+    this.rest = rest;
     this.forms = forms;
     this.lenv = lenv;
   }
@@ -4928,9 +4923,9 @@ primitiveFunction('closure?', 1, 1, function(args) {
   return evlBoolean(args[0] instanceof EVLClosure);
 });
 
-/*****************************/
-/* Other Primitive Functions */
-/*****************************/
+/*************************************/
+/* Miscellaneous Primitive Functions */
+/*************************************/
 
 primitiveFunction('values', 0, null, function(args) {
   return new EVLObjects(args);
@@ -4945,29 +4940,40 @@ primitiveFunction('now', 0, 0, function(args) {
   return new EVLNumber(Date.now());
 });
 
-/**********************************/
-/* Primitive Function Definer (2) */
-/**********************************/
+/**************************************/
+/* Primitive Function Definitions (2) */
+/**************************************/
 
 for (const [name, [arityMin, arityMax, jsFunction]] of primitiveFunctions) {
   GlobalEnv.set(FUN_NS, internVariable(name), new EVLPrimitiveFunction(arityMin, arityMax, jsFunction));
 }
 
-/********/
-/* Node */
-/********/
+/****************************/
+/* Interface (Command Line) */
+/****************************/
 
-if (typeof onmessage === 'undefined') { // node
+const evaluatorOptions = [
+  '--plainrec',
+  '--cps',
+  '--oocps',
+  '--sboocps',
+  '--trampoline',
+  '--trampolinepp'
+];
+
+if (isRunningInsideNode) {
   import('node:fs').then(fs => {
-    signalArray = [0];
-    selectedEvaluator = 'trampolinepp';
-    GlobalEnv.set(VAL_NS, internVariable('*features*'), new EVLCons(internVariable(selectedEvaluator), EVLEmptyList.NIL));
     const nargs = process.argv.length;
-    let n = 2;
+    let n = 2; // skip 'node' and 'core.js'
+    selectedEvaluator = 'trampolinepp';
+    if (n < nargs && evaluatorOptions.includes(process.argv[n])) {
+      selectedEvaluator = process.argv[n++].substring(2);
+    }
+    initializeFeatureList([selectedEvaluator]);
     while (n < nargs) {
       const arg = process.argv[n++];
       switch (arg) {
-        case '-l':
+        case '-l': {
           if (n === nargs) {
             usage();
           }
@@ -4975,13 +4981,24 @@ if (typeof onmessage === 'undefined') { // node
           const fileContents = fs.readFileSync(file, 'utf8');
           printToConsole(evaluateAllForms(fileContents));
           break;
-        case '-e':
+        }
+        case '-e': {
           if (n === nargs) {
             usage();
           }
           const form = process.argv[n++];
           printToConsole(evaluateFirstForm(form));
           break;
+        }
+        case '--convert': {
+          if (n === nargs) {
+            usage();
+          }
+          const file = process.argv[n++];
+          const fileContents = fs.readFileSync(file, 'utf8');
+          printToConsole(convertEVLToXML(fileContents));
+          break;
+        }
         default:
           usage();
       }
@@ -4990,16 +5007,25 @@ if (typeof onmessage === 'undefined') { // node
 }
 
 function usage() {
-  console.log('usage: -l <file> to load a file, -e <form> to evaluate a form');
+  console.log('usage:');
+  console.log('--plainrec: selects the plain recursive evaluator');
+  console.log('--cps: selects the continuation passing style evaluator');
+  console.log('--oocps: selects the object-oriented CPS evaluator');
+  console.log('--sboocps: selects the stack-based object-oriented CPS evaluator');
+  console.log('--trampoline: selects the trampoline evaluator');
+  console.log('--trampolinepp: selects the trampoline++ evaluator (DEFAULT)');
+  console.log('-l <file>: loads the EVL file');
+  console.log('-e <form>: evaluates the form');
+  console.log('--convert <file>: converts the EVL file to XML');
   process.exit();
 }
 
 function printToConsole(response) {
   switch (response.status) {
-    case COMPLETED_NORMALLY:
+    case SUCCESS:
       console.log(response.output);
       break;
-    case COMPLETED_ABNORMALLY:
+    case ERROR:
       console.log(response.output);
       process.exit();
   }

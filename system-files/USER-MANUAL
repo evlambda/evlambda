@@ -4,6 +4,7 @@
 <html>
   <head>
     <meta charset="utf-8">
+    <title>User Manual</title>
     <link rel="stylesheet" href="___cssURL___"/>
     <script src="___jsURL___"></script>
     <script>const windowId = ___windowId___;</script>
@@ -323,10 +324,10 @@
     <ul>
       <li>The prompt is the greater-than sign printed at the beginning of a line to inform you that the listener buffer is waiting for a form to be typed in.</li>
       <li>If you press the Return or Enter key when (1) the cursor is not at the very end of the buffer or (2) the form is missing or incomplete, then a newline is simply inserted into the buffer and no evaluation takes place.</li>
-      <li>If the evaluation completes abruptly, then the reason is necessarily of type <code>error</code> and its payload (a message describing the error) is printed in place of the printable representations of the (nonexisting) resulting values.</li>
+      <li>If the evaluation completes abruptly, then the reason is necessarily of type <code>error</code> and its payload (an object of type <code>string</code> describing the error) is printed in place of the printable representations of the (nonexisting) resulting values.</li>
       <li>If the evaluation does not complete, then you must abort the evaluation or restart the evaluator in order to get a new prompt.</li>
     </ul>
-    <p>We will now illustrate some of the concepts introduced in the section <a href="#programming-language">Programming Language</a> by providing a commented transcript of a sequence of evaluations conducted in a listener buffer. If you want to reproduce the evaluations, be sure to start with a fresh Trampoline++ evaluator. To get a fresh Trampoline++ evaluator, restart the evaluator (using the Restart Evaluator&hellip; command from the Eval menu) with Trampoline++ selected as the evaluator type.</p>
+    <p>We will now illustrate some of the concepts introduced in the section <a href="#programming-language">Programming Language</a> by providing a commented transcript of a sequence of evaluations conducted in a listener buffer. If you want to reproduce the evaluations, be sure to start with a fresh Trampoline++ evaluator. To get a fresh Trampoline++ evaluator, restart the evaluator (using the Restart Evaluator&hellip; command from the Eval menu) with Trampoline++ selected as the evaluator name.</p>
     <p>The global functions used in the evaluations are listed below. For each function, a template function call and a description of the function's behavior are provided. The variable in operator position is the name of the function (i.e., the variable bound to the function in the function namespace of the global environment).</p>
     <dl>
       <dt><code>(car $\cons$)</code></dt>
@@ -475,8 +476,8 @@
     <ul>
       <li><code>/system/USER-MANUAL</code>: the user manual (this file)</li>
       <li><code>/system/TUTORIAL</code>: the tutorial</li>
-      <!--<li><code>/system/REFERENCE-MANUAL</code>: the reference manual</li>-->
-      <!--<li><code>/system/IMPLEMENTATION-NOTES</code>: the implementation notes</li>-->
+      <li><code>/system/REFERENCE-MANUAL</code>: the reference manual</li>
+      <li><code>/system/IMPLEMENTATION-NOTES</code>: the implementation notes</li>
       <li><code>/system/BIBLIOGRAPHY</code>: the bibliography</li>
       <li><code>/system/LICENSE</code>: the license</li>
       <li><code>/system/all-caps.css</code>: the CSS file styling the all-caps files</li>
@@ -485,7 +486,7 @@
       <li><code>/system/evl2html.xslt</code>: the XSLT file used to convert the EVLambda source files to HTML</li>
       <li><code>/system/evl2html.css</code>: the CSS file styling the EVLambda source files converted to HTML</li>
       <li><code>/system/evl2html.js</code>: the JavaScript file loaded by the EVLambda source files converted to HTML</li>
-      <li><code>/system/mantle.evl</code>: the EVLambda source file implementing the nonprimitive data types, the nonprimitive functions, and the macros constituting the &ldquo;mantle&rdquo; of the EVLambda programming language</li>
+      <li><code>/system/mantle.evl</code>: the EVLambda source file implementing the nonprimitive data types, the nonprimitive functions, the macros, etc., constituting the &ldquo;mantle&rdquo; of the EVLambda programming language</li>
       <li><code>Listener 1</code>: the initial listener</li>
     </ul>
     <h3>Help Menu</h3>

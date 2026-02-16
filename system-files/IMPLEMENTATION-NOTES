@@ -4,10 +4,436 @@
 <html>
   <head>
     <meta charset="utf-8">
+    <title>Implementation Notes</title>
     <link rel="stylesheet" href="___cssURL___"/>
     <script src="___jsURL___"></script>
     <script>const windowId = ___windowId___;</script>
   </head>
   <body>
+    <div class="preamble">
+      $\DeclareMathOperator{\bindingmathop}{binding}$
+    </div>
+    <h1>Implementation Notes</h1>
+    <p>The implementation notes document the JavaScript file <code>/system/core.js</code>, which implements the &ldquo;core&rdquo; of the EVLambda programming language and the EVL to XML converter (one of the two components of the documentation generator, the other one being the XSLT stylesheet). The implementation notes and the JavaScript file have the same organization (the same sections, in the same order) and are meant to be read side by side.</p>
+    <p>The JavaScript file implements five interpreter-based evaluators:</p>
+    <ul>
+      <li>Plain Recursive (plainrec)</li>
+      <li>Continuation Passing Style (cps)</li>
+      <li>Object-Oriented CPS (oocps)</li>
+      <li>Stack-Based Object-Oriented CPS (sboocps)</li>
+      <li>Trampoline (trampoline)</li>
+      <li>Trampoline++ (trampolinepp)</li>
+    </ul>
+    <p>Only the Trampoline and Trampoline++ evaluators allow unbounded iterations through tail-recursive calls. The other evaluators are only useful as stepping stones to understand the Trampoline and Trampoline++ evaluators. The Trampoline++ evaluator is an optimized version of the Trampoline evaluator.</p>
+    <p>The JavaScript file can run inside the IDE (actually inside a web worker started from the IDE) or inside a Node.js runtime environment started from the command line.</p>
+    <p>Here are quick links to the sections:</p>
+    <ol>
+      <li><a href="#global-variables">Global Variables</a></li>
+      <li><a href="#interface-ide">Interface (IDE)</a></li>
+      <li><a href="#errors">Errors</a></li>
+      <li><a href="#tokenizer">Tokenizer</a></li>
+      <li><a href="#reader">Reader</a></li>
+      <li><a href="#evl-to-xml-converter">EVL to XML Converter</a></li>
+      <li><a href="#form-analyzer">Form Analyzer</a></li>
+      <li><a href="#scope-extent-combinations">Scope-Extent Combinations</a></li>
+      <li><a href="#namespaces">Namespaces</a></li>
+      <li><a href="#global-environment">Global Environment</a></li>
+      <li><a href="#lexical-and-dynamic-environments">Lexical and Dynamic Environments</a></li>
+      <li><a href="#pairing-parameters-with-arguments">Pairing Parameters with Arguments</a></li>
+      <li><a href="#generic-evaluator">Generic Evaluator</a></li>
+      <li><a href="#plainrec">Plain Recursive Evaluator</a></li>
+      <li><a href="#cps">Continuation Passing Style Evaluator</a></li>
+      <li><a href="#oocps">Object-Oriented CPS Evaluator</a></li>
+      <li><a href="#sboocps">Stack-Based Object-Oriented CPS Evaluator</a></li>
+      <li><a href="#trampoline">Trampoline Evaluator</a></li>
+      <li><a href="#trampolinepp">Trampoline++ Evaluator</a></li>
+      <li><a href="#primitive-function-definitions-1">Primitive Function Definitions (1)</a></li>
+      <li><a href="#bounce">Bounce</a></li>
+      <li><a href="#evaluation-request">Evaluation Request</a></li>
+      <li><a href="#result">Result</a></li>
+      <li><a href="#evlobjects">EVLObjects</a></li>
+      <li><a href="#evlobject">EVLObject</a></li>
+      <li><a href="#evlvoid">EVLVoid</a></li>
+      <li><a href="#evlboolean">EVLBoolean</a></li>
+      <li><a href="#evlnumber">EVLNumber</a></li>
+      <li><a href="#evlcharacter">EVLCharacter</a></li>
+      <li><a href="#evlstring">EVLString</a></li>
+      <li><a href="#evlsymbol">EVLSymbol</a></li>
+      <li><a href="#evlkeyword">EVLKeyword</a></li>
+      <li><a href="#evlvariable">EVLVariable</a></li>
+      <li><a href="#evllist">EVLList</a></li>
+      <li><a href="#evlemptylist">EVLEmptyList</a></li>
+      <li><a href="#evlcons">EVLCons</a></li>
+      <li><a href="#evlvector">EVLVector</a></li>
+      <li><a href="#evlfunction">EVLFunction</a></li>
+      <li><a href="#evlprimitivefunction">EVLPrimitiveFunction</a></li>
+      <li><a href="#evlclosure">EVLClosure</a></li>
+      <li><a href="#miscellaneous-primitive-functions">Miscellaneous Primitive Functions</a></li>
+      <li><a href="#primitive-function-definitions-2">Primitive Function Definitions (2)</a></li>
+      <li><a href="#interface-command-line">Interface (Command Line)</a></li>
+    </ol>
+    <h2 id="global-variables">Global Variables</h2>
+    <p>The constant <code>isRunningInsideNode</code> is true if the JavaScript file is running inside a Node.js runtime environment and false otherwise.</p>
+    <p>The variable <code>abortSignalArray</code> contains a shared array used by the IDE to abort the current evaluation without terminating the web worker.</p>
+    <p>The variable <code>selectedEvaluator</code> contains the name of the selected evaluator.</p>
+    <h2 id="interface-ide">Interface (IDE)</h2>
+    <p>This section implements the interface used by the IDE to control the evaluator and the EVL to XML converter.</p>
+    <p>The evaluator and the EVL to XML converter are running inside a web worker because running them directly inside the main thread would make the GUI unresponsive when they are running.</p>
+    <p>The main thread and the web worker thread communicate through messages and shared arrays.</p>
+    <h3>Messages</h3>
+    <p>The request messages sent by the main thread to the web worker thread are objects containing the following properties:</p>
+    <ul>
+      <li><code>id</code> (required): A unique integer id used to pair responses with requests.</li>
+      <li><code>action</code> (required): An integer specifying the requested action.</li>
+      <li><code>input</code> (optional): Some data.</li>
+    </ul>
+    <p>The response messages sent by the web worker thread to the main thread are objects containing the following properties:</p>
+    <ul>
+      <li><code>id</code> (required): A unique integer id used to pair responses with requests.</li>
+      <li><code>status</code> (required): An integer specifying the status of the processing of the requested action.</li>
+      <li><code>output</code> (optional): Some data.</li>
+    </ul>
+    <p>When the processing of the requested action fails because of an error, the response message contains the following properties:</p>
+    <ul>
+      <li><code>id</code>: A unique integer id used to pair responses with requests.</li>
+      <li><code>status</code>: The value of the constant <code>ERROR</code>.</li>
+      <li><code>output</code>: A string describing the error.</li>
+    </ul>
+    <p>When the processing of the requested action fails because of the abortion of an evaluation, the response message contains the following properties:</p>
+    <ul>
+      <li><code>id</code>: A unique integer id used to pair responses with requests.</li>
+      <li><code>status</code>: The value of the constant <code>ABORTED</code>.</li>
+    </ul>
+    <p>The following sections describe the messages currently implemented. The response messages <code>ERROR</code> and <code>ABORTED</code> are omitted from the descriptions. The property <code>id</code> is omitted from the descriptions.</p>
+    <h4><code>INITIALIZE</code></h4>
+    <p>This message is used to request the initialization of the web worker.</p>
+    <p>Request message:</p>
+    <ul>
+      <li><code>action</code>: The value of the constant <code>INITIALIZE</code>.</li>
+      <li><code>input</code>: An object containing the following properties:
+        <ul>
+          <li><code>abortSignalBuffer</code>: The shared buffer under the shared array.</li>
+          <li><code>selectedEvaluator</code>: The name of the selected evaluator.</li>
+          <li><code>evlFiles</code>: The contents of some EVLambda source files to load.</li>
+        </ul>
+      </li>
+    </ul>
+    <p>Response message when the processing of the requested action succeeds:</p>
+    <ul>
+      <li><code>status</code>: The value of the constant <code>SUCCESS</code>.</li>
+      <li><code>output</code>: An array containing the printable representations of the values of the last form of the last EVLambda source file.</li>
+    </ul>
+    <h4><code>EVALUATE_FIRST_FORM</code></h4>
+    <p>This message is used to request the evaluation of the first form contained in some input string.</p>
+    <p>Request message:</p>
+    <ul>
+      <li><code>action</code>: The value of the constant <code>EVALUATE_FIRST_FORM</code>.</li>
+      <li><code>input</code>: The input string.</li>
+    </ul>
+    <p>Response message when the processing of the requested action fails because the input string does not contain any forms:</p>
+    <ul>
+      <li><code>status</code>: The value of the constant <code>FOUND_NO_FORM</code>.</li>
+    </ul>
+    <p>Response message when the processing of the requested action succeeds:</p>
+    <ul>
+      <li><code>status</code>: The value of the constant <code>SUCCESS</code>.</li>
+      <li><code>output</code>: An array containing the printable representations of the values of the first form contained in the input string.</li>
+    </ul>
+    <h4><code>EVALUATE_ALL_FORMS</code></h4>
+    <p>This message is used to request the evaluation of all of the forms contained in some input string.</p>
+    <p>Request message:</p>
+    <ul>
+      <li><code>action</code>: The value of the constant <code>EVALUATE_ALL_FORMS</code>.</li>
+      <li><code>input</code>: The input string.</li>
+    </ul>
+    <p>Response message when the processing of the requested action succeeds:</p>
+    <ul>
+      <li><code>status</code>: The value of the constant <code>SUCCESS</code>.</li>
+      <li><code>output</code>: An array containing the printable representations of the values of the last form contained in the input string.</li>
+    </ul>
+    <h4><code>CONVERT_EVL_TO_XML</code></h4>
+    <p>This message is used to request the conversion of some input string from EVL to XML.</p>
+    <p>Request message:</p>
+    <ul>
+      <li><code>action</code>: The value of the constant <code>CONVERT_EVL_TO_XML</code>.</li>
+      <li><code>input</code>: The input string.</li>
+    </ul>
+    <p>Response message when the processing of the requested action succeeds:</p>
+    <ul>
+      <li><code>status</code>: The value of the constant <code>SUCCESS</code>.</li>
+      <li><code>output</code>: A string containing the result of the conversion.</li>
+    </ul>
+    <h3>Shared Arrays</h3>
+    <h4><code>abortSignalArray</code></h4>
+    <p>The shared array contained in the variable <code>abortSignalArray</code> is used by the IDE to abort the current evaluation without terminating the web worker. The shared array contains one boolean flag represented by an $8$-bit unsigned integer. The IDE requests the abortion of the current evaluation by setting the flag to true. The Trampoline and Trampoline++ evaluators implement the abort-evaluation functionality by regularly checking the value of the flag. The other evaluators do not implement the abort-evaluation functionality.</p>
+    <h2 id="errors">Errors</h2>
+    <p>This section defines some custom error types.</p>
+    <h2 id="tokenizer">Tokenizer</h2>
+    <p>For the most part, the tokenizer is implemented as described in the reference manual. The main difference is that the tokens are produced on demand instead of all at once before the parsing begins.</p>
+    <p>On each invocation, the tokenizer sets the following properties:</p>
+    <ul>
+      <li><code>whitespace</code>: The run of whitespace preceding the lexeme associated with the next token.</li>
+      <li><code>lexeme</code>: The lexeme associated with the next token.</li>
+      <li><code>category</code>: The category of the next token.</li>
+      <li><code>value</code>: The value of the next token or <code>null</code> if tokens of this category have no value.</li>
+    </ul>
+    <h2 id="reader">Reader</h2>
+    <p>The reader is a <a href="https://en.wikipedia.org/wiki/Recursive_descent_parser" target="_blank">recursive descent parser</a> getting its tokens from the tokenizer.</p>
+    <p>The read-time conditionalization facility is integrated into the reader.</p>
+    <p>The central function is the function <code>readObject</code>, which returns one of the following:</p>
+    <ul>
+      <li>The next object.</li>
+      <li>The value of the constant <code>DOT</code>.</li>
+      <li>The value of the constant <code>CLOSING_PARENTHESIS</code>.</li>
+      <li>The value of the constant <code>XML_END_TAG</code>.</li>
+      <li>The value of the constant <code>EOI</code>.</li>
+    </ul>
+    <p>The function <code>readObject</code> treats XML elements as comments and skips them. However, the objects contained inside XML elements are not completely invisible because a callback can be attached to the tokenizer that will be invoked on each object encountered while skipping XML elements.</p>
+    <p>Most of the other functions invoke the function <code>readObject</code> and use a <code>switch</code> statement to decide what to do depending on the result of the invocation.</p>
+    <p>The main function is the function <code>read</code>, which invokes the function <code>readObject</code> and, depending on the result of the invocation, does one of the following:</p>
+    <ul>
+      <li>If the function <code>readObject</code> returns the next object, then the function <code>read</code> returns that object.</li>
+      <li>If the function <code>readObject</code> returns <code>DOT</code>, <code>CLOSING_PARENTHESIS</code>, or <code>XML_END_TAG</code>, then the function <code>read</code> throws an exception.</li>
+      <li>If the function <code>readObject</code> returns <code>EOI</code>, then the function <code>read</code> returns <code>null</code> to signal the invoker that the end of the input has been reached.</li>
+    </ul>
+    <p>In order to evaluates all of the forms contained in an EVLambda source file, the function <code>read</code> is invoked in a loop. If the function <code>read</code> returns an object, then that object is evaluated and the loop continues. If the function <code>read</code> returns <code>null</code>, then the loop terminates.</p>
+    <p>When the source file is a plain EVLambda source file, the function <code>read</code> returns each of the forms in turn and all of the forms get evaluated.</p>
+    <p>When the source file is a documented EVLambda source file, the first invocation of the function <code>read</code> returns <code>null</code> (because the chapter element is treated as a comment and skipped) and nothing seems to get evaluated. Actually, this is not the case because a callback is attached to the tokenizer that will evaluate each object encountered while skipping the chapter element.</p>
+    <h2 id="evl-to-xml-converter">EVL to XML Converter</h2>
+    <p>The job of the EVL to XML converter is to produce an output identical to the input except that (1) the characters less-than, greater-than, and ampersand occurring inside the code have been escaped and (2) some tags have been added to better delimit the code from the surrounding documentation and the comments from the surrounding code.</p>
+    <p>The EVL to XML converter uses the following context-free grammar to model the input:</p>
+    <table class="ebnf">
+      <tr>
+        <td class="lhs">$\metavar{input}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>beginning-of-input {$\metavar{top-level-whitespace}$ $\metavar{construct}$}* $\metavar{top-level-whitespace}$ end-of-input</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{construct}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{xml-construct}$ | $\metavar{evl-construct}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{xml-construct}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>xml-start-tag {$\metavar{xml-whitespace}$ $\metavar{construct}$}* $\metavar{xml-whitespace}$ xml-end-tag | xml-empty-element-tag | xml-comment</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{evl-construct}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>void | boolean | number | hash-string-construct | string | keyword | variable | quote | quasiquote | unquote | unquote-splicing | hash-plus | hash-minus | dot | {left-parenthesis | hash-left-parenthesis} {$\metavar{evl-whitespace}$ $\metavar{construct}$}* $\metavar{evl-whitespace}$ right-parenthesis</code></td>
+      </tr>
+    </table>
+    <p>The main differences between the context-free grammar used by the EVL to XML converter and the context-free grammar used by the parser are the following:</p>
+    <ul>
+      <li>New tokens have been added to represent the beginning and the end of the input.</li>
+      <li>New tokens have been added to represent runs of whitespace. Runs of whitespace can be empty and can occur in three different contexts: top-level context, XML context , and EVL context.</li>
+      <li>Hash-string constructs are not decomposed into characters.</li>
+      <li>The grammar recognizes the tokens introducing abbreviations but it does not recognize abbreviations as units.</li>
+      <li>The grammar recognizes the tokens introducing read-time conditionals but it does not recognize read-time conditionals as units.</li>
+      <li>The grammar recognizes the dot but it does not distinguish between proper lists and dotted lists.</li>
+      <li>The value of a token is the lexeme associated with the token.</li>
+    </ul>
+    <p>The tags are always added before or after a run of whitespace. The converter considers each of the runs of whitespace contained in the input and, for each of them, decides what to do depending on the following:</p>
+    <ul>
+      <li>Whether the run of whitespace occurs in top-level context, in XML context, or in EVL context.</li>
+      <li>Whether the token preceding the run of whitespace is <code>beginning-of-input</code>, an XML token, or an EVL token.</li>
+      <li>Whether the token following the run of whitespace is <code>end-of-input</code>, an XML token, or an EVL token.</li>
+    </ul>
+    <p>The XML tokens are the following tokens: <code>xml-start-tag</code>, <code>xml-end-tag</code>, <code>xml-empty-element-tag</code>, and <code>xml-comment</code>.</p>
+    <p>The EVL tokens are the end-of-line and end-of-last-line comments (which are treated as a unit) and the following tokens: <code>void</code>, <code>boolean</code>, <code>number</code>, <code>hash-string-construct</code>, <code>string</code>, <code>keyword</code>, <code>variable</code>, <code>quote</code>, <code>quasiquote</code>, <code>unquote</code>, <code>unquote-splicing</code>, <code>hash-plus</code>, <code>hash-minus</code>, <code>dot</code>, <code>left-parenthesis</code>, <code>hash-left-parenthesis</code>, and <code>right-parenthesis</code>.</p>
+    <p>The end-of-line and end-of-last-line comments are treated as EVL tokens because they are not delimited from the surrounding code by additional tags.</p>
+    <p>Tags are never added before or after the runs of whitespace occurring in top-level context.</p>
+    <p>The runs of whitespace occurring in XML context are processed as follows:</p>
+    <dl>
+      <dt><code>$\metavar{xmltok}$$\metavar{ws}$$\metavar{evltok}$</code> is transformed into</dt>
+      <dd><code>$\metavar{xmltok}$$\metavar{ws}$&lt;toplevelcode&gt;&lt;blockcode&gt;$\metavar{evltok}$</code></dd>
+      <dt><code>$\metavar{evltok}$$\metavar{ws}$$\metavar{evltok}$</code>, where $\metavar{ws}$ contains at least one blank line, is transformed into</dt>
+      <dd><code>$\metavar{evltok}$&lt;/blockcode&gt;&lt;/toplevelcode&gt;$\metavar{ws}$&lt;toplevelcode&gt;&lt;blockcode&gt;$\metavar{evltok}$</code></dd>
+      <dt><code>$\metavar{evltok}$$\metavar{ws}$$\metavar{evltok}$</code>, where $\metavar{ws}$ contains no blank lines, is transformed into</dt>
+      <dd><code>$\metavar{evltok}$$\metavar{ws}$$\metavar{evltok}$</code></dd>
+      <dt><code>$\metavar{evltok}$$\metavar{ws}$$\metavar{xmltok}$</code> is transformed into</dt>
+      <dd><code>$\metavar{evltok}$&lt;/toplevelcode&gt;&lt;/blockcode&gt;$\metavar{ws}$$\metavar{xmltok}$</code></dd>
+      <dt><code>$\metavar{xmltok}$$\metavar{ws}$$\metavar{xmltok}$</code> is transformed into</dt>
+      <dd><code>$\metavar{xmltok}$$\metavar{ws}$$\metavar{xmltok}$</code></dd>
+    </dl>
+    <p>The runs of whitespace occurring in EVL context are processed as follows:</p>
+    <dl>
+      <dt><code>$\metavar{evltok}$$\metavar{ws}$$\metavar{xmltok}$</code> is transformed into</dt>
+      <dd><code>$\metavar{evltok}$&lt;/blockcode&gt;&lt;indentation style="&hellip;"&gt;&lt;blockcomment&gt;$\metavar{ws}$$\metavar{xmltok}$</code></dd>
+      <dt><code>$\metavar{xmltok}$$\metavar{ws}$$\metavar{xmltok}$</code> is transformed into</dt>
+      <dd><code>$\metavar{xmltok}$$\metavar{ws}$$\metavar{xmltok}$</code></dd>
+      <dt><code>$\metavar{xmltok}$$\metavar{ws}$$\metavar{evltok}$</code> is transformed into</dt>
+      <dd><code>$\metavar{xmltok}$&lt;/blockcomment&gt;&lt;/indentation&gt;&lt;blockcode&gt;$\metavar{ws}$$\metavar{evltok}$</code></dd>
+      <dt><code>$\metavar{evltok}$$\metavar{ws}$$\metavar{evltok}$</code> is transformed into</dt>
+      <dd><code>$\metavar{evltok}$$\metavar{ws}$$\metavar{evltok}$</code></dd>
+    </dl>
+    <h2 id="form-analyzer">Form Analyzer</h2>
+    <p>The form analyzer analyzes a form without analyzing the subforms of the form. The subforms of the form are analyzed if and when they are evaluated. The classification part of the analysis is done by the evaluators themselves by checking whether the form is an empty-list, a cons, a variable, or something else and, if the form is a cons, by checking if the car of the cons is a special operator or something else.</p>
+    <h2 id="scope-extent-combinations">Scope-Extent Combinations</h2>
+    <p>The scope-extent combinations are identified using the members of the following enumeration:</p>
+    <ul>
+      <li><code>LEX_SCOPE</code>: lexical scope and indefinite extent (= lexical environment)</li>
+      <li><code>DYN_SCOPE</code>: indefinite scope and dynamic extent (= dynamic environment)</li>
+    </ul>
+    <h2 id="namespaces">Namespaces</h2>
+    <p>The namespaces are identified using the members of the following enumeration:</p>
+    <ul>
+      <li><code>VAL_NS</code>: value namespace</li>
+      <li><code>FUN_NS</code>: function namespace</li>
+    </ul>
+    <h2 id="global-environment">Global Environment</h2>
+    <p>Because the global environment is unique, any given variable can have, at any given time, at most one global binding in the value namespace and at most one global binding in the function namespace. An obvious way to implement the global environment is thus to store the global bindings for a variable directly on the JavaScript object representing the variable.</p>
+    <p>Variables are represented by instances of the JavaScript class <code>EVLVariable</code>. The property <code>value</code> of the instance representing a variable contains the value of the binding for the variable in the value namespace of the global environment if that binding exists and <code>null</code> otherwise.  The property <code>function</code> of the instance representing a variable contains the value of the binding for the variable in the function namespace of the global environment if that binding exists and <code>null</code> otherwise.</p>
+    <h2 id="lexical-and-dynamic-environments">Lexical and Dynamic Environments</h2>
+    <p>The user manual specifies the lexical and dynamic environments as follows:</p>
+    <ul>
+      <li>Each lexical or dynamic environment consists of two sets of bindings: one for the value namespace and one for the function namespace.</li>
+      <li>Each lexical or dynamic environment is the result of extending zero or more times in sequence an empty environment.</li>
+      <li>Extending a lexical or dynamic environment is achieved by copying the two sets of bindings and then deleting and adding some bindings from/to the copy of one of the two sets.</li>
+    </ul>
+    <p>A lexical or dynamic environment is represented not by the result of the sequence of extensions leading to the environment but by a recording of the sequence of extensions leading to the environment. A single extension is recorded into a data structure called a frame and a sequence of extensions is recorded into a chain of frames.</p>
+    <p>Let $\env$ be a lexical or dynamic environment and$$[(\ns_1,[\var_{1,1},\ldots,\var_{1,m_1}],[\obj_{1,1},\ldots,\obj_{1,m_1}]),\ldots,(\ns_n,[\var_{n,1},\ldots,\var_{n,m_n}],[\obj_{n,1},\ldots,\obj_{n,m_n}])]$$be the sequence of extensions leading to the environment. The extensions are applied from left to right and the first extension is applied to an empty environment. The $i$-th extension$$(\ns_i,[\var_{i,1},\ldots,\var_{i,m_i}],[\obj_{i,1},\ldots,\obj_{i,m_i}])$$extends the previous environment by binding, in the namespace $\ns_i$, the variable $\var_{i,j}$ to the object $\obj_{i,j}$ (for all $i$ from $1$ to $n$ and all $j$ from $1$ to $m_i$). We will denote by $\bindingmathop(i,j)$ the binding between $\var_{i,j}$ and $\obj_{i,j}$ created by the $i$-th extension.</p>
+    <p>The binding for the variable $\var$ in the namespace $\ns$ of the environment $\env$ can easily be located using the following lookup rule expressed in pseudocode:</p>
+    <blockquote>
+      Initialize $i$ to $n$.<br>
+      While $i>0$, do the following:
+      <blockquote>
+        If $\ns_i=\ns$ and there exists $j\in\{1,\ldots,m_i\}$ such that $\var_{i,j}=\var$ (if such $j$ exists, it is necessarily unique because the variables $\var_{i,1},\ldots,\var_{i,m_i}$ are distinct), then $\bindingmathop(i,j)$ is the binding for the variable $\var$ in the namespace $\ns$ of the environment $\env$. Otherwise, decrement $i$ by $1$.
+      </blockquote>
+      The variable $\var$ in unbound in the namespace $\ns$ of the environment $\env$.
+    </blockquote>
+    <p>By selecting the greatest $i$ satisfying the conditions, the lookup rule correctly handles the possibility of shadowing of a binding by another binding.</p>
+    <p>Lexical and dynamic environments are represented by instances of the classes <code>NullDefiniteEnv</code> and <code>Frame</code>, which are the two concrete subclasses of the abstract class <code>DefiniteEnv</code>.</p>
+    <p>For the sake of this document, lexical and dynamic environments are called definite because their scope or their extent is definite. The bindings of a lexical environment have lexical, and thus definite, scope. The bindings of a dynamic environment have dynamic, and thus definite, extent. By contrast, the bindings of the global environment have indefinite scope and indefinite extent.</p>
+    <p>Instances of <code>Frame</code>, which represent single extensions, have four properties:</p>
+    <ul>
+      <li><code>namespace</code>: <code>VAL_NS</code> or <code>FUN_NS</code></li>
+      <li><code>variables</code>: an array of distinct variables</li>
+      <li><code>values</code>: an array of objects</li>
+      <li><code>next</code>: an instance of <code>NullDefiniteEnv</code> or <code>Frame</code></li>
+    </ul>
+    <p>The two arrays <code>variables</code> and <code>values</code> must have the same length $m\ge0$. The array <code>variables</code> contains the variables $\var_1,\ldots,\var_m$ and the array <code>values</code> contains the objects $\obj_1,\ldots,\obj_m$. The property <code>next</code> is used to create chains of instances of <code>Frame</code>. Each chain is terminated by an instance of <code>NullDefiniteEnv</code>, which represents an empty environment.</p>
+    <h2 id="pairing-parameters-with-arguments">Pairing Parameters with Arguments</h2>
+    <p>The parameters are paired with the arguments by the following functions:</p>
+    <table class="plain">
+      <tr><th>Function</th><th>Function call</th><th>Rest parameter</th></tr>
+      <tr><td><code>pairPrimFunParametersNoApply</code></td><td>plain function call<br>multiple-value-call-form</td><td>N/A</td></tr>
+      <tr><td><code>pairPrimFunParametersApply</code></td><td>apply<br>multiple-value-apply-form</td><td>N/A</td></tr>
+      <tr><td><code>pairClosureParametersNoApplyNoRest</code></td><td>plain function call<br>multiple-value-call-form</td><td>no</td></tr>
+      <tr><td><code>pairClosureParametersNoApplyRest</code></td><td>plain function call<br>multiple-value-call-form</td><td>yes</td></tr>
+      <tr><td><code>pairClosureParametersApplyNoRest</code></td><td>apply<br>multiple-value-apply-form</td><td>no</td></tr>
+      <tr><td><code>pairClosureParametersApplyRest</code></td><td>apply<br>multiple-value-apply-form</td><td>yes</td></tr>
+    </table>
+    <p>The function <code>pairClosureParametersApplyRest</code> reuses conses from the last element of the spreadable sequence of objects when possible. To illustrate, let us consider the following function calls:</p>
+    <dl>
+      <dt><code>(apply (_vlambda a (list a)) $x=\code{1}$ $y=\code{2}$ $z=\code{'(3 4)}$)</code></dt>
+      <dd><code>a</code> is paired with <code>(cons $x$ (cons $y$ $z$))$\,=\,$(1 2 3 4)</code> ($2$ new conses and $2$ reused conses)</dd>
+      <dt><code>(apply (_vlambda (a . b) (list a b)) $x=\code{1}$ $y=\code{2}$ $z=\code{'(3 4)}$)</code></dt>
+      <dd><code>a</code> is paired with <code>$x$$\,=\,$1</code></dd>
+      <dd><code>b</code> is paired with <code>(cons $y$ $z$)$\,=\,$(2 3 4)</code> ($1$ new cons and $2$ reused conses)</dd>
+      <dt><code>(apply (_vlambda (a b . c) (list a b c)) $x=\code{1}$ $y=\code{2}$ $z=\code{'(3 4)}$)</code></dt>
+      <dd><code>a</code> is paired with <code>$x$$\,=\,$1</code></dd>
+      <dd><code>b</code> is paired with <code>$y$$\,=\,$2</code></dd>
+      <dd><code>c</code> is paired with <code>$z$$\,=\,$(3 4)</code> ($0$ new conses and $2$ reused conses)</dd>
+      <dt><code>(apply (_vlambda (a b c . d) (list a b c d)) $x=\code{1}$ $y=\code{2}$ $z=\code{'(3 4)}$)</code></dt>
+      <dd><code>a</code> is paired with <code>$x$$\,=\,$1</code></dd>
+      <dd><code>b</code> is paired with <code>$y$$\,=\,$2</code></dd>
+      <dd><code>c</code> is paired with <code>(car $z$)$\,=\,$3</code></dd>
+      <dd><code>d</code> is paired with <code>(cdr $z$)$\,=\,$(4)</code> ($0$ new conses and $1$ reused cons)</dd>
+      <dt><code>(apply (_vlambda (a b c d . e) (list a b c d e)) $x=\code{1}$ $y=\code{2}$ $z=\code{'(3 4)}$)</code></dt>
+      <dd><code>a</code> is paired with <code>$x$$\,=\,$1</code></dd>
+      <dd><code>b</code> is paired with <code>$y$$\,=\,$2</code></dd>
+      <dd><code>c</code> is paired with <code>(car $z$)$\,=\,$3</code></dd>
+      <dd><code>d</code> is paired with <code>(car (cdr $z$))$\,=\,$4</code></dd>
+      <dd><code>e</code> is paired with <code>(cdr (cdr $z$))$\,=\,$()</code> ($0$ new conses and $0$ reused conses)</dd>
+      <dt><code>(apply (_vlambda (a b c d e . f) (list a b c d e f)) $x=\code{1}$ $y=\code{2}$ $z=\code{'(3 4)}$)</code></dt>
+      <dd>ERROR: Too few arguments.</dd>
+    </dl>
+    <h2 id="generic-evaluator">Generic Evaluator</h2>
+    <p>The generic evaluator simply dispatches the form to evaluate to the selected evaluator.</p>
+    <h2 id="plainrec">Plain Recursive Evaluator</h2>
+    <h2 id="cps">Continuation Passing Style Evaluator</h2>
+    <h2 id="oocps">Object-Oriented CPS Evaluator</h2>
+    <h2 id="sboocps">Stack-Based Object-Oriented CPS Evaluator</h2>
+    <h2 id="trampoline">Trampoline Evaluator</h2>
+    <h2 id="trampolinepp">Trampoline++ Evaluator</h2>
+    <h2 id="primitive-function-definitions-1">Primitive Function Definitions (1)</h2>
+    <p>Defining a primitive function is a two-step process. First, the function <code>primitiveFunction</code> is used to add to the Map contained in the variable <code>primitiveFunctions</code> an entry mapping the name of the primitive function to a record containing the minimum number of arguments, the maximum number of arguments, and the JavaScript function implementing the primitive function. Then, a binding between the name of the primitive function and an instance of the JavaScript class EVLPrimitiveFunction is added to the function namespace of the global environment.</p>
+    <p>The first step occurs where it makes the most sense. For the primitive functions related to a primitive date type, the first step occurs inside the section defining the JavaScript class associated with the primitive data type.</p>
+    <p>The second step is postponed to the section <a href="#primitive-function-definitions-2">Primitive Function Definitions (2)</a> because it cannot happen before the JavaScript class EVLPrimitiveFunction has been defined.</p>
+    <p>The actual number of arguments is checked against the minimum and maximum numbers of arguments by the code implementing the invocation of primitive functions.</p>
+    <p>The types of the arguments are checked by the JavaScript functions implementing the primitive functions.</p>
+    <h2 id="bounce">Bounce</h2>
+    <p>A bounce is what is sent back to the trampoline. A bounce is either an evaluation request or a result.</p>
+    <h2 id="evaluation-request">Evaluation Request</h2>
+    <p>An evaluation request specifies the form to evaluate and the lexical environment with respect to which the form is to be evaluated. The dynamic environment with respect to which the form is to be evaluated is always the current dynamic environment.</p>
+    <h2 id="result">Result</h2>
+    <p>A result is either an instance of the class <code>EVLObjects</code> or an instance of a concrete subclass of the abstract class <code>EVLObject</code>.</p>
+    <h2 id="evlobjects">EVLObjects</h2>
+    <p>An instance of the class <code>EVLOjects</code> is a result consisting of a sequence of zero or more objects.</p>
+    <p>The method <code>primaryValue</code> returns <code>#v</code> if the result consists of a sequence of zero objects and the first object otherwise.</p>
+    <p>The method <code>allValues</code> returns an array containing all of the objects.</p>
+    <h2 id="evlobject">EVLObject</h2>
+    <p>An instance of a concrete subclass of the abstract class <code>EVLObject</code> is two things at once: an object and a result consisting of a single object.</p>
+    <p>The method <code>primaryValue</code> returns the single object.</p>
+    <p>The method <code>allValues</code> returns an array containing the single object.</p>
+    <p>The method <code>eql</code> implements the default behavior of the equality predicate <code>eql?</code> (that is, pointer equality). The method is overridden in the classes <code>EVLNumber</code>, <code>EVLCharacter</code>, and <code>EVLString</code>.</p>
+    <p>The method <code>toString</code> is overridden in some subclasses of the abstract class <code>EVLObject</code> to return the printable representation of <code>this</code>.</p>
+    <h2 id="evlvoid">EVLVoid</h2>
+    <p>An instance of the class <code>EVLVoid</code> is an object of type <code>void</code>.</p>
+    <h2 id="evlboolean">EVLBoolean</h2>
+    <p>An instance of the class <code>EVLBoolean</code> is an object of type <code>boolean</code>.</p>
+    <h2 id="evlnumber">EVLNumber</h2>
+    <p>An instance of the class <code>EVLNumber</code> is an object of type <code>number</code>.</p>
+    <h2 id="evlcharacter">EVLCharacter</h2>
+    <p>An instance of the class <code>EVLCharacter</code> is an object of type <code>character</code>.</p>
+    <h2 id="evlstring">EVLString</h2>
+    <p>An instance of the class <code>EVLString</code> is an object of type <code>string</code>.</p>
+    <h2 id="evlsymbol">EVLSymbol</h2>
+    <p>An instance of a concrete subclass of the abstract class <code>EVLSymbol</code> is an object of type <code>symbol</code>.</p>
+    <h2 id="evlkeyword">EVLKeyword</h2>
+    <p>An instance of the class <code>EVLKeyword</code> is an object of type <code>keyword</code>.</p>
+    <h2 id="evlvariable">EVLVariable</h2>
+    <p>An instance of the class <code>EVLVariable</code> is an object of type <code>variable</code>.</p>
+    <h2 id="evllist">EVLList</h2>
+    <p>An instance of a concrete subclass of the abstract class <code>EVLList</code> is an object of type <code>list</code>.</p>
+    <h2 id="evlemptylist">EVLEmptyList</h2>
+    <p>An instance of the class <code>EVLEmptyList</code> is an object of type <code>empty-list</code>.</p>
+    <h2 id="evlcons">EVLCons</h2>
+    <p>An instance of the class <code>EVLCons</code> is an object of type <code>cons</code>.</p>
+    <h2 id="evlvector">EVLVector</h2>
+    <p>An instance of the class <code>EVLVector</code> is an object of type <code>vector</code>.</p>
+    <h2 id="evlfunction">EVLFunction</h2>
+    <p>An instance of a concrete subclass of the abstract class <code>EVLFunction</code> is an object of type <code>function</code>.</p>
+    <h2 id="evlprimitivefunction">EVLPrimitiveFunction</h2>
+    <p>An instance of the class <code>EVLPrimitiveFunction</code> is an object of type <code>primitive-function</code>.</p>
+    <h2 id="evlclosure">EVLClosure</h2>
+    <p>An instance of the class <code>EVLClosure</code> is an object of type <code>closure</code>.</p>
+    <h2 id="miscellaneous-primitive-functions">Miscellaneous Primitive Functions</h2>
+    <p>This section implements the primitive functions <code>values</code>, <code>error</code>, and <code>now</code>.</p>
+    <h2 id="primitive-function-definitions-2">Primitive Function Definitions (2)</h2>
+    <p>The second steps of the primitive function definitions all occur in this section.</p>
+    <h2 id="interface-command-line">Interface (Command Line)</h2>
+    <p>This section implements the command-line interface used to control the evaluator and the EVL to XML converter.</p>
+    <p>The syntax of the command line to control the evaluator is as follows:</p>
+    <blockquote><code>node core.js { --plainrec | --cps | --oocps | --sboocps | --trampoline | --trampoliepp }? { -l $\metavar{file}$ | -e $\metavar{form}$ }*</code></blockquote>
+    <p>The options and arguments have the following meanings:</p>
+    <ul>
+      <li><code>--plainrec</code>: selects the plain recursive evaluator</li>
+      <li><code>--cps</code>: selects the continuation passing style evaluator</li>
+      <li><code>--oocps</code>: selects the object-oriented CPS evaluator</li>
+      <li><code>--sboocps</code>: selects the stack-based object-oriented CPS evaluator</li>
+      <li><code>--trampoline</code>: selects the trampoline evaluator</li>
+      <li><code>--trampolinepp</code>: selects the trampoline++ evaluator (DEFAULT)</li>
+      <li><code>-l $\metavar{file}$</code>: loads the EVL file</li>
+      <li><code>-e $\metavar{form}$</code>: evaluates the form</li>
+    </ul>
+    <p>The syntax of the command line to control the EVL to XML converter is as follows:</p>
+    <blockquote><code>node core.js --convert $\metavar{file}$</code></blockquote>
+    <p>The options and arguments have the following meanings:</p>
+    <ul>
+      <li><code>--convert $\metavar{file}$</code>: converts the EVL file to XML</li>
+    </ul>
   </body>
 </html>

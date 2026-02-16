@@ -90,7 +90,7 @@ import {
   createEvaluator,
   evaluateFirstForm,
   evaluateAllForms,
-  convertToHTML,
+  convertEVLToHTML,
   formatForMinibuffer,
   abortEvaluation
 } from './evaluator.js';
@@ -227,7 +227,7 @@ class EVLBuffer extends FileBuffer {
     const jsURL = URL.createObjectURL(jsBlob);
     const state = this.transaction.state;
     const text = state.sliceDoc();
-    convertToHTML(text, xslt, cssURL, jsURL, window.id, html  => toggleHTMLModeCommand2(ide, window, html, cssURL, jsURL));
+    convertEVLToHTML(text, xslt, cssURL, jsURL, window.id, html  => toggleHTMLModeCommand2(ide, window, html, cssURL, jsURL));
   }
 }
 
@@ -1231,7 +1231,7 @@ init([
   'USER-MANUAL',
   'TUTORIAL',
   'REFERENCE-MANUAL',
-  //'IMPLEMENTATION-NOTES',
+  'IMPLEMENTATION-NOTES',
   'BIBLIOGRAPHY',
   'LICENSE',
   'all-caps.css',

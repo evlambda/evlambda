@@ -4,6 +4,7 @@
 <html>
   <head>
     <meta charset="utf-8">
+    <title>License</title>
     <link rel="stylesheet" href="___cssURL___"/>
     <script src="___jsURL___"></script>
     <script>const windowId = ___windowId___;</script>

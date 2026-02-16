@@ -4,6 +4,7 @@
 <html>
   <head>
     <meta charset="utf-8">
+    <title>Tutorial</title>
     <link rel="stylesheet" href="___cssURL___"/>
     <script src="___jsURL___"></script>
     <script>const windowId = ___windowId___;</script>
@@ -37,16 +38,16 @@
     <pre class="repl">&gt; (not #t)<br>#f<br><br>&gt; (not #f)<br>#t</pre>
     <dl>
       <dt><code>(and $\metavar{test-forms}$)</code></dt>
-      <dd>The macro returns <code>#t</code> if all its arguments are <code>#t</code> and <code>#f</code> otherwise. The exact behavior of the macro is as follows: The macro evaluates the test-forms in sequence from left to right. If a test-form evaluates to an object that is not a boolean, then the following test-forms are not evaluated and the evaluation of the macro call completes abnormally.  If a test-form evaluates to <code>#f</code>, then the following test-forms are not evaluated and the macro call evaluates to <code>#f</code>. If all test-forms evaluate to <code>#t</code>, then the macro call evaluates to <code>#t</code>. Note that the previous condition is automatically satisfied if there are no test-forms.</dd>
+      <dd>The macro returns <code>#t</code> if all its arguments are <code>#t</code> and <code>#f</code> otherwise. The exact behavior of the macro is as follows: The macro evaluates the test-forms in sequence from left to right. If a test-form evaluates to an object that is not a boolean, then the following test-forms are not evaluated and the evaluation of the macro call completes abruptly with a reason of type <code>error</code>.  If a test-form evaluates to <code>#f</code>, then the following test-forms are not evaluated and the macro call evaluates to <code>#f</code>. If all test-forms evaluate to <code>#t</code>, then the macro call evaluates to <code>#t</code>. Note that the previous condition is automatically satisfied if there are no test-forms.</dd>
     </dl>
     <pre class="repl">&gt; (and)<br>#t<br><br>&gt; (and #t)<br>#t<br><br>&gt; (and #f)<br>#f<br><br>&gt; (and #t #t)<br>#t<br><br>&gt; (and #t #f)<br>#f<br><br>&gt; (and #f #t)<br>#f<br><br>&gt; (and #f #f)<br>#f</pre>
     <dl>
       <dt><code>(or $\metavar{test-forms}$)</code></dt>
-      <dd>The macro returns <code>#f</code> if all its arguments are <code>#f</code> and <code>#t</code> otherwise. The exact behavior of the macro is as follows: The macro evaluates the test-forms in sequence from left to right. If a test-form evaluates to an object that is not a boolean, then the following test-forms are not evaluated and the evaluation of the macro call completes abnormally.  If a test-form evaluates to <code>#t</code>, then the following test-forms are not evaluated and the macro call evaluates to <code>#t</code>. If all test-forms evaluate to <code>#f</code>, then the macro call evaluates to <code>#f</code>. Note that the previous condition is automatically satisfied if there are no test-forms.</dd>
+      <dd>The macro returns <code>#f</code> if all its arguments are <code>#f</code> and <code>#t</code> otherwise. The exact behavior of the macro is as follows: The macro evaluates the test-forms in sequence from left to right. If a test-form evaluates to an object that is not a boolean, then the following test-forms are not evaluated and the evaluation of the macro call completes abruptly with a reason of type <code>error</code>.  If a test-form evaluates to <code>#t</code>, then the following test-forms are not evaluated and the macro call evaluates to <code>#t</code>. If all test-forms evaluate to <code>#f</code>, then the macro call evaluates to <code>#f</code>. Note that the previous condition is automatically satisfied if there are no test-forms.</dd>
     </dl>
     <pre class="repl">&gt; (or)<br>#f<br><br>&gt; (or #t)<br>#t<br><br>&gt; (or #f)<br>#f<br><br>&gt; (or #t #t)<br>#t<br><br>&gt; (or #t #f)<br>#t<br><br>&gt; (or #f #t)<br>#t<br><br>&gt; (or #f #f)<br>#f</pre>
     <p>When we say that a macro does this and that, what we really mean is that the expansion of the macro does this and that. In the case of the macros <code>and</code> and <code>or</code>, it is their expansions that evaluate the test-forms in sequence from left to right, etc.</p>
-    <p>The macros <code>and</code> and <code>or</code> stop evaluating their operands as soon as they can determine that the result of the macro call is definitively true or definitively false. This short-circuiting behavior is possible only because <code>and</code> and <code>or</code> are macros. When a function call is evaluated, all the operands are always evaluated (unless the evaluation of the operator or the evaluation of one of the operands other than the last one completes abnormally or does not complete).</p>
+    <p>The macros <code>and</code> and <code>or</code> stop evaluating their operands as soon as they can determine that the result of the macro call is definitively true or definitively false. This short-circuiting behavior is possible only because <code>and</code> and <code>or</code> are macros. When a function call is evaluated, all the operands are always evaluated (unless the evaluation of the operator or the evaluation of one of the operands other than the last one completes abruptly or does not complete).</p>
     <p>Here are two expansions illustrating the implementations of the macros <code>and</code> and <code>or</code>:</p>
     <ul>
       <li><code>(and $\metavarn{test-form}{1}$ $\metavarn{test-form}{2}$ $\metavarn{test-form}{3}$)</code> expands into<br><code>(if $\metavarn{test-form}{1}$ (if $\metavarn{test-form}{2}$ (if $\metavarn{test-form}{3}$ #t #f) #f) #f)</code></li>
@@ -62,7 +63,7 @@
     <pre class="repl">&gt; (+)<br>0<br><br>&gt; (+ 1)<br>1<br><br>&gt; (+ 1 2)<br>3<br><br>&gt; (+ 1 2 3)<br>6</pre>
     <dl>
       <dt><code>(- $\number_1\ldots\number_n$)</code></dt>
-      <dd>If the function is invoked on zero numbers, then the invocation completes abnormally. If the function is invoked on one number, then the opposite of that number is returned. If the function is invoked on more than one number, then the result of subtracting those numbers from left to right is returned: the second number is subtracted from the first number, then the third number is subtracted from the partial result just computed, &hellip; The function is a closure built on top of the primitive function <code>_-</code>, which must be invoked on exactly two numbers.</dd>
+      <dd>If the function is invoked on zero numbers, then the invocation completes abruptly with a reason of type <code>error</code>. If the function is invoked on one number, then the opposite of that number is returned. If the function is invoked on more than one number, then the result of subtracting those numbers from left to right is returned: the second number is subtracted from the first number, then the third number is subtracted from the partial result just computed, &hellip; The function is a closure built on top of the primitive function <code>_-</code>, which must be invoked on exactly two numbers.</dd>
     </dl>
     <pre class="repl">&gt; (-)<br>ERROR: Expecting at least one number.<br><br>&gt; (- 1)<br>-1<br><br>&gt; (- 0 1)<br>-1<br><br>&gt; (- 0 1 2)<br>-3<br><br>&gt; (- 0 1 2 3)<br>-6</pre>
     <dl>
@@ -72,7 +73,7 @@
     <pre class="repl">&gt; (*)<br>1<br><br>&gt; (* 2)<br>2<br><br>&gt; (* 2 4)<br>8<br><br>&gt; (* 2 4 8)<br>64</pre>
     <dl>
       <dt><code>(/ $\number_1\ldots\number_n$)</code></dt>
-      <dd>If the function is invoked on zero numbers, then the invocation completes abnormally. If the function is invoked on one number, then the inverse of that number is returned. If the function is invoked on more than one number, then the result of dividing those numbers from left to right is returned: the first number is divided by the second number, then the partial result just computed is divided by the third number, &hellip; The function is a closure built on top of the primitive function <code>_/</code>, which must be invoked on exactly two numbers.</dd>
+      <dd>If the function is invoked on zero numbers, then the invocation completes abruptly with a reason of type <code>error</code>. If the function is invoked on one number, then the inverse of that number is returned. If the function is invoked on more than one number, then the result of dividing those numbers from left to right is returned: the first number is divided by the second number, then the partial result just computed is divided by the third number, &hellip; The function is a closure built on top of the primitive function <code>_/</code>, which must be invoked on exactly two numbers.</dd>
     </dl>
     <pre class="repl">&gt; (/)<br>ERROR: Expecting at least one number.<br><br>&gt; (/ 2)<br>0.5<br><br>&gt; (/ 1 2)<br>0.5<br><br>&gt; (/ 1 2 4)<br>0.125<br><br>&gt; (/ 1 2 4 8)<br>0.015625</pre>
     <h4>Comparison Operators</h4>
@@ -206,12 +207,12 @@
         <li>The form <code>(+ 1 2)</code> is evaluated with respect to $[]$ and $[]$.</li>
         <li>
           <ul>
-            <li>The form <code>(+ 1 2)</code> is classified as a plain function call.</li>
+            <li>The form <code>(+ 1 2)</code> is analyzed as a plain function call.</li>
             <li>The variable <code>+</code> is treated as an abbreviation for <code>(fref +)</code>.</li>
             <li>The form <code>(fref +)</code> is evaluated with respect to $[]$ and $[]$.</li>
             <li>
               <ul>
-                <li>The form <code>(fref +)</code> is classified as an fref-form.</li>
+                <li>The form <code>(fref +)</code> is analyzed as an fref-form.</li>
                 <li>The variable <code>+</code> is looked up.</li>
               </ul>
             </li>
@@ -219,14 +220,14 @@
             <li>The form <code>1</code> is evaluated with respect to $[]$ and $[]$.</li>
             <li>
               <ul>
-                <li>The form <code>1</code> is classified as a self-evaluating object.</li>
+                <li>The form <code>1</code> is analyzed as a self-evaluating object.</li>
               </ul>
             </li>
             <li>The form <code>1</code> evaluates to the number <code>1</code>.</li>
             <li>The form <code>2</code> is evaluated with respect to $[]$ and $[]$.</li>
             <li>
               <ul>
-                <li>The form <code>2</code> is classified as a self-evaluating object.</li>
+                <li>The form <code>2</code> is analyzed as a self-evaluating object.</li>
               </ul>
             </li>
             <li>The form <code>2</code> evaluates to the number <code>2</code>.</li>
@@ -238,12 +239,12 @@
                 <li>The form <code>(_+ x y)</code> is evaluated with respect to $[\vbinding{x}{1},\vbinding{y}{2}]$ and $[]$.</li>
                 <li>
                   <ul>
-                    <li>The form <code>(_+ x y)</code> is classified as a plain function call.</li>
+                    <li>The form <code>(_+ x y)</code> is analyzed as a plain function call.</li>
                     <li>The variable <code>_+</code> is treated as an abbreviation for <code>(fref _+)</code>.</li>
                     <li>The form <code>(fref _+)</code> is evaluated with respect to $[\vbinding{x}{1},\vbinding{y}{2}]$ and $[]$.</li>
                     <li>
                       <ul>
-                        <li>The form <code>(fref _+)</code> is classified as an fref-form.</li>
+                        <li>The form <code>(fref _+)</code> is analyzed as an fref-form.</li>
                         <li>The variable <code>_+</code> is looked up.</li>
                       </ul>
                     </li>
@@ -252,7 +253,7 @@
                     <li>The form <code>(vref x)</code> is evaluated with respect to $[\vbinding{x}{1},\vbinding{y}{2}]$ and $[]$.</li>
                     <li>
                       <ul>
-                        <li>The form <code>(vref x)</code> is classified as a vref-form.</li>
+                        <li>The form <code>(vref x)</code> is analyzed as a vref-form.</li>
                         <li>The variable <code>x</code> is looked up.</li>
                       </ul>
                     </li>
@@ -261,7 +262,7 @@
                     <li>The form <code>(vref y)</code> is evaluated with respect to $[\vbinding{x}{1},\vbinding{y}{2}]$ and $[]$.</li>
                     <li>
                       <ul>
-                        <li>The form <code>(vref y)</code> is classified as a vref-form.</li>
+                        <li>The form <code>(vref y)</code> is analyzed as a vref-form.</li>
                         <li>The variable <code>y</code> is looked up.</li>
                       </ul>
                     </li>
@@ -299,13 +300,13 @@
         <li>The form <code>(simple-vlet x 1 (+ x 2))</code> is evaluated with respect to $[]$ and $[]$.</li>
         <li>
           <ul>
-            <li>Because the variable <code>simple-vlet</code> names a macro according to the lookup rule used by <code>fref</code>, the form <code>(simple-vlet x 1 (+ x 2))</code> is classified as a macro call.</li>
+            <li>Because the variable <code>simple-vlet</code> names a macro according to the lookup rule used by <code>fref</code>, the form <code>(simple-vlet x 1 (+ x 2))</code> is analyzed as a macro call.</li>
             <li>The global macro <code>simple-vlet</code> is invoked on the variable <code>x</code>, the number <code>1</code>, and the list <code>(+ x 2)</code>.</li>
             <li>The global macro <code>simple-vlet</code> returns the list <code>((_vlambda (x) (+ x 2)) 1)</code>.</li>
             <li>The form <code>((_vlambda (x) (+ x 2)) 1)</code> is evaluated with respect to $[]$ and $[]$.</li>
             <li>
               <ul>
-                <li>The form <code>((_vlambda (x) (+ x 2)) 1)</code> is classified as a plain function call.</li>
+                <li>The form <code>((_vlambda (x) (+ x 2)) 1)</code> is analyzed as a plain function call.</li>
                 <li>The form <code>(_vlambda (x) (+ x 2))</code> is evaluated with respect to $[]$ and $[]$.</li>
                 <li>The form <code>(_vlambda (x) (+ x 2))</code> evaluates to a closure recording the following two pieces of information: the _vlambda-form <code>(_vlambda (x) (+ x 2))</code> and the lexical environment $[]$.</li>
                 <li>The form <code>1</code> is evaluated with respect to $[]$ and $[]$.</li>
@@ -333,13 +334,13 @@
         <li>The form <code>(simple-vlet x 1 (simple-vlet y 2 (+ x y)))</code> is evaluated with respect to $[]$ and $[]$.</li>
         <li>
           <ul>
-            <li>Because the variable <code>simple-vlet</code> names a macro according to the lookup rule used by <code>fref</code>, the form <code>(simple-vlet x 1 (simple-vlet y 2 (+ x y)))</code> is classified as a macro call.</li>
+            <li>Because the variable <code>simple-vlet</code> names a macro according to the lookup rule used by <code>fref</code>, the form <code>(simple-vlet x 1 (simple-vlet y 2 (+ x y)))</code> is analyzed as a macro call.</li>
             <li>The global macro <code>simple-vlet</code> is invoked on the variable <code>x</code>, the number <code>1</code>, and the list <code>(simple-vlet y 2 (+ x y))</code>.</li>
             <li>The global macro <code>simple-vlet</code> returns the list <code>((_vlambda (x) (simple-vlet y 2 (+ x y))) 1)</code>.</li>
             <li>The form <code>((_vlambda (x) (simple-vlet y 2 (+ x y))) 1)</code> is evaluated with respect to $[]$ and $[]$.</li>
             <li>
               <ul>
-                <li>The form <code>((_vlambda (x) (simple-vlet y 2 (+ x y))) 1)</code> is classified as a plain function call.</li>
+                <li>The form <code>((_vlambda (x) (simple-vlet y 2 (+ x y))) 1)</code> is analyzed as a plain function call.</li>
                 <li>The form <code>(_vlambda (x) (simple-vlet y 2 (+ x y)))</code> is evaluated with respect to $[]$ and $[]$.</li>
                 <li>The form <code>(_vlambda (x) (simple-vlet y 2 (+ x y)))</code> evaluates to a closure recording the following two pieces of information: the _vlambda-form <code>(_vlambda (x) (simple-vlet y 2 (+ x y)))</code> and the lexical environment $[]$.</li>
                 <li>The form <code>1</code> is evaluated with respect to $[]$ and $[]$.</li>
@@ -351,13 +352,13 @@
                     <li>The form <code>(simple-vlet y 2 (+ x y))</code> is evaluated with respect to $[\vbinding{x}{1}]$ and $[]$.</li>
                     <li>
                       <ul>
-                        <li>Because the variable <code>simple-vlet</code> names a macro according to the lookup rule used by <code>fref</code>, the form <code>(simple-vlet y 2 (+ x y))</code> is classified as a macro call.</li>
+                        <li>Because the variable <code>simple-vlet</code> names a macro according to the lookup rule used by <code>fref</code>, the form <code>(simple-vlet y 2 (+ x y))</code> is analyzed as a macro call.</li>
                         <li>The global macro <code>simple-vlet</code> is invoked on the variable <code>y</code>, the number <code>2</code>, and the list <code>(+ x y)</code>.</li>
                         <li>The global macro <code>simple-vlet</code> returns the list <code>((_vlambda (y) (+ x y)) 2)</code>.</li>
                         <li>The form <code>((_vlambda (y) (+ x y)) 2)</code> is evaluated with respect to $[\vbinding{x}{1}]$ and $[]$.</li>
                         <li>
                           <ul>
-                            <li>The form <code>((_vlambda (y) (+ x y)) 2)</code> is classified as a plain function call.</li>
+                            <li>The form <code>((_vlambda (y) (+ x y)) 2)</code> is analyzed as a plain function call.</li>
                             <li>The form <code>(_vlambda (y) (+ x y))</code> is evaluated with respect to $[\vbinding{x}{1}]$ and $[]$.</li>
                             <li>The form <code>(_vlambda (y) (+ x y))</code> evaluates to a closure recording the following two pieces of information: the _vlambda-form <code>(_vlambda (y) (+ x y))</code> and the lexical environment $[\vbinding{x}{1}]$.</li>
                             <li>The form <code>2</code> is evaluated with respect to $[\vbinding{x}{1}]$ and $[]$.</li>
@@ -404,7 +405,7 @@
                 <li>The form <code>(if (&gt;= x 0) x (- x)))</code> is evaluated with respect to $[\vbinding{x}{1}]$ and $[]$.</li>
                 <li>
                   <ul>
-                    <li>The form <code>(if (&gt;= x 0) x (- x)))</code> is classified as an if-form.</li>
+                    <li>The form <code>(if (&gt;= x 0) x (- x)))</code> is analyzed as an if-form.</li>
                     <li>The form <code>(&gt;= x 0)</code> is evaluated with respect to $[\vbinding{x}{1}]$ and $[]$.</li>
                     <li>
                       <ul>
@@ -439,7 +440,7 @@
                 <li>The form <code>(if (&gt;= x 0) x (- x)))</code> is evaluated with respect to $[\vbinding{x}{-1}]$ and $[]$.</li>
                 <li>
                   <ul>
-                    <li>The form <code>(if (&gt;= x 0) x (- x)))</code> is classified as an if-form.</li>
+                    <li>The form <code>(if (&gt;= x 0) x (- x)))</code> is analyzed as an if-form.</li>
                     <li>The form <code>(&gt;= x 0)</code> is evaluated with respect to $[\vbinding{x}{-1}]$ and $[]$.</li>
                     <li>
                       <ul>
