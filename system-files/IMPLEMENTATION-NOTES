@@ -11,7 +11,7 @@
   </head>
   <body>
     <div class="preamble">
-      $\DeclareMathOperator{\bindingmathop}{binding}$
+      $\DeclareMathOperator{\binding}{binding}$
     </div>
     <h1>Implementation Notes</h1>
     <p>The implementation notes document the JavaScript file <code>/system/core.js</code>, which implements the &ldquo;core&rdquo; of the EVLambda programming language and the EVL to XML converter (one of the two components of the documentation generator, the other one being the XSLT stylesheet). The implementation notes and the JavaScript file have the same organization (the same sections, in the same order) and are meant to be read side by side.</p>
@@ -293,13 +293,13 @@
       <li>Extending a lexical or dynamic environment is achieved by copying the two sets of bindings and then deleting and adding some bindings from/to the copy of one of the two sets.</li>
     </ul>
     <p>A lexical or dynamic environment is represented not by the result of the sequence of extensions leading to the environment but by a recording of the sequence of extensions leading to the environment. A single extension is recorded into a data structure called a frame and a sequence of extensions is recorded into a chain of frames.</p>
-    <p>Let $\env$ be a lexical or dynamic environment and$$[(\ns_1,[\var_{1,1},\ldots,\var_{1,m_1}],[\obj_{1,1},\ldots,\obj_{1,m_1}]),\ldots,(\ns_n,[\var_{n,1},\ldots,\var_{n,m_n}],[\obj_{n,1},\ldots,\obj_{n,m_n}])]$$be the sequence of extensions leading to the environment. The extensions are applied from left to right and the first extension is applied to an empty environment. The $i$-th extension$$(\ns_i,[\var_{i,1},\ldots,\var_{i,m_i}],[\obj_{i,1},\ldots,\obj_{i,m_i}])$$extends the previous environment by binding, in the namespace $\ns_i$, the variable $\var_{i,j}$ to the object $\obj_{i,j}$ (for all $i$ from $1$ to $n$ and all $j$ from $1$ to $m_i$). We will denote by $\bindingmathop(i,j)$ the binding between $\var_{i,j}$ and $\obj_{i,j}$ created by the $i$-th extension.</p>
+    <p>Let $\env$ be a lexical or dynamic environment and$$[(\ns_1,[\var_{1,1},\ldots,\var_{1,m_1}],[\obj_{1,1},\ldots,\obj_{1,m_1}]),\ldots,(\ns_n,[\var_{n,1},\ldots,\var_{n,m_n}],[\obj_{n,1},\ldots,\obj_{n,m_n}])]$$be the sequence of extensions leading to the environment. The extensions are applied from left to right and the first extension is applied to an empty environment. The $i$-th extension$$(\ns_i,[\var_{i,1},\ldots,\var_{i,m_i}],[\obj_{i,1},\ldots,\obj_{i,m_i}])$$extends the previous environment by binding, in the namespace $\ns_i$, the variable $\var_{i,j}$ to the object $\obj_{i,j}$ (for all $i$ from $1$ to $n$ and all $j$ from $1$ to $m_i$). We will denote by $\binding(i,j)$ the binding between $\var_{i,j}$ and $\obj_{i,j}$ created by the $i$-th extension.</p>
     <p>The binding for the variable $\var$ in the namespace $\ns$ of the environment $\env$ can easily be located using the following lookup rule expressed in pseudocode:</p>
     <blockquote>
       Initialize $i$ to $n$.<br>
       While $i>0$, do the following:
       <blockquote>
-        If $\ns_i=\ns$ and there exists $j\in\{1,\ldots,m_i\}$ such that $\var_{i,j}=\var$ (if such $j$ exists, it is necessarily unique because the variables $\var_{i,1},\ldots,\var_{i,m_i}$ are distinct), then $\bindingmathop(i,j)$ is the binding for the variable $\var$ in the namespace $\ns$ of the environment $\env$. Otherwise, decrement $i$ by $1$.
+        If $\ns_i=\ns$ and there exists $j\in\{1,\ldots,m_i\}$ such that $\var_{i,j}=\var$ (if such $j$ exists, it is necessarily unique because the variables $\var_{i,1},\ldots,\var_{i,m_i}$ are distinct), then $\binding(i,j)$ is the binding for the variable $\var$ in the namespace $\ns$ of the environment $\env$. Otherwise, decrement $i$ by $1$.
       </blockquote>
       The variable $\var$ in unbound in the namespace $\ns$ of the environment $\env$.
     </blockquote>

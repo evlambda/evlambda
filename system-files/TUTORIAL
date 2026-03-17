@@ -38,16 +38,16 @@
     <pre class="repl">&gt; (not #t)<br>#f<br><br>&gt; (not #f)<br>#t</pre>
     <dl>
       <dt><code>(and $\metavar{test-forms}$)</code></dt>
-      <dd>The macro returns <code>#t</code> if all its arguments are <code>#t</code> and <code>#f</code> otherwise. The exact behavior of the macro is as follows: The macro evaluates the test-forms in sequence from left to right. If a test-form evaluates to an object that is not a boolean, then the following test-forms are not evaluated and the evaluation of the macro call completes abruptly with a reason of type <code>error</code>.  If a test-form evaluates to <code>#f</code>, then the following test-forms are not evaluated and the macro call evaluates to <code>#f</code>. If all test-forms evaluate to <code>#t</code>, then the macro call evaluates to <code>#t</code>. Note that the previous condition is automatically satisfied if there are no test-forms.</dd>
+      <dd>The macro returns <code>#t</code> if all its arguments are <code>#t</code> and <code>#f</code> otherwise. The exact behavior of the macro is as follows: The macro evaluates the test-forms in sequence from left to right. If a test-form evaluates to an object that is not a boolean, then the following test-forms are not evaluated and the evaluation of the macro call completes abruptly for a reason of type <code>error</code>.  If a test-form evaluates to <code>#f</code>, then the following test-forms are not evaluated and the macro call evaluates to <code>#f</code>. If all test-forms evaluate to <code>#t</code>, then the macro call evaluates to <code>#t</code>. Note that the previous condition is automatically satisfied if there are no test-forms.</dd>
     </dl>
     <pre class="repl">&gt; (and)<br>#t<br><br>&gt; (and #t)<br>#t<br><br>&gt; (and #f)<br>#f<br><br>&gt; (and #t #t)<br>#t<br><br>&gt; (and #t #f)<br>#f<br><br>&gt; (and #f #t)<br>#f<br><br>&gt; (and #f #f)<br>#f</pre>
     <dl>
       <dt><code>(or $\metavar{test-forms}$)</code></dt>
-      <dd>The macro returns <code>#f</code> if all its arguments are <code>#f</code> and <code>#t</code> otherwise. The exact behavior of the macro is as follows: The macro evaluates the test-forms in sequence from left to right. If a test-form evaluates to an object that is not a boolean, then the following test-forms are not evaluated and the evaluation of the macro call completes abruptly with a reason of type <code>error</code>.  If a test-form evaluates to <code>#t</code>, then the following test-forms are not evaluated and the macro call evaluates to <code>#t</code>. If all test-forms evaluate to <code>#f</code>, then the macro call evaluates to <code>#f</code>. Note that the previous condition is automatically satisfied if there are no test-forms.</dd>
+      <dd>The macro returns <code>#f</code> if all its arguments are <code>#f</code> and <code>#t</code> otherwise. The exact behavior of the macro is as follows: The macro evaluates the test-forms in sequence from left to right. If a test-form evaluates to an object that is not a boolean, then the following test-forms are not evaluated and the evaluation of the macro call completes abruptly for a reason of type <code>error</code>.  If a test-form evaluates to <code>#t</code>, then the following test-forms are not evaluated and the macro call evaluates to <code>#t</code>. If all test-forms evaluate to <code>#f</code>, then the macro call evaluates to <code>#f</code>. Note that the previous condition is automatically satisfied if there are no test-forms.</dd>
     </dl>
     <pre class="repl">&gt; (or)<br>#f<br><br>&gt; (or #t)<br>#t<br><br>&gt; (or #f)<br>#f<br><br>&gt; (or #t #t)<br>#t<br><br>&gt; (or #t #f)<br>#t<br><br>&gt; (or #f #t)<br>#t<br><br>&gt; (or #f #f)<br>#f</pre>
     <p>When we say that a macro does this and that, what we really mean is that the expansion of the macro does this and that. In the case of the macros <code>and</code> and <code>or</code>, it is their expansions that evaluate the test-forms in sequence from left to right, etc.</p>
-    <p>The macros <code>and</code> and <code>or</code> stop evaluating their operands as soon as they can determine that the result of the macro call is definitively true or definitively false. This short-circuiting behavior is possible only because <code>and</code> and <code>or</code> are macros. When a function call is evaluated, all the operands are always evaluated (unless the evaluation of the operator or the evaluation of one of the operands other than the last one completes abruptly or does not complete).</p>
+    <p>The macros <code>and</code> and <code>or</code> stop evaluating their operands as soon as they can determine that the result of the macro call is definitively true or definitively false. This short-circuiting behavior is possible only because <code>and</code> and <code>or</code> are macros. When a function call is evaluated, all the operand-forms are always evaluated (unless the evaluation of the operator-form completes abruptly or does not complete, the primary value of the operator-form is not a function, or the evaluation of one of the operand-forms other than the last one completes abruptly or does not complete).</p>
     <p>Here are two expansions illustrating the implementations of the macros <code>and</code> and <code>or</code>:</p>
     <ul>
       <li><code>(and $\metavarn{test-form}{1}$ $\metavarn{test-form}{2}$ $\metavarn{test-form}{3}$)</code> expands into<br><code>(if $\metavarn{test-form}{1}$ (if $\metavarn{test-form}{2}$ (if $\metavarn{test-form}{3}$ #t #f) #f) #f)</code></li>
@@ -63,7 +63,7 @@
     <pre class="repl">&gt; (+)<br>0<br><br>&gt; (+ 1)<br>1<br><br>&gt; (+ 1 2)<br>3<br><br>&gt; (+ 1 2 3)<br>6</pre>
     <dl>
       <dt><code>(- $\number_1\ldots\number_n$)</code></dt>
-      <dd>If the function is invoked on zero numbers, then the invocation completes abruptly with a reason of type <code>error</code>. If the function is invoked on one number, then the opposite of that number is returned. If the function is invoked on more than one number, then the result of subtracting those numbers from left to right is returned: the second number is subtracted from the first number, then the third number is subtracted from the partial result just computed, &hellip; The function is a closure built on top of the primitive function <code>_-</code>, which must be invoked on exactly two numbers.</dd>
+      <dd>If the function is invoked on zero numbers, then the invocation completes abruptly for a reason of type <code>error</code>. If the function is invoked on one number, then the opposite of that number is returned. If the function is invoked on more than one number, then the result of subtracting those numbers from left to right is returned: the second number is subtracted from the first number, then the third number is subtracted from the partial result just computed, &hellip; The function is a closure built on top of the primitive function <code>_-</code>, which must be invoked on exactly two numbers.</dd>
     </dl>
     <pre class="repl">&gt; (-)<br>ERROR: Expecting at least one number.<br><br>&gt; (- 1)<br>-1<br><br>&gt; (- 0 1)<br>-1<br><br>&gt; (- 0 1 2)<br>-3<br><br>&gt; (- 0 1 2 3)<br>-6</pre>
     <dl>
@@ -73,7 +73,7 @@
     <pre class="repl">&gt; (*)<br>1<br><br>&gt; (* 2)<br>2<br><br>&gt; (* 2 4)<br>8<br><br>&gt; (* 2 4 8)<br>64</pre>
     <dl>
       <dt><code>(/ $\number_1\ldots\number_n$)</code></dt>
-      <dd>If the function is invoked on zero numbers, then the invocation completes abruptly with a reason of type <code>error</code>. If the function is invoked on one number, then the inverse of that number is returned. If the function is invoked on more than one number, then the result of dividing those numbers from left to right is returned: the first number is divided by the second number, then the partial result just computed is divided by the third number, &hellip; The function is a closure built on top of the primitive function <code>_/</code>, which must be invoked on exactly two numbers.</dd>
+      <dd>If the function is invoked on zero numbers, then the invocation completes abruptly for a reason of type <code>error</code>. If the function is invoked on one number, then the inverse of that number is returned. If the function is invoked on more than one number, then the result of dividing those numbers from left to right is returned: the first number is divided by the second number, then the partial result just computed is divided by the third number, &hellip; The function is a closure built on top of the primitive function <code>_/</code>, which must be invoked on exactly two numbers.</dd>
     </dl>
     <pre class="repl">&gt; (/)<br>ERROR: Expecting at least one number.<br><br>&gt; (/ 2)<br>0.5<br><br>&gt; (/ 1 2)<br>0.5<br><br>&gt; (/ 1 2 4)<br>0.125<br><br>&gt; (/ 1 2 4 8)<br>0.015625</pre>
     <h4>Comparison Operators</h4>
@@ -173,21 +173,21 @@
     <ul>
       <li>An evaluation trace is a sequence of lines.</li>
       <li>Times flows from top to bottom.</li>
-      <li>Each recorded evaluation contributes two lines to the trace: an eval-in line of the form &ldquo;The form $\form$ is evaluated with respect to $\lexenv$ and $\dynenv$.&rdquo; recording the start of the evaluation and a matching eval-out line recording the completion of the evaluation. The eval-out line can take the following forms:
+      <li>Each recorded evaluation contributes two lines to the trace: an eval-in line of the form &ldquo;The form $\mlvar{form}$ is evaluated with respect to $\lexenv$ and $\dynenv$.&rdquo; recording the start of the evaluation and a matching eval-out line recording the completion of the evaluation. The eval-out line can take the following forms:
         <ul>
-          <li>&ldquo;The form $\form$ evaluates to $\obj_1,\ldots,\obj_n$.&rdquo;, which records the normal completion of the evaluation</li>
-          <li>&ldquo;The evaluation of the form $\form$ completes abruptly.&rdquo;, which records the abrupt completion of the evaluation</li>
+          <li>&ldquo;The form $\mlvar{form}$ evaluates to $\obj_1,\ldots,\obj_n$.&rdquo;, which records the normal completion of the evaluation</li>
+          <li>&ldquo;The evaluation of the form $\mlvar{form}$ completes abruptly.&rdquo;, which records the abrupt completion of the evaluation</li>
         </ul>
       </li>
-      <li>Each recorded invocation contributes two lines to the trace: an invoke-in line of the form &ldquo;The function $\fun$ is invoked on $\obj_1,\ldots,\obj_n$.&rdquo; recording the start of the invocation and a matching invoke-out line recording the completion of the invocation. The invoke-out line can take the following forms:
+      <li>Each recorded invocation contributes two lines to the trace: an invoke-in line of the form &ldquo;The function $\mlvar{function}$ is invoked on $\obj_1,\ldots,\obj_n$.&rdquo; recording the start of the invocation and a matching invoke-out line recording the completion of the invocation. The invoke-out line can take the following forms:
         <ul>
-          <li>&ldquo;The function $\fun$ returns $\obj_1,\ldots,\obj_m$.&rdquo;, which records the normal completion of the invocation</li>
-          <li>&ldquo;The invocation of the function $\fun$ completes abruptly.&rdquo;, which records the abrupt completion of the invocation</li>
+          <li>&ldquo;The function $\mlvar{function}$ returns $\obj_1,\ldots,\obj_m$.&rdquo;, which records the normal completion of the invocation</li>
+          <li>&ldquo;The invocation of the function $\mlvar{function}$ completes abruptly.&rdquo;, which records the abrupt completion of the invocation</li>
         </ul>
       </li>
       <li>A step line is a free-form line recording a step other than an evaluation or invocation.</li>
       <li>A comment line is a free-form line in italic type containing a comment.</li>
-      <li>Lexical and dynamic environments are represented as $[\binding_1,\ldots,\binding_n]$ where bindings in the value namespace are represented as $\var\vbind\obj$ and bindings in the function namespace are represented as $\var\fbind\obj$.</li>
+      <li>Lexical and dynamic environments are represented as $[\mlvar{binding}_1,\ldots,\mlvar{binding}_n]$ where bindings in the value namespace are represented as $\var\vbind\obj$ and bindings in the function namespace are represented as $\var\fbind\obj$.</li>
     </ul>
     <p>An evaluation trace is a tool used to illustrate a point. Any evaluation, invocation, or step that is not necessary to illustrate the point can be omitted from the evaluation trace. The only constraint is that if an evaluation or invocation is included in the evaluation trace, then both the in line and the matching out line must be included.</p>
     <p>Let $X$ be an evaluation or invocation and $Y$ be another evaluation or invocation. A consequence of the evaluation rules is that $X$ and $Y$ cannot overlap. If we place $X$-in, $X$-out, $Y$-in, and $Y$-out on a line where time flows from left to right, there are four possible configurations and two impossible configurations:</p>
@@ -505,8 +505,8 @@
     <p>A recursive function call is a function call through which a recursive function invokes itself directly or indirectly.</p>
     <p>A form is said to be in tail position with respect to a lambda abstraction if and only if one of the following mutually exclusive conditions is satisfied:</p>
     <ul>
-      <li>The form is the last form of the body of the lambda abstraction.</li>
-      <li>The form is the last form of a progn-form in tail position with respect to the lambda abstraction.</li>
+      <li>The form is the last serial-form of the body of the lambda abstraction.</li>
+      <li>The form is the last serial-form of a progn-form in tail position with respect to the lambda abstraction.</li>
       <li>The form is the then-form or the else-form of an if-form in tail position with respect to the lambda abstraction.</li>
     </ul>
     <p>A form in tail position with respect to a lambda abstraction has the following property: If (1) a closure resulting from the evaluation of the lambda abstraction is invoked and (2) the form happens to be evaluated during the invocation of the closure, then the result of the evaluation of the form becomes the result of the invocation of the closure without any further processing. (The values of the form are returned as is and not used otherwise.)</p>
@@ -830,7 +830,7 @@
       <li>$F_3$ is computed from $F_2$ and $F_1$</li>
       <li>&hellip;</li>
     </ul>
-    <p>Let $n_\mathrm{init}$ be the the argument of <code>fib-iter</code> and $n$, $a$, and $b$ be the arguments of the invocation of <code>fib-iter-internal</code> under consideration. When processing the invocation of <code>fib-iter-internal</code> from <code>fib-iter</code>, $n=n_\mathrm{init}$, $a=F_0$, and $b=F_1$. If $n_\mathrm{init}=0$, then <code>fib-iter-internal</code> returns $a=F_0$. Otherwise, if $n_\mathrm{init}=1$, then <code>fib-iter-internal</code> returns $b=F_1$. Otherwise, <code>fib-iter-internal</code> invokes itself recursively. On each recursive invocation of <code>fib-iter-internal</code>, $n$ is decremented by $1$, $a$ is replaced by the next Fibonacci number in the sequence $F_0,F_1,F_2,\ldots$, and $b$ is replaced by the next Fibonacci number in the sequence $F_1,F_2,F_3,\ldots$ When processing the $(n_\mathrm{init}-1)$-th recursive invocation of <code>fib-iter-internal</code>, $n=n_\mathrm{init}-(n_\mathrm{init}-1)=1$, $a=F_{0+n_\mathrm{init}-1}=F_{n_\mathrm{init}-1}$, and $b=F_{1+n_\mathrm{init}-1}=F_{n_\mathrm{init}}$ and <code>fib-iter-internal</code> returns $b=F_{n_\mathrm{init}}$.</p>
+    <p>Let $n_\textrm{init}$ be the the argument of <code>fib-iter</code> and $n$, $a$, and $b$ be the arguments of the invocation of <code>fib-iter-internal</code> under consideration. When processing the invocation of <code>fib-iter-internal</code> from <code>fib-iter</code>, $n=n_\textrm{init}$, $a=F_0$, and $b=F_1$. If $n_\textrm{init}=0$, then <code>fib-iter-internal</code> returns $a=F_0$. Otherwise, if $n_\textrm{init}=1$, then <code>fib-iter-internal</code> returns $b=F_1$. Otherwise, <code>fib-iter-internal</code> invokes itself recursively. On each recursive invocation of <code>fib-iter-internal</code>, $n$ is decremented by $1$, $a$ is replaced by the next Fibonacci number in the sequence $F_0,F_1,F_2,\ldots$, and $b$ is replaced by the next Fibonacci number in the sequence $F_1,F_2,F_3,\ldots$ When processing the $(n_\textrm{init}-1)$-th recursive invocation of <code>fib-iter-internal</code>, $n=n_\textrm{init}-(n_\textrm{init}-1)=1$, $a=F_{0+n_\textrm{init}-1}=F_{n_\textrm{init}-1}$, and $b=F_{1+n_\textrm{init}-1}=F_{n_\textrm{init}}$ and <code>fib-iter-internal</code> returns $b=F_{n_\textrm{init}}$.</p>
     <p>Here is an invocation trace of the evaluation of the form <code>(fib-iter 6)</code>:</p>
     <div class="trace">
       <ul>

@@ -737,7 +737,7 @@
 <title>Signaling and Handling Conditions</title>
 <primitivefunction>(error &lt;string&gt;)</primitivefunction>
 (test-error (error "foo"))
-<syntax>(_catch-errors &lt;form&gt;)</syntax>
+<syntax>(_catch-errors &lt;form&gt;*)</syntax>
 (test #v (_catch-errors :no-error))
 (test "Error" (_catch-errors (error "foo")))
 </section>

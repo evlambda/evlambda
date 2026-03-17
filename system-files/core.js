@@ -4416,7 +4416,7 @@ class EVLVoid extends EVLObject {
   }
 }
 
-// the only object of type void
+// the single object of type void
 EVLVoid.VOID = new EVLVoid();
 
 function nullToVoid(x) {
@@ -4441,9 +4441,9 @@ class EVLBoolean extends EVLObject {
   }
 }
 
-// the only object of type boolean representing true
+// the single object of type boolean representing true
 EVLBoolean.TRUE = new EVLBoolean(true);
-// the only object of type boolean representing false
+// the single object of type boolean representing false
 EVLBoolean.FALSE = new EVLBoolean(false);
 
 function evlBoolean(jsBoolean) {
@@ -4788,7 +4788,7 @@ class EVLEmptyList extends EVLList {
   }
 }
 
-// the only object of type empty-list
+// the single object of type empty-list
 EVLEmptyList.NIL = new EVLEmptyList();
 
 primitiveFunction('empty-list?', 1, 1, function(args) {
