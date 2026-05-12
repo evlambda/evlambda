@@ -6,6 +6,11 @@
   <xsl:param name="cssURL"/>
   <xsl:param name="jsURL"/>
   <xsl:param name="windowId"/>
+  <xsl:template match="node()|@*">
+    <xsl:copy>
+      <xsl:apply-templates select="node()|@*"/>
+    </xsl:copy>
+  </xsl:template>
   <xsl:template match="/chapter">
     <html>
       <head>
@@ -43,35 +48,53 @@
   <xsl:template match="title">
     <xsl:apply-templates/>
   </xsl:template>
-  <xsl:template match="para">
-    <p>
+  <xsl:template match="repl">
+    <pre class="repl">
       <xsl:apply-templates/>
-    </p>
+    </pre>
   </xsl:template>
-  <xsl:template match="code">
-    <code>
+  <xsl:template match="table">
+    <table class="plain">
       <xsl:apply-templates/>
-    </code>
+    </table>
   </xsl:template>
-  <xsl:template match="syntax">
-    <p class="syntax">
-      <span>Syntax: <code><xsl:apply-templates/></code></span>
-    </p>
+  <xsl:template match="ebnf">
+    <table class="ebnf">
+      <xsl:apply-templates/>
+    </table>
+  </xsl:template>
+  <xsl:template match="lhs">
+    <td class="lhs">
+      <xsl:apply-templates/>
+    </td>
+  </xsl:template>
+  <xsl:template match="def">
+    <td class="def">
+      <xsl:apply-templates/>
+    </td>
+  </xsl:template>
+  <xsl:template match="rhs">
+    <td class="rhs">
+      <xsl:apply-templates/>
+    </td>
+  </xsl:template>
+  <xsl:template match="specialform">
+    <p>Special form: <code class="bg"><xsl:apply-templates/></code></p>
+  </xsl:template>
+  <xsl:template match="macrocall">
+    <p>Macro call: <code class="bg"><xsl:apply-templates/></code></p>
+  </xsl:template>
+  <xsl:template match="plainfunctioncall">
+    <p>Plain function call: <code class="bg"><xsl:apply-templates/></code></p>
   </xsl:template>
   <xsl:template match="primitivefunction">
-    <p class="primitivefunction">
-      <span>Primitive function: <code><xsl:apply-templates/></code></span>
-    </p>
+    <p>Primitive function: <code class="bg"><xsl:apply-templates/></code></p>
   </xsl:template>
   <xsl:template match="macro">
-    <p class="macro">
-      <span>Macro: <code><xsl:apply-templates/></code></span>
-    </p>
+    <p>Macro: <code class="bg"><xsl:apply-templates/></code></p>
   </xsl:template>
-  <xsl:template match="function">
-    <p class="function">
-      <span>Function: <code><xsl:apply-templates/></code></span>
-    </p>
+  <xsl:template match="nonprimitivefunction">
+    <p>Nonprimitive function: <code class="bg"><xsl:apply-templates/></code></p>
   </xsl:template>
   <xsl:template match="toplevelcode">
     <xsl:apply-templates/>

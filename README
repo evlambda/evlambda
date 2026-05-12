@@ -54,9 +54,9 @@ How to run the evaluator from the terminal
 ==========================================
 
 Execute the following command from <EVLAMBDA_HOME>:
-node system-files/core.js { --plainrec | --cps | --oocps | --sboocps | --trampoline | --trampoliepp }? { -l <file> | -e <form> }*
+node system-files/core.js { --directstyle | --cps | --oocps | --sboocps | --trampoline | --trampoliepp }? { -l <file> | -e <form> }*
 
---plainrec: selects the plain recursive evaluator
+--directstyle: selects the direct style evaluator
 --cps: selects the continuation passing style evaluator
 --oocps: selects the object-oriented CPS evaluator
 --sboocps: selects the stack-based object-oriented CPS evaluator
@@ -67,7 +67,22 @@ node system-files/core.js { --plainrec | --cps | --oocps | --sboocps | --trampol
 
 Examples:
 node system-files/core.js -l system-files/mantle.evl -e '(test-loop 1000000)'
-node system-files/core.js --plainrec -l system-files/mantle.evl -e '(test-loop 1000000)'
+node system-files/core.js --directstyle -l system-files/mantle.evl -e '(test-loop 1000000)'
+
+How to run the evaluator from the terminal using Bun
+====================================================
+
+The Bun runtime is a drop-in replacement for the Node.js runtime.
+One important difference between the Bun runtime and the Node.js runtime is that former implements proper tail calls (PTC) and the latter does not.
+
+Install Bun if it is not already installed.
+
+Execute the following command from <EVLAMBDA_HOME>:
+bun system-files/core.js { --directstyle | --cps | --oocps | --sboocps | --trampoline | --trampoliepp }? { -l <file> | -e <form> }*
+
+Examples:
+bun system-files/core.js -l system-files/mantle.evl -e '(test-loop 1000000)'
+bun system-files/core.js --directstyle -l system-files/mantle.evl -e '(test-loop 1000000)'
 
 How to run the EVL to XML converter from the terminal
 =====================================================

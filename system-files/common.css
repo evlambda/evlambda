@@ -123,6 +123,7 @@ table.ks {
 table.ks th, table.ks td {
   border: 1px solid;
   padding: 5px;
+  text-align: left;
 }
 
 table.ebnf {
@@ -143,4 +144,16 @@ td.def {
 
 td.rhs {
   text-align: left;
+}
+
+pre.blockcode, div.indentation {
+  font-family: monospace;
+}
+
+div.blockcomment, span.eolcomment {
+  font-family: Arial, sans-serif;
+}
+
+span.eolcomment::before {
+  content: '\2014  '; /* em dash followed by a single space */
 }

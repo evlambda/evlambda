@@ -17,7 +17,7 @@ const EVALUATE_ALL_FORMS = 2;
 const CONVERT_EVL_TO_XML = 3;
 
 export const evaluatorNames = new Map([
-  ['plainrec', 'Plain Recursive'],
+  ['directstyle', 'Direct Style'],
   ['cps', 'Continuation Passing Style'],
   ['oocps', 'Object-Oriented CPS'],
   ['sboocps', 'Stack-Based Object-Oriented CPS'],
@@ -100,7 +100,7 @@ export function convertEVLToHTML(text, xsltString, cssURL, jsURL, windowId, call
           result = htmlString;
           break;
         case ERROR:
-          result = errorPage(`ERROR: ${response.output}`, cssURL, jsURL, windowId);
+          result = errorPage(response.output, cssURL, jsURL, windowId);
           break;
         case ABORTED:
           result = errorPage('ABORTED', cssURL, jsURL, windowId);
@@ -144,7 +144,7 @@ export function formatForListener(response) {
       }
       return text;
     case ERROR:
-      return `ERROR: ${response.output}\n`;
+      return response.output + '\n';
     case ABORTED:
       return 'ABORTED\n';
     case TERMINATED:
@@ -169,7 +169,7 @@ export function formatForMinibuffer(response) {
       }
       return text;
     case ERROR:
-      return `ERROR: ${response.output}`;
+      return response.output;
     case ABORTED:
       return 'ABORTED';
     case TERMINATED:

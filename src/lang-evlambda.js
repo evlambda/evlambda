@@ -57,10 +57,18 @@ const specialIndentations = new Map([
   ['_mlambda', [1, 4, 2]],
   ['_flambda', [1, 4, 2]],
   ['_dlambda', [1, 4, 2]],
+  ['block', [1, 4, 2]],
+  ['catch', [1, 4, 2]],
+  ['_handler-bind', [1, 4, 2]],
+  ['unwind-protect', [1, 4, 2]],
+  ['when', [1, 4, 2]],
+  ['loop', [0, 0, 2]],
   ['vlambda', [1, 4, 2]],
   ['mlambda', [1, 4, 2]],
   ['flambda', [1, 4, 2]],
   ['dlambda', [1, 4, 2]],
+  ['destructuring-bind', [2, 4, 2]],
+  ['multiple-value-bind', [2, 4, 2]],
   ['vdef', [1, 4, 2]],
   ['fdef', [2, 4, 2]],
   ['mdef', [2, 4, 2]],
@@ -71,7 +79,8 @@ const specialIndentations = new Map([
   ['vlet*', [1, 4, 2]],
   ['flet*', [1, 4, 2]],
   ['dlet*', [1, 4, 2]],
-  ['fletrec', [1, 4, 2]]
+  ['fletrec', [1, 4, 2]],
+  ['ignore-errors', [0, 0, 2]]
 ]);
 
 const localFunctionDefiners = ['flet', 'mlet', 'flet*', 'fletrec'];

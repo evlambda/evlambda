@@ -9,6 +9,7 @@ const specialOperators = [
   'quote',
   'progn',
   'if',
+  '_for-each',
   '_vlambda',
   '_mlambda',
   '_flambda',
@@ -19,23 +20,28 @@ const specialOperators = [
   'fset!',
   'dref',
   'dset!',
-  '_for-each',
-  '_catch-errors',
+  'block',
+  'return-from',
+  'catch',
+  'throw',
+  '_handler-bind',
+  'unwind-protect',
   'apply',
   'multiple-value-call',
   'multiple-value-apply'
 ];
 
 const macros = [
-  'quasiquote',
-  'unquote',
-  'unquote-splicing',
+  'when',
   'cond',
   'econd',
+  'loop',
   'vlambda',
   'mlambda',
   'flambda',
   'dlambda',
+  'destructuring-bind',
+  'multiple-value-bind',
   'vdef',
   'fdef',
   'mdef',
@@ -46,7 +52,8 @@ const macros = [
   'vlet*',
   'flet*',
   'dlet*',
-  'fletrec'
+  'fletrec',
+  'ignore-errors'
 ];
 
 const languageKeywords = new Map();

@@ -4,11 +4,11 @@
 <title>Mantle</title>
 <section>
 <title>Bootstrapping</title>
+<p>The top-level forms composing a source file cannot occur in any order. Two obvious constraints are that (1) a function must be defined before any call to the function is evaluated and (2) a macro must be defined before any call to the macro is expanded. In all evaluators except the trampoline++ evaluator, a macro call is expanded each time it is evaluated or, if macro calls are optimized, each time it is evaluated for the first time after an evaluation of the top-level form containing it. (The expansion of an optimized macro call is forgotten each time the top-level form containing it is evaluated.) In the trampoline++ evaluator, a macro call is expanded each time the top-level form containing it is evaluated. It is clear that an order that satisfies the constraints imposed by the trampoline++ evaluator automatically satisfies the constraints imposed by the other evaluators.</p>
+<p>The purpose of the bootstrapping section is to define some essential functions and macros in an order that satisfies the constraints imposed by the trampoline++ evaluator. In particular, the order must be such that, for each macro, the macro and all the functions directly or indirectly invoked from the macro are defined before the first occurrence of a call to the macro. As the functions and macros defined in the bootstrapping section are only documented later in the chapter, it is probably better to skim through the bootstrapping section on first reading.</p>
 <section>
-<title>Targets: <code>not</code>, <code>and</code>, and <code>or</code></title>
-(fset! list
-       (_vlambda list list))
-
+<title>Boolean Operators</title>
+<p>By the end of this section, the function <code>not</code> and the macros <code>and</code> and <code>or</code> will be available.</p>
 (fset! not
        (_vlambda (boolean)
          (if boolean #f #t)))
@@ -36,251 +36,283 @@
            (if (empty-list? test-forms)
                #f
              (error "Error expanding or form.")))))
+<section>
+<title>New Functions Invoked by the Macros</title>
+(fset! list
+       (_vlambda list list))
+</section>
 </section>
 <section>
-<title>Targets: <code>vlambda</code>, <code>mlambda</code>, <code>flambda</code>, and <code>dlambda</code></title>
-(fset! list-reverse
-       (_vlambda (list)
-         (list-reverse/2 list '())))
+<title>Branching</title>
+<p>By the end of this section, the macros <code>when</code>, <code>cond</code>, and <code>econd</code> will be available.</p>
+(fset! when
+       (_mlambda (test-form . serial-forms)
+         (list 'if test-form (cons 'progn serial-forms) #v)))
 
-(fset! list-reverse/2
-       (_vlambda (list acc)
-         (if (cons? list)
-             (list-reverse/2 (cdr list) (cons (car list) acc))
-           acc)))
+(fset! cond
+       (_mlambda clauses
+         (cond/fn clauses #f)))
 
-(fset! caar (_vlambda (x) (car (car x))))
-(fset! cdar (_vlambda (x) (cdr (car x))))
-(fset! cadr (_vlambda (x) (car (cdr x))))
-(fset! cddr (_vlambda (x) (cdr (cdr x))))
-(fset! caaar (_vlambda (x) (car (car (car x)))))
-(fset! cdaar (_vlambda (x) (cdr (car (car x)))))
-(fset! cadar (_vlambda (x) (car (cdr (car x)))))
-(fset! cddar (_vlambda (x) (cdr (cdr (car x)))))
-(fset! caadr (_vlambda (x) (car (car (cdr x)))))
-(fset! cdadr (_vlambda (x) (cdr (car (cdr x)))))
-(fset! caddr (_vlambda (x) (car (cdr (cdr x)))))
-(fset! cdddr (_vlambda (x) (cdr (cdr (cdr x)))))
-(fset! caaaar (_vlambda (x) (car (car (car (car x))))))
-(fset! cdaaar (_vlambda (x) (cdr (car (car (car x))))))
-(fset! cadaar (_vlambda (x) (car (cdr (car (car x))))))
-(fset! cddaar (_vlambda (x) (cdr (cdr (car (car x))))))
-(fset! caadar (_vlambda (x) (car (car (cdr (car x))))))
-(fset! cdadar (_vlambda (x) (cdr (car (cdr (car x))))))
-(fset! caddar (_vlambda (x) (car (cdr (cdr (car x))))))
-(fset! cdddar (_vlambda (x) (cdr (cdr (cdr (car x))))))
-(fset! caaadr (_vlambda (x) (car (car (car (cdr x))))))
-(fset! cdaadr (_vlambda (x) (cdr (car (car (cdr x))))))
-(fset! cadadr (_vlambda (x) (car (cdr (car (cdr x))))))
-(fset! cddadr (_vlambda (x) (cdr (cdr (car (cdr x))))))
-(fset! caaddr (_vlambda (x) (car (car (cdr (cdr x))))))
-(fset! cdaddr (_vlambda (x) (cdr (car (cdr (cdr x))))))
-(fset! cadddr (_vlambda (x) (car (cdr (cdr (cdr x))))))
-(fset! cddddr (_vlambda (x) (cdr (cdr (cdr (cdr x))))))
+(fset! econd
+       (_mlambda clauses
+         (cond/fn clauses #t)))
 
+(fset! cond/fn
+       (_vlambda (clauses error?)
+         (if (else-clause? clauses)
+             (if (proper-list? (cdar clauses))
+                 (cons 'progn (cdar clauses))
+               (error "Error expanding cond form."))
+           (if (cons? clauses)
+               (if (and
+                    (cons? (car clauses))
+                    (proper-list? (cdar clauses)))
+                   (list
+                    'if
+                    (caar clauses)
+                    (cons 'progn (cdar clauses))
+                    (cond/fn (cdr clauses) error?))
+                 (error "Error expanding cond form."))
+             (if (empty-list? clauses)
+                 (if error?
+                     (list 'error "Fell through econd.")
+                   #v)
+               (error "Error expanding cond form."))))))
+
+(fset! else-clause?
+       (_vlambda (clauses)
+         (and
+          (cons? clauses)
+          (cons? (car clauses))
+          (eq? (caar clauses) 'else)
+          (empty-list? (cdr clauses)))))
+<section>
+<title>New Functions Invoked by the Macros</title>
+(fset! caar
+       (_vlambda (x)
+         (car (car x))))
+
+(fset! cdar
+       (_vlambda (x)
+         (cdr (car x))))
+
+(fset! proper-list?
+       (_vlambda (object)
+         (or
+          (and
+           (cons? object)
+           (proper-list? (cdr object)))
+          (empty-list? object))))
+</section>
+</section>
+<section>
+<title>Abstracting</title>
+<p>By the end of this section, the macros <code>vlambda</code>, <code>mlambda</code>, <code>flambda</code>, and <code>dlambda</code> will be available.</p>
 (fset! vlambda
-       (_mlambda (parameter-list . forms)
-         (lambda/fn '_vlambda parameter-list forms)))
+       (_mlambda (fancy-parameter-list . body)
+         (lambda/fn '_vlambda fancy-parameter-list body)))
 
 (fset! mlambda
-       (_mlambda (parameter-list . forms)
-         (lambda/fn '_mlambda parameter-list forms)))
+       (_mlambda (fancy-parameter-list . body)
+         (lambda/fn '_mlambda fancy-parameter-list body)))
 
 (fset! flambda
-       (_mlambda (parameter-list . forms)
-         (lambda/fn '_flambda parameter-list forms)))
+       (_mlambda (fancy-parameter-list . body)
+         (lambda/fn '_flambda fancy-parameter-list body)))
 
 (fset! dlambda
-       (_mlambda (parameter-list . forms)
-         (lambda/fn '_dlambda parameter-list forms)))
+       (_mlambda (fancy-parameter-list . body)
+         (lambda/fn '_dlambda fancy-parameter-list body)))
 
 (fset! lambda/fn
-       (_vlambda (kind parameter-list forms)
-         (cons kind (cons (cl2scm-parameter-list parameter-list '()) forms))))
+       (_vlambda (lambda fancy-parameter-list body)
+         (cons
+          lambda
+          (cons
+           (fancy-to-plain-parameter-list fancy-parameter-list '())
+           body))))
 
-(fset! cl2scm-parameter-list
-       (_vlambda (parameter-list required-parameters)
-         (if (rest-parameter? parameter-list)
-             (make-scm-parameter-list
-              (list-reverse required-parameters)
-              (cadr parameter-list))
-           (if (cons? parameter-list)
-               (if (variable? (car parameter-list))
-                   (cl2scm-parameter-list
-                    (cdr parameter-list)
-                    (cons (car parameter-list) required-parameters))
-                 (error "Error expanding lambda form."))
-             (if (empty-list? parameter-list)
-                 (make-scm-parameter-list
-                  (list-reverse required-parameters)
-                  '())
-               (error "Error expanding lambda form."))))))
+(fset! fancy-to-plain-parameter-list
+       (_vlambda (fancy-parameter-list required-parameters)
+         (cond ((rest-parameter? fancy-parameter-list)
+                (make-plain-parameter-list
+                 (list-reverse required-parameters)
+                 (cadr fancy-parameter-list)))
+               ((cons? fancy-parameter-list)
+                (cond ((variable? (car fancy-parameter-list))
+                       (fancy-to-plain-parameter-list
+                        (cdr fancy-parameter-list)
+                        (cons (car fancy-parameter-list) required-parameters)))
+                      (else
+                       (error "Error expanding lambda form."))))
+               ((empty-list? fancy-parameter-list)
+                (make-plain-parameter-list
+                 (list-reverse required-parameters)
+                 '()))
+               (else
+                (error "Error expanding lambda form.")))))
 
 (fset! rest-parameter?
-       (_vlambda (parameter-list)
+       (_vlambda (fancy-parameter-list)
          (and
-          (cons? parameter-list)
-          (eq? (car parameter-list) '&rest)
-          (cons? (cdr parameter-list))
-          (variable? (cadr parameter-list))
-          (empty-list? (cddr parameter-list)))))
+          (cons? fancy-parameter-list)
+          (eq? (car fancy-parameter-list) '&rest)
+          (cons? (cdr fancy-parameter-list))
+          (variable? (cadr fancy-parameter-list))
+          (empty-list? (cddr fancy-parameter-list)))))
 
-(fset! make-scm-parameter-list
+(fset! make-plain-parameter-list
        (_vlambda (required-parameters rest-parameter)
-         (if (cons? required-parameters)
-             (cons
-              (car required-parameters)
-              (make-scm-parameter-list
-               (cdr required-parameters)
-               rest-parameter))
-           rest-parameter)))
+         (cond ((cons? required-parameters)
+                (cons
+                 (car required-parameters)
+                 (make-plain-parameter-list
+                  (cdr required-parameters)
+                  rest-parameter)))
+               (else
+                rest-parameter))))
+<section>
+<title>New Functions Invoked by the Macros</title>
+(fset! cadr
+       (_vlambda (x)
+         (car (cdr x))))
+
+(fset! cddr
+       (_vlambda (x)
+         (cdr (cdr x))))
+
+(fset! list-reverse
+       (_vlambda (list)
+         (list-reverse/internal list '())))
+
+(fset! list-reverse/internal
+       (_vlambda (list acc)
+         (cond ((cons? list)
+                (list-reverse/internal (cdr list) (cons (car list) acc)))
+               (else
+                acc))))
+</section>
 </section>
 <section>
-<title>Targets: <code>vdef</code>, <code>fdef</code>, and <code>mdef</code></title>
+<title>Defining</title>
+<p>By the end of this section, the macros <code>vdef</code>, <code>fdef</code>, and <code>mdef</code> will be available.</p>
 (fset! vdef
-       (mlambda (variable form)
+       (mlambda (variable value-form)
          (list
           'progn
           (list
            'variable-set-value!
            (list 'quote variable)
-           form)
+           value-form)
           (list 'quote variable))))
 
 (fset! fdef
-       (mlambda (variable parameter-list &rest forms)
+       (mlambda (variable fancy-parameter-list &rest body)
          (list
           'progn
           (list
            'variable-set-function!
            (list 'quote variable)
-           (cons 'vlambda (cons parameter-list forms)))
+           (cons 'vlambda (cons fancy-parameter-list body)))
           (list 'quote variable))))
 
 (fset! mdef
-       (mlambda (variable parameter-list &rest forms)
+       (mlambda (variable fancy-parameter-list &rest body)
          (list
           'progn
           (list
            'variable-set-function!
            (list 'quote variable)
-           (cons 'mlambda (cons parameter-list forms)))
+           (cons 'mlambda (cons fancy-parameter-list body)))
           (list 'quote variable))))
 </section>
 <section>
-<title>Targets: <code>cond</code> and <code>econd</code></title>
-(fdef proper-list? (object)
-  (or
-   (and
-    (cons? object)
-    (proper-list? (cdr object)))
-   (empty-list? object)))
+<title>Binding</title>
+<p>By the end of this section, the macros <code>vlet</code>, <code>flet</code>, <code>mlet</code>, <code>dlet</code>, <code>vlet*</code>, <code>flet*</code>, <code>dlet*</code>, and <code>fletrec</code> will be available.</p>
+(mdef vlet (bindings &rest body)
+  (let/fn 'vlet bindings body '() '()))
 
-(mdef cond (&rest clauses)
-  (cond/fn clauses #f))
+(mdef flet (bindings &rest body)
+  (let/fn 'flet bindings body '() '()))
 
-(mdef econd (&rest clauses)
-  (cond/fn clauses #t))
+(mdef mlet (bindings &rest body)
+  (let/fn 'mlet bindings body '() '()))
 
-(fdef cond/fn (clauses error?)
-  (if (else-clause? clauses)
-      (if (proper-list? (cdar clauses))
-          (cons 'progn (cdar clauses))
-        (error "Error expanding cond form."))
-    (if (cons? clauses)
-        (if (and
-             (cons? (car clauses))
-             (proper-list? (cdar clauses)))
-            (list
-             'if
-             (caar clauses)
-             (cons 'progn (cdar clauses))
-             (cond/fn (cdr clauses) error?))
-          (error "Error expanding cond form."))
-      (if (empty-list? clauses)
-          (if error?
-              (list 'error "Fell through econd.")
-            #v)
-        (error "Error expanding cond form.")))))
+(mdef dlet (bindings &rest body)
+  (let/fn 'dlet bindings body '() '()))
 
-(fdef else-clause? (clauses)
-  (and
-   (cons? clauses)
-   (cons? (car clauses))
-   (eq? (caar clauses) 'else)
-   (empty-list? (cdr clauses))))
-</section>
-<section>
-<title>Targets: <code>vlet</code>, <code>flet</code>, <code>mlet</code>, <code>dlet</code>, <code>vlet*</code>, <code>flet*</code>, <code>dlet*</code>, and <code>fletrec</code></title>
-(mdef vlet (bindings &rest forms) (let/fn 'vlet bindings forms '() '()))
-(mdef flet (bindings &rest forms) (let/fn 'flet bindings forms '() '()))
-(mdef mlet (bindings &rest forms) (let/fn 'mlet bindings forms '() '()))
-(mdef dlet (bindings &rest forms) (let/fn 'dlet bindings forms '() '()))
+(mdef vlet* (bindings &rest body)
+  (let*/fn 'vlet bindings body))
 
-(mdef vlet* (bindings &rest forms) (let*/fn 'vlet bindings forms))
-(mdef flet* (bindings &rest forms) (let*/fn 'flet bindings forms))
-(mdef dlet* (bindings &rest forms) (let*/fn 'dlet bindings forms))
+(mdef flet* (bindings &rest body)
+  (let*/fn 'flet bindings body))
 
-(mdef fletrec (bindings &rest forms) (fletrec/fn bindings forms '() '() '()))
+(mdef dlet* (bindings &rest body)
+  (let*/fn 'dlet bindings body))
 
-(fdef let/fn (kind bindings forms binding-variables binding-forms)
+(mdef fletrec (bindings &rest body)
+  (fletrec/fn bindings body '() '() '()))
+
+(fdef let/fn (let bindings body binding-variables binding-forms)
   (cond ((cons? bindings)
-         (cond ((let-binding? kind (car bindings))
-                (let/fn kind
-                        (cdr bindings)
-                        forms
-                        (cons
-                         (let-binding-variable (car bindings))
-                         binding-variables)
-                        (cons
-                         (let-binding-form kind (car bindings))
-                         binding-forms)))
+         (cond ((let-binding? let (car bindings))
+                (let/fn
+                 let
+                 (cdr bindings)
+                 body
+                 (cons
+                  (let-binding-variable (car bindings))
+                  binding-variables)
+                 (cons
+                  (let-binding-form let (car bindings))
+                  binding-forms)))
                (else
                 (error "Error expanding let form."))))
         ((empty-list? bindings)
          (cons
           (cons
-           (let-lambda kind)
+           (let-lambda let)
            (cons
             (list-reverse binding-variables)
-            forms))
+            body))
           (list-reverse binding-forms)))
         (else
          (error "Error expanding let form."))))
 
-(fdef let*/fn (kind bindings forms)
+(fdef let*/fn (let bindings body)
   (cond ((cons? bindings)
-         (cond ((let-binding? kind (car bindings))
+         (cond ((let-binding? let (car bindings))
                 (list
                  (list
-                  (let-lambda kind)
+                  (let-lambda let)
                   (list (let-binding-variable (car bindings)))
-                  (let*/fn kind (cdr bindings) forms))
-                 (let-binding-form kind (car bindings))))
-               (let
+                  (let*/fn let (cdr bindings) body))
+                 (let-binding-form let (car bindings))))
+               (else
                 (error "Error expanding let* form."))))
         ((empty-list? bindings)
-         (cons 'progn forms))
+         (cons 'progn body))
         (else
          (error "Error expanding let* form."))))
 
-(fdef fletrec/fn (bindings forms binding-variables binding-forms set-forms)
+(fdef fletrec/fn (bindings body binding-variables binding-forms set-forms)
   (cond ((cons? bindings)
          (cond ((let-binding? 'flet (car bindings))
-                (fletrec/fn (cdr bindings)
-                            forms
-                            (cons
-                             (let-binding-variable (car bindings))
-                             binding-variables)
-                            (cons
-                             #v <comment>dummy value</comment>
-                             binding-forms)
-                            (cons
-                             (list
-                              'fset!
-                              (let-binding-variable (car bindings))
-                              (let-binding-form 'flet (car bindings)))
-                             set-forms)))
+                (fletrec/fn
+                 (cdr bindings)
+                 body
+                 (cons
+                  (let-binding-variable (car bindings))
+                  binding-variables)
+                 (cons
+                  #v <comment>dummy value</comment>
+                  binding-forms)
+                 (cons
+                  (list
+                   'fset!
+                   (let-binding-variable (car bindings))
+                   (let-binding-form 'flet (car bindings)))
+                  set-forms)))
                (else
                 (error "Error expanding fletrec form."))))
         ((empty-list? bindings)
@@ -289,49 +321,49 @@
            (let-lambda 'flet)
            (cons
             (list-reverse binding-variables)
-            (cons (cons 'progn set-forms) forms)))
+            (cons (cons 'progn set-forms) body)))
           (list-reverse binding-forms)))
         (else
          (error "Error expanding fletrec form."))))
 
-(fdef let-lambda (kind)
-  (econd ((eq? kind 'vlet)
+(fdef let-lambda (let)
+  (econd ((eq? let 'vlet)
           '_vlambda)
-         ((eq? kind 'flet)
+         ((eq? let 'flet)
           '_flambda)
-         ((eq? kind 'mlet)
+         ((eq? let 'mlet)
           '_flambda)
-         ((eq? kind 'dlet)
+         ((eq? let 'dlet)
           '_dlambda)))
 
-(fdef let-binding? (kind binding)
+(fdef let-binding? (let binding)
   (econd ((or
-           (eq? kind 'vlet)
-           (eq? kind 'dlet))
+           (eq? let 'vlet)
+           (eq? let 'dlet))
           (and
            (cons? binding)
            (variable? (car binding))
            (cons? (cdr binding))
            (empty-list? (cddr binding))))
          ((or
-           (eq? kind 'flet)
-           (eq? kind 'mlet))
+           (eq? let 'flet)
+           (eq? let 'mlet))
           (and
            (cons? binding)
            (variable? (car binding))
            (cons? (cdr binding))
-           (parameter-list? (cadr binding))
+           (fancy-parameter-list? (cadr binding))
            (proper-list? (cddr binding))))))
 
-(fdef parameter-list? (parameter-list)
-  (cond ((rest-parameter? parameter-list)
+(fdef fancy-parameter-list? (object)
+  (cond ((rest-parameter? object)
          #t)
-        ((cons? parameter-list)
-         (cond ((variable? (car parameter-list))
-                (parameter-list? (cdr parameter-list)))
+        ((cons? object)
+         (cond ((variable? (car object))
+                (fancy-parameter-list? (cdr object)))
                (else
                 #f)))
-        ((empty-list? parameter-list)
+        ((empty-list? object)
          #t)
         (else
          #f)))
@@ -339,57 +371,170 @@
 (fdef let-binding-variable (binding)
   (car binding))
 
-(fdef let-binding-form (kind binding)
-  (econd ((eq? kind 'vlet)
+(fdef let-binding-form (let binding)
+  (econd ((eq? let 'vlet)
           (cadr binding))
-         ((eq? kind 'flet)
+         ((eq? let 'flet)
           (cons 'vlambda (cdr binding)))
-         ((eq? kind 'mlet)
+         ((eq? let 'mlet)
           (cons 'mlambda (cdr binding)))
-         ((eq? kind 'dlet)
+         ((eq? let 'dlet)
           (cadr binding))))
+</section>
+<section>
+<title>Quoting</title>
+<p>By the end of this section, the macro <code>quasiquote</code> will be available.</p>
+(fdef quasiquotation? (template)
+  (and
+   (cons? template)
+   (eq? (car template) 'quasiquote)
+   (empty-list? (cddr template))))
+
+(fdef unquotation? (template)
+  (and
+   (cons? template)
+   (eq? (car template) 'unquote)
+   (empty-list? (cddr template))))
+
+(fdef splicing-unquotation? (template)
+  (and
+   (cons? template)
+   (eq? (car template) 'unquote-splicing)
+   (empty-list? (cddr template))))
+
+(mdef quasiquote (template)
+  (quasiquote/F template))
+
+(fdef quasiquote/F (template)
+  (cond ((quasiquotation? template)
+         (quasiquote/F (quasiquote/F (cadr template))))
+        ((unquotation? template)
+         (cadr template))
+        ((splicing-unquotation? template)
+         (error "Unexpected splicing unquotation."))
+        ((cons? template)
+         (cons
+          'list-append
+          (fletrec ((rec (template)
+                      (cond ((or
+                              (quasiquotation? template)
+                              (unquotation? template)
+                              (splicing-unquotation? template))
+                             (list (quasiquote/F template)))
+                            ((cons? template)
+                             (cons
+                              (quasiquote/F-prime (car template))
+                              (rec (cdr template))))
+                            ((empty-list? template)
+                             '())
+                            (else
+                             (list (quasiquote/F template))))))
+            (rec template))))
+        (else
+         (list 'quote template))))
+
+(fdef quasiquote/F-prime (template)
+  (cond ((splicing-unquotation? template)
+         (cadr template))
+        (else
+         (list 'list (quasiquote/F template)))))
+
+(mdef unquote (form)
+  (error "Unexpected unquotation."))
+
+(mdef unquote-splicing (form)
+  (error "Unexpected splicing unquotation."))
+<section>
+<title>New Functions Invoked by the Macro Expansions</title>
+<p>The function <code>list-append</code> is not invoked by the macro <code>quasiquote</code> but by the expansions of the macro <code>quasiquote</code> that build lists. The function <code>list-append</code> must therefore be defined before any such expansion is evaluated.</p>
+(fdef list-append (&rest lists)
+  (vlet ((list '())
+         (last-cons #v))
+    (fletrec ((rec (first-list rest-lists)
+                (cond ((cons? first-list)
+                       (vlet ((new-cons
+                               (cons (car first-list) '())))
+                         (cond ((cons? last-cons)
+                                (set-cdr! last-cons new-cons))
+                               (else
+                                (vset! list new-cons)))
+                         (vset! last-cons new-cons))
+                       (rec (cdr first-list) rest-lists))
+                      ((not (empty-list? first-list))
+                       (when (cons? rest-lists)
+                         (error "Each argument except the last must be a proper list."))
+                       (cond ((cons? last-cons)
+                              (set-cdr! last-cons first-list))
+                             (else
+                              (vset! list first-list))))
+                      ((cons? rest-lists)
+                       (rec (car rest-lists) (cdr rest-lists)))
+                      (else
+                       #v))))
+      (rec '() lists))
+    list))
+</section>
+</section>
+<section>
+<title>Miscellaneous</title>
+(fdef fresh-variable ()
+  (make-variable "fresh"))
+
+(mdef values->list (values-form)
+  `(multiple-value-call list ,values-form))
 </section>
 </section>
 <section>
 <title>Testing</title>
+<p>This section implements a testing facility.</p>
+<macro>(test $\metavar{expected-outcome-form}$ $\metavar{form-under-test}$)</macro>
+<p>The macro adds a test checking that the primary value of the form under test is <code>equal?</code> to the value of the expected-outcome form.</p>
+<macro>(test-mv $\metavar{expected-outcome-form}$ $\metavar{form-under-test}$)</macro>
+<p>The macro adds a test checking that the list whose elements are the values of the form under test is <code>equal?</code> to the value of the expected-outcome form.</p>
+<macro>(test-error $\metavar{expected-outcome-form}$ $\metavar{form-under-test}$)</macro>
+<p>The macro adds a test checking that the evaluation of the form under test completes abruptly for a reason of type <code>error</code> carrying a category <code>equal?</code> to the value of the expected-outcome form.</p>
+<nonprimitivefunction>(run-tests)</nonprimitivefunction>
+<p>The function runs the tests.</p>
 (vdef *tests* '())
-<macro>(test &lt;expected-value-form&gt; &lt;form&gt;)</macro>
-<macro>(test-mv &lt;expected-values-form&gt; &lt;form&gt;)</macro>
-<macro>(test-error &lt;form&gt;)</macro>
-(mdef test (expected-value-form form)
-  (test/fn expected-value-form form))
 
-(mdef test-mv (expected-values-form form)
-  (test/fn expected-values-form (list 'multiple-value-call 'list form)))
+(mdef test (expected-outcome-form form-under-test)
+  (test/fn
+   form-under-test
+   expected-outcome-form
+   form-under-test))
 
-(mdef test-error (form)
-  (test/fn #t (list 'string? (list '_catch-errors form))))
+(mdef test-mv (expected-outcome-form form-under-test)
+  (test/fn
+   form-under-test
+   expected-outcome-form
+   `(values->list ,form-under-test)))
 
-(fdef test/fn (expected-result-form form)
-  (list
-   'progn
-   (list
-    'vset!
-    '*tests*
-    (list
-     'cons
-     (list 'vlambda '() (list 'list (list 'quote form) form expected-result-form))
-     '*tests*))
-   #v))
+(mdef test-error (expected-outcome-form form-under-test)
+  (vlet ((blk
+          (fresh-variable)))
+    (test/fn
+     form-under-test
+     expected-outcome-form
+     `(block ,blk
+        (_handler-bind
+            (vlambda (category description)
+              (return-from ,blk category))
+          ,form-under-test
+          #v)))))
 
-(fdef run-test (test)
-  (vlet ((form-result-expected-result
-          ((vref test))))
-    (vlet ((form
-            (car form-result-expected-result))
-           (result
-            (cadr form-result-expected-result))
-           (expected-result
-            (caddr form-result-expected-result)))
-      (cond ((equal? result expected-result)
-             (list 'PASSED))
-            (else
-             (list 'FAILED form result expected-result))))))
+(fdef test/fn (form-under-test expected-outcome-form outcome-form)
+  `(progn
+     (vset!
+      *tests*
+      (cons
+       (vlambda ()
+         (list ',form-under-test ,expected-outcome-form ,outcome-form))
+       *tests*))
+     #v))
+
+#+(or trampoline trampolinepp)
+(fdef run-tests ()
+  (run-tests/rec))
 
 (fdef run-tests/rec ()
   (vlet ((passed 0)
@@ -397,12 +542,12 @@
          (start-time (now)))
     (fletrec ((rec (tests)
                 (cond ((cons? tests)
-                       (vlet ((outcome
+                       (vlet ((result
                                (run-test (car tests))))
-                         (econd ((eq? (car outcome) 'PASSED)
+                         (econd ((eq? (car result) 'PASSED)
                                  (vset! passed (+ passed 1)))
-                                ((eq? (car outcome) 'FAILED)
-                                 (vset! failed (cons outcome failed)))))
+                                ((eq? (car result) 'FAILED)
+                                 (vset! failed (cons result failed)))))
                        (rec (cdr tests)))
                       (else
                        #v))))
@@ -412,77 +557,476 @@
           (else
            (list-reverse failed)))))
 
+#+(or directstyle cps oocps sboocps)
+(fdef run-tests ()
+  (run-tests/iter))
+
 (fdef run-tests/iter ()
   (vlet ((passed 0)
          (failed '())
          (start-time (now)))
     (_for-each
      (vlambda (test)
-       (vlet ((outcome
+       (vlet ((result
                (run-test test)))
-         (econd ((eq? (car outcome) 'PASSED)
+         (econd ((eq? (car result) 'PASSED)
                  (vset! passed (+ passed 1)))
-                ((eq? (car outcome) 'FAILED)
-                 (vset! failed (cons outcome failed))))))
+                ((eq? (car result) 'FAILED)
+                 (vset! failed (cons result failed))))))
      *tests*)
     (cond ((empty-list? failed)
            (values passed (- (now) start-time)))
           (else
            (list-reverse failed)))))
 
-#+plainrec
-(fdef run-tests ()
-  (run-tests/rec))
+(fdef run-test (test)
+  (vlet ((form-under-test&expected-outcome&outcome
+          ((vref test))))
+    (vlet ((form-under-test
+            (car form-under-test&expected-outcome&outcome))
+           (expected-outcome
+            (cadr form-under-test&expected-outcome&outcome))
+           (outcome
+            (caddr form-under-test&expected-outcome&outcome)))
+      (cond ((equal? expected-outcome outcome)
+             (list 'PASSED))
+            (else
+             (list 'FAILED form-under-test expected-outcome outcome))))))
+</section>
+<section>
+<title>Quoting</title>
+<specialform>(quote $\metavar{literal}$)</specialform>
+(test '() '())
+<macro>(quasiquote $\metavar{template}$)</macro>
+<ebnf>
+  <tr>
+    <lhs>$\metavar{template}$</lhs>
+    <def>$\Coloneq$</def>
+    <rhs><code>$\metavar{quasiquotation}$ | $\metavar{unquotation}$ | $\metavar{splicing-unquotation}$ | $\metavar{list-template}$ | $\metavar{atom}$</code></rhs>
+  </tr>
+  <tr>
+    <lhs>$\metavar{quasiquotation}$</lhs>
+    <def>$\Coloneq$</def>
+    <rhs><code>(quasiquote $\metavar{form}$)</code></rhs>
+  </tr>
+  <tr>
+    <lhs>$\metavar{unquotation}$</lhs>
+    <def>$\Coloneq$</def>
+    <rhs><code>(unquote $\metavar{form}$)</code></rhs>
+  </tr>
+  <tr>
+    <lhs>$\metavar{splicing-unquotation}$</lhs>
+    <def>$\Coloneq$</def>
+    <rhs><code>(unquote-splicing $\metavar{form}$)</code></rhs>
+  </tr>
+  <tr>
+    <lhs>$\metavar{list-template}$</lhs>
+    <def>$\Coloneq$</def>
+    <rhs><code>$\metavar{proper-list-template}$ | $\metavar{dotted-list-template}$</code></rhs>
+  </tr>
+  <tr>
+    <lhs>$\metavar{proper-list-template}$</lhs>
+    <def>$\Coloneq$</def>
+    <rhs><code>($\metavar{template}$+)</code></rhs>
+  </tr>
+  <tr>
+    <lhs>$\metavar{dotted-list-template}$</lhs>
+    <def>$\Coloneq$</def>
+    <rhs><code>($\metavar{template}$+ . $\metavar{template}$)</code></rhs>
+  </tr>
+  <tr>
+    <lhs>$\metavar{atom}$</lhs>
+    <def>$\Coloneq$</def>
+    <rhs><code>$\void$ | $\boolean$ | $\number$ | $\character$ | $\string$ | $\keyword$ | $\emptylist$ | $\vector$ | $\primitivefunction$ | $\closure$</code></rhs>
+  </tr>
+</ebnf>
+<p>Quasiquotations, unquotations, and splicing unquotation are usually abbreviated as follows:</p>
+<ul>
+  <li><code>(quasiquote $\mlvar{form}$)</code> is usually abbreviated as <code>`$\mlvar{form}$</code></li>
+  <li><code>(unquote $\mlvar{form}$)</code> is usually abbreviated as <code>,$\mlvar{form}$</code></li>
+  <li><code>(unquote-splicing $\mlvar{form}$)</code> is usually abbreviated as <code>,@$\mlvar{form}$</code></li>
+</ul>
+<p>A quasiquotation that does not contain any nested quasiquotations evaluates to an object that is identical to the template except for the following:</p>
+<ul>
+  <li>Each unquotation is replaced by the primary value of the its form.</li>
+  <li>Each splicing unquotation is replaced by the elements of the primary value of the its form, which must be a proper list. We will see below that, semantically, a splicing unquotation can only occur inside a proper-list template or inside a dotted-list template at a position other than the end. The elements of the primary value of a splicing unquotation's form are spliced into the containing list.</li>
+</ul>
+<p>By way of example, the quasiquotation inside</p>
+<blockquote><code>(vlet ((test-form '(do-it?))<br/>&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;&#x00A0;(serial-forms '(1 2 3 'done)))<br/>&#x00A0;&#x00A0;`(if ,test-form (progn ,@serial-forms) #v))</code></blockquote>
+<p>evaluates to</p>
+<blockquote><code>(if (do-it?) (progn 1 2 3 (quote done)) #v)</code></blockquote>
+<p>The context-free grammar for templates is ambiguous. The following rules are used to resolve the ambiguities:</p>
+<ul>
+  <li><code>(quasiquote $\metavar{form}$)</code> is interpreted as a quasiquotation, not as a proper-list template.</li>
+  <li><code>(unquote $\metavar{form}$)</code> is interpreted as an unquotation, not as a proper-list template.</li>
+  <li><code>(unquote-splicing $\metavar{form}$)</code> is interpreted as a splicing unquotation, not as a proper-list template.</li>
+  <li><code>($\metavar{template}$+ quasiquote $\metavar{form}$)</code> is interpreted as a dotted-list template ending with an quasiquotation, not as a proper-list template.</li>
+  <li><code>($\metavar{template}$+ unquote $\metavar{form}$)</code> is interpreted as a dotted-list template ending with an unquotation, not as a proper-list template.</li>
+  <li><code>($\metavar{template}$+ unquote-splicing $\metavar{form}$)</code> is interpreted as a dotted-list template ending with a splicing unquotation, not as a proper-list template.</li>
+  <li>The end of a dotted-list template is never the empty list.</li>
+  <li>The end of a dotted-list template is never a cons, unless the end of the dotted-list template is a quasiquotation, an unquotation, or a splicing unquotation.</li>
+</ul>
+<p>The macro call <code>(quasiquote $\mlvar{template}$)</code> expands into a form that evaluates to an object that is <code>equal?</code> to the value of the form $\mathcal{F}(\mlvar{template})$ computed by the functions $\mathcal{F}$ and $\mathcal{F}'$ defined below.</p>
+<p>The function $\mathcal{F}$ is defined as follows:</p>
+<ul>
+  <li>$\mathcal{F}($<code>(quasiquote $\mlvar{template}$)</code>$)=\mathcal{F}(\mathcal{F}(\mlvar{template}))$</li>
+  <li>$\mathcal{F}($<code>(unquote $\mlvar{form}$)</code>$)=\mlvar{form}$</li>
+  <li>$\mathcal{F}($<code>(unquote-splicing $\mlvar{form}$)</code>$)$ is an error</li>
+  <li>$\mathcal{F}($<code>($\mlvar{template}_1\ldots\mlvar{template}_{n\ge1}$)</code>$)=\,$<code>(list-append $\mathcal{F}'(\mlvar{template}_1)\ldots\mathcal{F}'(\mlvar{template}_n)$)</code></li>
+  <li>$\mathcal{F}($<code>($\mlvar{template}_1\ldots\mlvar{template}_{n\ge1}$ . $\mlvar{template}_{n+1}$)</code>$)=\,$<code>(list-append $\mathcal{F}'(\mlvar{template}_1)\ldots\mathcal{F}'(\mlvar{template}_n)$ $\mathcal{F}(\mlvar{template}_{n+1})$)</code></li>
+  <li>$\mathcal{F}(\mlvar{atom})=\,$<code>(quote $\mlvar{atom}$)</code></li>
+</ul>
+<p>The end of a dotted-list template, which can only be a quasiquotation, an unquotation, a splicing unquotation, or an atom other than the empty list, is processed by the function $\mathcal{F}$, not by the function $\mathcal{F}'$.</p>
+<p>The function $\mathcal{F}'$ is defined as follows:</p>
+<ul>
+  <li>If $\mlvar{template}=\,$<code>(unquote-splicing $\mlvar{form}$)</code>, then $\mathcal{F}'(\mlvar{template})=\mlvar{form}$.</li>
+  <li>Otherwise, $\mathcal{F}'(\mlvar{template})=\,$<code>(list $\mathcal{F}(\mlvar{template})$)</code>.</li>
+</ul>
+<p>By way of example,</p>
+<blockquote>$\mathcal{F}($<code>(if ,test-form (progn ,@serial-forms) #v)</code>$)$</blockquote>
+<p>is equal to</p>
+<blockquote><code>(list-append<br/>&#x00A0;(list (quote if))<br/>&#x00A0;(list test-form)<br/>&#x00A0;(list (list-append (list (quote progn)) serial-forms))<br/>&#x00A0;(list (quote #v)))</code></blockquote>
+<p>The bootstrapping section contains an implementation of the macro <code>quasiquote</code> that is a direct translation of the functions $\mathcal{F}$ and $\mathcal{F}'$, without any optimizations.</p>
+(test '(() (1) (2 3)) `(,'() ,'(1) ,'(2 3)))
+(test '(1 2 3) `(,@'() ,@'(1) ,@'(2 3)))
 
-#+cps
-(fdef run-tests ()
-  (run-tests/iter))
+(test
+ '(if (do-it?) (progn 1 2 3 (quote done)) #v)
+ (vlet ((test-form '(do-it?))
+        (serial-forms '(1 2 3 'done)))
+   `(if ,test-form (progn ,@serial-forms) #v)))
 
-#+oocps
-(fdef run-tests ()
-  (run-tests/iter))
+(test 'a `a)
+(test 'a `,'a)
+(test '(a b) `(a b))
+(test '(a b) `(,'a b))
+(test '(a b) `(,@'(a) b))
+(test '(a b) `(a ,'b))
+(test '(a b) `(a ,@'(b)))
+(test '(a . b) `(a . b))
+(test '(a . b) `(,'a . b))
+(test '(a . b) `(,@'(a) . b))
+(test '(a . b) `(a . ,'b))
+</section>
+<section>
+<title>Sequencing</title>
+<specialform>(progn $\metavar{serial-form}$*)</specialform>
+(test-mv '(#v) (progn))
+(test-mv '() (progn (values)))
+(test-mv '(1) (progn 1))
+(test-mv '(1) (progn (values 1)))
+(test-mv '(1 2) (progn (values 1 2)))
+(test-mv '() (progn #v (values)))
+(test-mv '(1) (progn #v 1))
+(test-mv '(1) (progn #v (values 1)))
+(test-mv '(1 2) (progn #v (values 1 2)))
+</section>
+<section>
+<title>Branching</title>
+<specialform>(if $\metavar{test-form}$ $\metavar{then-form}$ $\metavar{else-form}$)</specialform>
+(test-mv '() (if #t (values) #v))
+(test-mv '(1) (if #t 1 #v))
+(test-mv '(1) (if #t (values 1) #v))
+(test-mv '(1 2) (if #t (values 1 2) #v))
+(test-mv '() (if #f #v (values)))
+(test-mv '(1) (if #f #v 1))
+(test-mv '(1) (if #f #v (values 1)))
+(test-mv '(1 2) (if #f #v (values 1 2)))
+<macro>(when $\metavar{test-form}$ $\metavar{serial-form}$*)</macro>
+<p>The test form is evaluated. Let $\mlvar{test}$ be the primary value of the test form. If $\mlvar{test}$ is not a boolean, then the evaluation of the macro call completes abruptly for a reason of type <code>error</code>. If $\mlvar{test}$ is the boolean <code>#t</code>, then the serial forms are evaluated in sequence from left to right and the macro call evaluates to the values of the last serial form or <code>#v</code> if there are no serial forms. If $\mlvar{test}$ is the boolean <code>#f</code>, then the serial forms are not evaluated and the macro call evaluates to <code>#v</code>.</p>
+<p>The macro <code>when</code> is implemented in the bootstrapping section.</p>
+(test 'done (when #t 1 2 3 'done))
+(test #v (when #f 1 2 3 'done))
+<macro>(cond $\metavar{clause}$* $\metavar{else-clause}$?)</macro>
+<macro>(econd $\metavar{clause}$* $\metavar{else-clause}$?)</macro>
+<ebnf>
+  <tr>
+    <lhs>$\metavar{clause}$</lhs>
+    <def>$\Coloneq$</def>
+    <rhs><code>($\metavar{test-form}$ $\metavar{serial-form}$*)</code></rhs>
+  </tr>
+  <tr>
+    <lhs>$\metavar{else-clause}$</lhs>
+    <def>$\Coloneq$</def>
+    <rhs><code>(else $\metavar{serial-form}$*)</code></rhs>
+  </tr>
+</ebnf>
+<p>A last clause that matches an else clause is always interpreted as an else clause.</p>
+<p>The test forms are evaluated in sequence from left to right and there are three cases to consider.</p>
+<p>Case 1, a test form evaluates to an object that is not a boolean: The following test forms are not evaluated and the macro call completes abruptly for a reason of type <code>error</code>.</p>
+<p>Case 2, a test form evaluates to the boolean <code>#t</code>: The following test forms are not evaluated. Instead, the serial forms of the clause containing the test form are evaluated from left to right and the macro call evaluates to the values of the last serial form or <code>#v</code> if there are no serial forms.</p>
+<p>Case 3, all test forms evaluate to the boolean <code>#f</code>: If there is an else clause, then the serial forms of the else clause are evaluated from left to right and the macro call evaluates to the values of the last serial form or <code>#v</code> if there are no serial forms. If there is no else clause and the macro is <code>cond</code>, then the macro call evaluates to <code>#v</code>. If there is no else clause and the macro is <code>econd</code>, then the macro call completes abruptly for a reason of type <code>error</code>.</p>
+<p>The macros <code>cond</code> and <code>econd</code> are implemented in the bootstrapping section.</p>
+(test #v (cond))
+(test 0 (cond (else 0)))
+(test 1 (cond (#t 1)))
+(test #v (cond (#f 1)))
+(test 1 (cond (#t 1) (else 0)))
+(test 0 (cond (#f 1) (else 0)))
+(test 1 (cond (#t 1) (#t 2)))
+(test 1 (cond (#t 1) (#f 2)))
+(test 2 (cond (#f 1) (#t 2)))
+(test #v (cond (#f 1) (#f 2)))
+(test 1 (cond (#t 1) (#t 2) (else 0)))
+(test 1 (cond (#t 1) (#f 2) (else 0)))
+(test 2 (cond (#f 1) (#t 2) (else 0)))
+(test 0 (cond (#f 1) (#f 2) (else 0)))
 
-#+sboocps
-(fdef run-tests ()
-  (run-tests/iter))
+(test-error "program-error" (econd))
+(test 0 (econd (else 0)))
+(test 1 (econd (#t 1)))
+(test-error "program-error" (econd (#f 1)))
+(test 1 (econd (#t 1) (else 0)))
+(test 0 (econd (#f 1) (else 0)))
+(test 1 (econd (#t 1) (#t 2)))
+(test 1 (econd (#t 1) (#f 2)))
+(test 2 (econd (#f 1) (#t 2)))
+(test-error "program-error" (econd (#f 1) (#f 2)))
+(test 1 (econd (#t 1) (#t 2) (else 0)))
+(test 1 (econd (#t 1) (#f 2) (else 0)))
+(test 2 (econd (#f 1) (#t 2) (else 0)))
+(test 0 (econd (#f 1) (#f 2) (else 0)))
+</section>
+<section>
+<title>Iterating</title>
+<specialform>(_for-each $\metavar{function-form}$ $\metavar{list-form}$)</specialform>
+#+(or directstyle cps oocps sboocps)
+(test
+ '(3 2 1)
+ (vlet ((acc '()))
+   (_for-each (vlambda (x) (vset! acc (cons x acc))) '(1 2 3))
+   acc))
+<macro>(loop $\metavar{serial-form}$*)</macro>
+<p>The macro creates an infinite loop repeatedly evaluating the serial forms in sequence from left to right.</p>
+(mdef loop (&rest serial-forms)
+  `(fletrec ((rec ()
+               ,@serial-forms
+               (rec)))
+     (rec)))
 
-#+trampoline
-(fdef run-tests ()
-  (run-tests/rec))
+(test
+ 10
+ (vlet ((n 0))
+   (block blk
+     (loop
+       (vset! n (+ n 1))
+       (when (= n 10)
+         (return-from blk n))))))
+<nonprimitivefunction>(test-loop $\number$)</nonprimitivefunction>
+<p>The function returns the number of milliseconds it takes to loop $\number$ times.</p>
+(fdef test-loop (n)
+  (vlet ((start-time (now)))
+    (fletrec ((rec (n)
+                (when (> n 0)
+                  (rec (- n 1)))))
+      (rec n))
+    (- (now) start-time)))
 
-#+trampolinepp
-(fdef run-tests ()
-  (run-tests/rec))
+(test #t (number? (test-loop 10)))
+</section>
+<section>
+<title>Abstracting</title>
+<specialform>(_vlambda $\metavar{plain-parameter-list}$ $\metavar{body}$)</specialform>
+<specialform>(_mlambda $\metavar{plain-parameter-list}$ $\metavar{body}$)</specialform>
+<specialform>(_flambda $\metavar{plain-parameter-list}$ $\metavar{body}$)</specialform>
+<specialform>(_dlambda $\metavar{plain-parameter-list}$ $\metavar{body}$)</specialform>
+<ebnf>
+  <tr>
+    <lhs>$\metavar{plain-parameter-list}$</lhs>
+    <def>$\Coloneq$</def>
+    <rhs><code>$\variable$ | ($\variable$*) | ($\variable$+ . $\variable$)</code></rhs>
+  </tr>
+</ebnf>
+(test '(1 2) ((_vlambda x (vref x)) 1 2))
+(test '(1 2) ((_vlambda (x y) (list (vref x) (vref y))) 1 2))
+(test '(1 (2)) ((_vlambda (x . y) (list (vref x) (vref y))) 1 2))
+
+(test '(1 2) ((_mlambda x (vref x)) 1 2))
+(test '(1 2) ((_mlambda (x y) (list (vref x) (vref y))) 1 2))
+(test '(1 (2)) ((_mlambda (x . y) (list (vref x) (vref y))) 1 2))
+
+(test '(1 2) ((_flambda x (fref x)) 1 2))
+(test '(1 2) ((_flambda (x y) (list (fref x) (fref y))) 1 2))
+(test '(1 (2)) ((_flambda (x . y) (list (fref x) (fref y))) 1 2))
+
+(test '(1 2) ((_dlambda x (dref x)) 1 2))
+(test '(1 2) ((_dlambda (x y) (list (dref x) (dref y))) 1 2))
+(test '(1 (2)) ((_dlambda (x . y) (list (dref x) (dref y))) 1 2))
+<macro>(vlambda $\metavar{fancy-parameter-list}$ $\metavar{body}$)</macro>
+<macro>(mlambda $\metavar{fancy-parameter-list}$ $\metavar{body}$)</macro>
+<macro>(flambda $\metavar{fancy-parameter-list}$ $\metavar{body}$)</macro>
+<macro>(dlambda $\metavar{fancy-parameter-list}$ $\metavar{body}$)</macro>
+<ebnf>
+  <tr>
+    <lhs>$\metavar{fancy-parameter-list}$</lhs>
+    <def>$\Coloneq$</def>
+    <rhs><code>($\variable$* {&amp;rest $\variable$}?)</code></rhs>
+  </tr>
+</ebnf>
+<p>Calls to the macros <code>vlambda</code>, <code>mlambda</code>, <code>flambda</code>, and <code>dlambda</code> are expanded as follows:</p>
+<table>
+  <tr>
+    <th>Macro call</th>
+    <th>Expansion</th>
+  </tr>
+  <tr>
+    <td><code>(vlambda $\mlvar{fancy-parameter-list}$ $\mlvar{body}$)</code></td>
+    <td><code>(_vlambda $\mlvar{plain-parameter-list}$ $\mlvar{body}$)</code></td>
+  </tr>
+  <tr>
+    <td><code>(mlambda $\mlvar{fancy-parameter-list}$ $\mlvar{body}$)</code></td>
+    <td><code>(_mlambda $\mlvar{plain-parameter-list}$ $\mlvar{body}$)</code></td>
+  </tr>
+  <tr>
+    <td><code>(flambda $\mlvar{fancy-parameter-list}$ $\mlvar{body}$)</code></td>
+    <td><code>(_flambda $\mlvar{plain-parameter-list}$ $\mlvar{body}$)</code></td>
+  </tr>
+  <tr>
+    <td><code>(dlambda $\mlvar{fancy-parameter-list}$ $\mlvar{body}$)</code></td>
+    <td><code>(_dlambda $\mlvar{plain-parameter-list}$ $\mlvar{body}$)</code></td>
+  </tr>
+</table>
+<p>The correspondence between fancy parameter lists and plain parameter lists is as follows:</p>
+<table>
+  <tr>
+    <th>Fancy parameter list</th>
+    <th>Plain parameter list</th>
+  </tr>
+  <tr>
+    <td><code>(&amp;rest $\var$)</code></td>
+    <td><code>$\var$</code></td>
+  </tr>
+  <tr>
+    <td><code>($\var_1\ldots\var_{n\ge0}$)</code></td>
+    <td><code>($\var_1\ldots\var_n$)</code></td>
+  </tr>
+  <tr>
+    <td><code>($\var_1\ldots\var_{n\ge1}$ &amp;rest $\var_{n+1}$)</code></td>
+    <td><code>($\var_1\ldots\var_n$ . $\var_{n+1}$)</code></td>
+  </tr>
+</table>
+<p>The macros <code>vlambda</code>, <code>mlambda</code>, <code>flambda</code> and <code>dlambda</code> are implemented in the bootstrapping section.</p>
+(test '(1 2) ((vlambda (&rest x) (vref x)) 1 2))
+(test '(1 2) ((vlambda (x y) (list (vref x) (vref y))) 1 2))
+(test '(1 (2)) ((vlambda (x &rest y) (list (vref x) (vref y))) 1 2))
+
+(test '(1 2) ((mlambda (&rest x) (vref x)) 1 2))
+(test '(1 2) ((mlambda (x y) (list (vref x) (vref y))) 1 2))
+(test '(1 (2)) ((mlambda (x &rest y) (list (vref x) (vref y))) 1 2))
+
+(test '(1 2) ((flambda (&rest x) (fref x)) 1 2))
+(test '(1 2) ((flambda (x y) (list (fref x) (fref y))) 1 2))
+(test '(1 (2)) ((flambda (x &rest y) (list (fref x) (fref y))) 1 2))
+
+(test '(1 2) ((dlambda (&rest x) (dref x)) 1 2))
+(test '(1 2) ((dlambda (x y) (list (dref x) (dref y))) 1 2))
+(test '(1 (2)) ((dlambda (x &rest y) (list (dref x) (dref y))) 1 2))
+</section>
+<section>
+<title>Destructuring Lists</title>
+<macro>(destructuring-bind $\metavar{fancy-parameter-list}$ $\metavar{list-form}$ $\metavar{body}$)</macro>
+<p>The list form is evaluated in the current lexical environment. The body is then evaluated with respect to the lexical environment extending the current lexical environment to bind, in the value namespace, the parameters of the fancy parameter list to the elements of the primary value of the list form, which must be a proper list.</p>
+(mdef destructuring-bind (fancy-parameter-list list-form &rest body)
+  `(apply (vlambda ,fancy-parameter-list ,@body) ,list-form))
+
+(test '(1 (2 3)) (destructuring-bind (x &rest y) '(1 2 3) (list x y)))
+</section>
+<section>
+<title>Producing and Consuming Multiple Values</title>
+<primitivefunction>(values $\object_1\ldots\object_n$)</primitivefunction>
+<p>The function converts its arguments into values: when invoked on the arguments $\object_1,\ldots,\object_n$, the function returns the values $\object_1,\ldots,\object_n$.</p>
+(test-mv '() (values))
+(test-mv '(1) (values 1))
+(test-mv '(1 2) (values 1 2))
+<macro>(multiple-value-bind $\metavar{fancy-parameter-list}$ $\metavar{values-form}$ $\metavar{body}$)</macro>
+<p>The values form is evaluated in the current lexical environment. The body is then evaluated with respect to the lexical environment extending the current lexical environment to bind, in the value namespace, the parameters of the fancy parameter list to the values of the values form.</p>
+(mdef multiple-value-bind (fancy-parameter-list values-form &rest body)
+  `(multiple-value-call (vlambda ,fancy-parameter-list ,@body) ,values-form))
+
+(test '(1 (2 3)) (multiple-value-bind (x &rest y) (values 1 2 3) (list x y)))
+<nonprimitivefunction>(list->values $\list$)</nonprimitivefunction>
+<p>The function converts the elements of $\list$, which must be a proper list, into values.</p>
+(fdef list->values (list)
+  (apply values list))
+
+(test-mv '(1 2 3) (list->values '(1 2 3)))
+<macro>(values->list $\metavar{values-form}$)</macro>
+<p>The macro collects the values of the values form into a list.</p>
+<p>The macro <code>values->list</code> is implemented in the bootstrapping section.</p>
+(test '(1 2 3) (values->list (values 1 2 3)))
 </section>
 <section>
 <title>Defining</title>
-<macro>(vdef &lt;variable&gt; &lt;form&gt;)</macro>
-<macro>(fdef &lt;variable&gt; &lt;common-lisp-parameter-list&gt; &lt;form&gt;*)</macro>
-<macro>(mdef &lt;variable&gt; &lt;common-lisp-parameter-list&gt; &lt;form&gt;*)</macro>
-<para><code>&lt;common-lisp-parameter-list&gt; ::= (&lt;variable&gt;* [&amp;rest &lt;variable&gt;])</code></para>
-<para>The macros <code>vdef</code>, <code>fdef</code>, and <code>mdef</code> are defined in the bootstrapping section.</para>
+<macro>(vdef $\metavar{variable}$ $\metavar{value-form}$)</macro>
+<p>The macro defines a global variable by ensuring that the variable is bound in the value namespace of the global environment to the primary value of the value form. The macro call evaluates to the variable.</p>
+<macro>(fdef $\metavar{variable}$ $\metavar{fancy-parameter-list}$ $\metavar{body}$)</macro>
+<p>The macro defines a global function by ensuring that the variable is bound in the function namespace of the global environment to the closure resulting from the evaluation of the <code>vlambda</code> form <code>(vlambda $\metavar{fancy-parameter-list}$ $\metavar{body}$)</code>. The macro call evaluates to the variable. This description amends the description given in the tutorial by replacing the special operator <code>_vlambda</code> by the macro <code>vlambda</code>.</p>
+<macro>(mdef $\metavar{variable}$ $\metavar{fancy-parameter-list}$ $\metavar{body}$)</macro>
+<p>The macro defines a global macro by ensuring that the variable is bound in the function namespace of the global environment to the closure resulting from the evaluation of the <code>mlambda</code> form <code>(mlambda $\metavar{fancy-parameter-list}$ $\metavar{body}$)</code>. The macro call evaluates to the variable. This description amends the description given in the tutorial by replacing the special operator <code>_mlambda</code> by the macro <code>mlambda</code>.</p>
+<p>The macros <code>vdef</code>, <code>fdef</code>, and <code>mdef</code> are implemented in the bootstrapping section.</p>
 </section>
 <section>
 <title>Binding</title>
-<macro>(vlet (&lt;value-binding&gt;*) &lt;form&gt;*)</macro>
-<macro>(flet (&lt;function-binding&gt;*) &lt;form&gt;*)</macro>
-<macro>(mlet (&lt;function-binding&gt;*) &lt;form&gt;*)</macro>
-<macro>(dlet (&lt;value-binding&gt;*) &lt;form&gt;*)</macro>
-<macro>(vlet* (&lt;value-binding&gt;*) &lt;form&gt;*)</macro>
-<macro>(flet* (&lt;function-binding&gt;*) &lt;form&gt;*)</macro>
-<macro>(dlet* (&lt;value-binding&gt;*) &lt;form&gt;*)</macro>
-<macro>(fletrec (&lt;function-binding&gt;*) &lt;form&gt;*)</macro>
-<para><code>&lt;value-binding&gt; ::= (&lt;variable&gt; &lt;form&gt;)</code></para>
-<para><code>&lt;function-binding&gt; ::= (&lt;variable&gt; &lt;common-lisp-parameter-list&gt; &lt;form&gt;*)</code></para>
-<para><code>&lt;common-lisp-parameter-list&gt; ::= (&lt;variable&gt;* [&amp;rest &lt;variable&gt;])</code></para>
-<para>The macros <code>vlet</code>, <code>flet</code>, <code>mlet</code>, <code>dlet</code>, <code>vlet*</code>, <code>flet*</code>, <code>dlet*</code>, and <code>fletrec</code> are defined in the bootstrapping section.</para>
+<macro>(vlet ($\metavar{value-binding}$*) $\metavar{body}$)</macro>
+<macro>(flet ($\metavar{function-binding}$*) $\metavar{body}$)</macro>
+<macro>(mlet ($\metavar{function-binding}$*) $\metavar{body}$)</macro>
+<macro>(dlet ($\metavar{value-binding}$*) $\metavar{body}$)</macro>
+<macro>(vlet* ($\metavar{value-binding}$*) $\metavar{body}$)</macro>
+<macro>(flet* ($\metavar{function-binding}$*) $\metavar{body}$)</macro>
+<macro>(dlet* ($\metavar{value-binding}$*) $\metavar{body}$)</macro>
+<macro>(fletrec ($\metavar{function-binding}$*) $\metavar{body}$)</macro>
+<ebnf>
+  <tr>
+    <lhs>$\metavar{value-binding}$</lhs>
+    <def>$\Coloneq$</def>
+    <rhs><code>($\metavar{variable}$ $\metavar{value-form}$)</code></rhs>
+  </tr>
+  <tr>
+    <lhs>$\metavar{function-binding}$</lhs>
+    <def>$\Coloneq$</def>
+    <rhs><code>($\metavar{variable}$ $\metavar{fancy-parameter-list}$ $\metavar{body}$)</code></rhs>
+  </tr>
+</ebnf>
+<p>The macro call</p>
+<blockquote><code>(vlet (($\mlvar{variable}_1$ $\mlvar{value-form}_1$) &#x2026; ($\mlvar{variable}_n$ $\mlvar{value-form}_n$)) $\mlvar{body}$)</code></blockquote>
+<p>is evaluated as follows:</p>
+<blockquote>For $i$ from $1$ to $n$, the value form $\mlvar{value-form}_i$ is evaluated with respect to the current lexical and dynamic environments. The serial forms composing the body $\mlvar{body}$ are then evaluated in sequence from left to right with respect to (1) the lexical environment extending the current lexical environment to bind, in the value namespace, the variable $\variable_i$ to the primary value of $\mlvar{value-form}_i$ (for all $i$ from $1$ to $n$) and (2) the current dynamic environment. The macro call evaluates to the values of the last serial form or <code>#v</code> if there are no serial forms.</blockquote>
+<p>The macro call</p>
+<blockquote><code>(flet (($\mlvar{variable}_1$ $\mlvar{fancypl}_1$ $\mlvar{body}_1$) &#x2026; ($\mlvar{variable}_n$ $\mlvar{fancypl}_n$ $\mlvar{body}_n$)) $\mlvar{body}$)</code></blockquote>
+<p>is evaluated as follows:</p>
+<blockquote>For $i$ from $1$ to $n$, the <code>vlambda</code> form $\mlvar{vlambda}_i$ = <code>(vlambda $\mlvar{fancypl}_i$ $\mlvar{body}_i$)</code> is evaluated with respect to the current lexical and dynamic environments. The serial forms composing the body $\mlvar{body}$ are then evaluated in sequence from left to right with respect to (1) the lexical environment extending the current lexical environment to bind, in the function namespace, the variable $\variable_i$ to the value of $\mlvar{vlambda}_i$ (for all $i$ from $1$ to $n$) and (2) the current dynamic environment. The macro call evaluates to the values of the last serial form or <code>#v</code> if there are no serial forms.</blockquote>
+<p>The macro call</p>
+<blockquote><code>(mlet (($\mlvar{variable}_1$ $\mlvar{fancypl}_1$ $\mlvar{body}_1$) &#x2026; ($\mlvar{variable}_n$ $\mlvar{fancypl}_n$ $\mlvar{body}_n$)) $\mlvar{body}$)</code></blockquote>
+<p>is evaluated as follows:</p>
+<blockquote>For $i$ from $1$ to $n$, the <code>mlambda</code> form $\mlvar{mlambda}_i$ = <code>(mlambda $\mlvar{fancypl}_i$ $\mlvar{body}_i$)</code> is evaluated with respect to the current lexical and dynamic environments. The serial forms composing the body $\mlvar{body}$ are then evaluated in sequence from left to right with respect to (1) the lexical environment extending the current lexical environment to bind, in the function namespace, the variable $\variable_i$ to the value of $\mlvar{mlambda}_i$ (for all $i$ from $1$ to $n$) and (2) the current dynamic environment. The macro call evaluates to the values of the last serial form or <code>#v</code> if there are no serial forms.</blockquote>
+<p>The macro call</p>
+<blockquote><code>(dlet (($\mlvar{variable}_1$ $\mlvar{value-form}_1$) &#x2026; ($\mlvar{variable}_n$ $\mlvar{value-form}_n$)) $\mlvar{body}$)</code></blockquote>
+<p>is evaluated as follows:</p>
+<blockquote>For $i$ from $1$ to $n$, the value form $\mlvar{value-form}_i$ is evaluated with respect to the current lexical and dynamic environments. The serial forms composing the body $\mlvar{body}$ are then evaluated in sequence from left to right with respect to (1) the current lexical environment and (2) the dynamic environment extending the current dynamic environment to bind, in the value namespace, the variable $\variable_i$ to the primary value of $\mlvar{value-form}_i$ (for all $i$ from $1$ to $n$). The macro call evaluates to the values of the last serial form or <code>#v</code> if there are no serial forms.</blockquote>
+<p>The macro call</p>
+<blockquote><code>(vlet* (($\mlvar{variable}_1$ $\mlvar{value-form}_1$) &#x2026; ($\mlvar{variable}_n$ $\mlvar{value-form}_n$)) $\mlvar{body}$)</code></blockquote>
+<p>is evaluated as follows:</p>
+<blockquote>For $i$ from $1$ to $n$, the value form $\mlvar{value-form}_i$ is evaluated with respect to $\env_{i-1}$ and the current dynamic environment, where $\env_0$ is the current lexical environment and $\env_i$ is the lexical environment extending $\env_{i-1}$ to bind, in the value namespace, the variable $\variable_i$ to the primary value of $\mlvar{value-form}_i$. The serial forms composing the body $\mlvar{body}$ are then evaluated in sequence from left to right with respect to $\env_n$ and the current dynamic environment. The macro call evaluates to the values of the last serial form or <code>#v</code> if there are no serial forms.</blockquote>
+<p>The macro call</p>
+<blockquote><code>(flet* (($\mlvar{variable}_1$ $\mlvar{fancypl}_1$ $\mlvar{body}_1$) &#x2026; ($\mlvar{variable}_n$ $\mlvar{fancypl}_n$ $\mlvar{body}_n$)) $\mlvar{body}$)</code></blockquote>
+<p>is evaluated as follows:</p>
+<blockquote>For $i$ from $1$ to $n$, the <code>vlambda</code> form $\mlvar{vlambda}_i$ = <code>(vlambda $\mlvar{fancypl}_i$ $\mlvar{body}_i$)</code> is evaluated with respect to $\env_{i-1}$ and the current dynamic environment, where $\env_0$ is the current lexical environment and $\env_i$ is the lexical environment extending $\env_{i-1}$ to bind, in the function namespace, the variable $\variable_i$ to the value of $\mlvar{vlambda}_i$. The serial forms composing the body $\mlvar{body}$ are then evaluated in sequence from left to right with respect to $\env_n$ and the current dynamic environment. The macro call evaluates to the values of the last serial form or <code>#v</code> if there are no serial forms.</blockquote>
+<p>The macro call</p>
+<blockquote><code>(dlet* (($\mlvar{variable}_1$ $\mlvar{value-form}_1$) &#x2026; ($\mlvar{variable}_n$ $\mlvar{value-form}_n$)) $\mlvar{body}$)</code></blockquote>
+<p>is evaluated as follows:</p>
+<blockquote>For $i$ from $1$ to $n$, the value form $\mlvar{value-form}_i$ is evaluated with respect to the current lexical environment and $\env_{i-1}$, where $\env_0$ is the current dynamic environment and $\env_i$ is the dynamic environment extending $\env_{i-1}$ to bind, in the value namespace, the variable $\variable_i$ to the primary value of $\mlvar{value-form}_i$. The serial forms composing the body $\mlvar{body}$ are then evaluated in sequence from left to right with respect to the current lexical environment and $\env_n$. The macro call evaluates to the values of the last serial form or <code>#v</code> if there are no serial forms.</blockquote>
+<p>The macro call</p>
+<blockquote><code>(fletrec (($\mlvar{variable}_1$ $\mlvar{fancypl}_1$ $\mlvar{body}_1$) &#x2026; ($\mlvar{variable}_n$ $\mlvar{fancypl}_n$ $\mlvar{body}_n$)) $\mlvar{body}$)</code></blockquote>
+<p>is evaluated as follows:</p>
+<blockquote>Let $\env$ be the lexical environment extending the current lexical environment to bind, in the function namespace, the variable $\variable_i$ to <code>#v</code> (for all $i$ from $1$ to $n$). The value is unimportant as it will not be referenced before it has been altered. For $i$ from $1$ to $n$, the <code>vlambda</code> form $\mlvar{vlambda}_i$ = <code>(vlambda $\mlvar{fancypl}_i$ $\mlvar{body}_i$)</code> is evaluated with respect to $\env$ and the current dynamic environment. The environment $\env$, which has been captured by the closures resulting from the evaluations of the <code>vlambda</code> forms, is then altered to bind, in the function namespace, the variable $\variable_i$ to the value of $\mlvar{vlambda}_i$ (for all $i$ from $1$ to $n$). The serial forms composing the body $\mlvar{body}$ are then evaluated in sequence from left to right with respect to $\env$ and the current dynamic environment. The macro call evaluates to the values of the last serial form or <code>#v</code> if there are no serial forms.</blockquote>
+<p>The macros <code>vlet</code>, <code>flet</code>, <code>mlet</code>, <code>dlet</code>, <code>vlet*</code>, <code>flet*</code>, <code>dlet*</code>, and <code>fletrec</code> are implemented in the bootstrapping section.</p>
 (test 1 (vlet ((x 1)) (vlet ((x 2) (y (vref x))) (vref y))))
 (test 2 (vlet ((x 1)) (vlet* ((x 2) (y (vref x))) (vref y))))
 
 (test 1 (flet ((x () 1)) (flet ((x () 2) (y () ((fref x)))) ((fref y)))))
 (test 2 (flet ((x () 1)) (flet* ((x () 2) (y () ((fref x)))) ((fref y)))))
 
-(test '(error "bar") (mlet ((foo (x) (list 'quote x))) (foo (error "bar"))))
+(test 6 (mlet ((foo (&rest args) (cons '+ args))) (foo 1 2 3)))
 
 (test 1 (dlet ((x 1)) (dlet ((x 2) (y (dref x))) (dref y))))
 (test 2 (dlet ((x 1)) (dlet* ((x 2) (y (dref x))) (dref y))))
@@ -508,57 +1052,137 @@
     (odd? 3))))
 </section>
 <section>
-<title>Abstracting</title>
-<syntax>(_vlambda &lt;scheme-parameter-list&gt; &lt;form&gt;*)</syntax>
-<syntax>(_mlambda &lt;scheme-parameter-list&gt; &lt;form&gt;*)</syntax>
-<syntax>(_flambda &lt;scheme-parameter-list&gt; &lt;form&gt;*)</syntax>
-<syntax>(_dlambda &lt;scheme-parameter-list&gt; &lt;form&gt;*)</syntax>
-<para><code>&lt;scheme-parameter-list&gt; ::= &lt;variable&gt;</code></para>
-<para><code>&lt;scheme-parameter-list&gt; ::= (&lt;variable&gt;*)</code></para>
-<para><code>&lt;scheme-parameter-list&gt; ::= (&lt;variable&gt;+ . &lt;variable&gt;)</code></para>
-(test '(1 2) ((_vlambda x (vref x)) 1 2))
-(test '(1 2) ((_vlambda (x y) (list (vref x) (vref y))) 1 2))
-(test '(1 (2)) ((_vlambda (x . y) (list (vref x) (vref y))) 1 2))
+<title>Referencing and Assigning</title>
+<specialform>(vref $\metavar{variable}$)</specialform>
+<specialform>(vset! $\metavar{variable}$ $\metavar{value-form}$)</specialform>
+<specialform>(fref $\metavar{variable}$)</specialform>
+<specialform>(fset! $\metavar{variable}$ $\metavar{value-form}$)</specialform>
+<specialform>(dref $\metavar{variable}$)</specialform>
+<specialform>(dset! $\metavar{variable}$ $\metavar{value-form}$)</specialform>
+(test '(1 2 2) ((vlambda (x) (list (vref x) (vset! x 2) (vref x))) 1))
+(test '(1 2 2) ((flambda (x) (list (fref x) (fset! x 2) (fref x))) 1))
+(test '(1 2 2) ((dlambda (x) (list (dref x) (dset! x 2) (dref x))) 1))
 
-(test '(1 2) ((_mlambda x (vref x)) 1 2))
-(test '(1 2) ((_mlambda (x y) (list (vref x) (vref y))) 1 2))
-(test '(1 (2)) ((_mlambda (x . y) (list (vref x) (vref y))) 1 2))
+(test
+ 3
+ (vlet ((counter 0))
+   (flet ((counter++ ()
+            (vset! counter (+ counter 1))))
+     (counter++)
+     (counter++)
+     (counter++)
+     counter)))
 
-(test '(1 2) ((_flambda x (fref x)) 1 2))
-(test '(1 2) ((_flambda (x y) (list (fref x) (fref y))) 1 2))
-(test '(1 (2)) ((_flambda (x . y) (list (fref x) (fref y))) 1 2))
-
-(test '(1 2) ((_dlambda x (dref x)) 1 2))
-(test '(1 2) ((_dlambda (x y) (list (dref x) (dref y))) 1 2))
-(test '(1 (2)) ((_dlambda (x . y) (list (dref x) (dref y))) 1 2))
-<macro>(vlambda &lt;common-lisp-parameter-list&gt; &lt;form&gt;*)</macro>
-<macro>(mlambda &lt;common-lisp-parameter-list&gt; &lt;form&gt;*)</macro>
-<macro>(flambda &lt;common-lisp-parameter-list&gt; &lt;form&gt;*)</macro>
-<macro>(dlambda &lt;common-lisp-parameter-list&gt; &lt;form&gt;*)</macro>
-<para><code>&lt;common-lisp-parameter-list&gt; ::= (&lt;variable&gt;* [&amp;rest &lt;variable&gt;])</code></para>
-<para>The macros <code>vlambda</code>, <code>mlambda</code>, <code>flambda</code> and <code>dlambda</code> are defined in the bootstrapping section.</para>
-(test '(1 2) ((vlambda (&rest x) (vref x)) 1 2))
-(test '(1 2) ((vlambda (x y) (list (vref x) (vref y))) 1 2))
-(test '(1 (2)) ((vlambda (x &rest y) (list (vref x) (vref y))) 1 2))
-
-(test '(1 2) ((mlambda (&rest x) (vref x)) 1 2))
-(test '(1 2) ((mlambda (x y) (list (vref x) (vref y))) 1 2))
-(test '(1 (2)) ((mlambda (x &rest y) (list (vref x) (vref y))) 1 2))
-
-(test '(1 2) ((flambda (&rest x) (fref x)) 1 2))
-(test '(1 2) ((flambda (x y) (list (fref x) (fref y))) 1 2))
-(test '(1 (2)) ((flambda (x &rest y) (list (fref x) (fref y))) 1 2))
-
-(test '(1 2) ((dlambda (&rest x) (dref x)) 1 2))
-(test '(1 2) ((dlambda (x y) (list (dref x) (dref y))) 1 2))
-(test '(1 (2)) ((dlambda (x &rest y) (list (dref x) (dref y))) 1 2))
+(test
+ 3
+ (flet ((counter++ ()
+          (dset! counter (+ (dref counter) 1))))
+   (dlet ((counter 0))
+     (counter++)
+     (counter++)
+     (counter++)
+     (dref counter))))
 </section>
 <section>
-<title>Invoking</title>
-<syntax>(&lt;operator&gt; &lt;operand&gt;*)</syntax>
-<syntax>(apply &lt;operator&gt; &lt;operand&gt;*)</syntax>
-<syntax>(multiple-value-call &lt;operator&gt; &lt;operand&gt;*)</syntax>
-<syntax>(multiple-value-apply &lt;operator&gt; &lt;operand&gt;*)</syntax>
+<title>Generalized Variables</title>
+</section>
+<section>
+<title>Abrupt Completions of Type <code>nonlocal-exit</code></title>
+<specialform>(block $\metavar{block-name}$ $\metavar{serial-form}$*)</specialform>
+<specialform>(return-from $\metavar{block-name}$ $\metavar{values-form}$)</specialform>
+(test-mv '(1 2) (block blk (values 1 2)))
+(test-mv '(3 4) (block blk (return-from blk (values 3 4)) (values 1 2)))
+<specialform>(catch $\metavar{exit-tag-form}$ $\metavar{serial-form}$*)</specialform>
+<specialform>(throw $\metavar{exit-tag-form}$ $\metavar{values-form}$)</specialform>
+(test-mv '(1 2) (catch 'blk (values 1 2)))
+(test-mv '(3 4) (catch 'blk (throw 'blk (values 3 4)) (values 1 2)))
+</section>
+<section>
+<title>Abrupt Completions of Type <code>error</code></title>
+<primitivefunction>(error $\string$)</primitivefunction>
+(test-error "program-error" (error "foo"))
+<specialform>(_handler-bind $\metavar{handler-form}$ $\metavar{serial-form}$*)</specialform>
+(test-mv
+ '(1 2)
+ (block blk
+   (_handler-bind
+       (vlambda (category description)
+         (return-from blk (values 3 4)))
+     (values 1 2))))
+
+(test-mv
+ '(1 2)
+ (block blk
+   (_handler-bind
+       (vlambda (category description)
+         #v)
+     (values 1 2))))
+
+(test-mv
+ '(3 4)
+ (block blk
+   (_handler-bind
+       (vlambda (category description)
+         (return-from blk (values 3 4)))
+     (error "foo"))))
+
+(test-error
+ "program-error"
+ (block blk
+   (_handler-bind
+       (vlambda (category description)
+         #v)
+     (error "foo"))))
+<macro>(ignore-errors $\metavar{serial-form}$*)</macro>
+<p>The serial forms are evaluated in sequence from left to right. If the evaluation of any serial form completes abruptly for any reason, then the following serial forms are not evaluated and the evaluation of the macro call proceeds as follows:</p>
+<blockquote>Let $\mlvar{reason}$ be the reason for the abrupt completion of the serial form. If $\mlvar{reason}$ is of type <code>nonlocal-exit</code>, then the evaluation of the macro call completes abruptly for the reason $\mlvar{reason}$. Otherwise, $\mlvar{reason}$ is necessarily of type <code>error</code> and the evaluation of the macro call completes normally and produces the following three values: <code>#v</code>, the category carried by $\mlvar{reason}$, and the description carried by $\mlvar{reason}$.</blockquote>
+<p>Otherwise, the evaluations of the serial forms all complete normally and the evaluation of the macro call completes normally and produces the values of the last serial form or <code>#v</code> if there are no serial forms.</p>
+(mdef ignore-errors (&rest serial-forms)
+  (vlet ((blk
+          (fresh-variable)))
+    `(block ,blk
+       (_handler-bind
+           (vlambda (category description)
+             (return-from ,blk (values #v category description)))
+         ,@serial-forms))))
+
+(test-mv '(1 2 3) (ignore-errors (values 1 2 3)))
+(test-mv '(#v "program-error" "foo") (ignore-errors (error "foo")))
+</section>
+<section>
+<title>Protecting against Abrupt Completions</title>
+<specialform>(unwind-protect $\metavar{protected-form}$ $\metavar{cleanup-form}$*)</specialform>
+(test
+ '(#t 1 2 #f)
+ (vlet ((open #t))
+   (multiple-value-call
+    list
+    open
+    (ignore-errors
+      (unwind-protect
+          (values 1 2)
+        (vset! open #f)))
+    open)))
+
+(test
+ '(#t #v "program-error" "foo" #f)
+ (vlet ((open #t))
+   (multiple-value-call
+    list
+    open
+    (ignore-errors
+      (unwind-protect
+          (error "foo")
+        (vset! open #f)))
+    open)))
+</section>
+<section>
+<title>Calling</title>
+<specialform>(apply $\metavar{operator-form}$ $\metavar{operand-form}$*)</specialform>
+<specialform>(multiple-value-call $\metavar{operator-form}$ $\metavar{operand-form}$*)</specialform>
+<specialform>(multiple-value-apply $\metavar{operator-form}$ $\metavar{operand-form}$*)</specialform>
+<macrocall>($\metavar{macro-operator}$ $\metavar{macro-operand}$*)</macrocall>
+<plainfunctioncall>($\metavar{operator-form}$ $\metavar{operand-form}$*)</plainfunctioncall>
 (test
  '(#v 1 2 3)
  ((_vlambda x x) (values) 1 (values 2) (values 3 4)))
@@ -576,7 +1200,6 @@
  (multiple-value-apply (_vlambda x x) (values) 1 (values 2) (values 3 4) '()))
 
 (test 3 (_+ 1 2))
-
 (test 3 (apply _+ 1 2 '()))
 (test 3 (apply _+ 1 '(2)))
 (test 3 (apply _+ '(1 2)))
@@ -614,141 +1237,8 @@
 (test #t (vlet ((list (list 1 2 3))) (eq? list (apply (_vlambda x x) list))))
 </section>
 <section>
-<title>Quoting</title>
-<syntax>(quote &lt;object&gt;)</syntax>
-(test '() '())
-<para>All objects but lists and variables are self-evaluating.</para>
-</section>
-<section>
-<title>Referencing and Assigning Variables</title>
-<syntax>(vref &lt;variable&gt;)</syntax>
-<syntax>(vset! &lt;variable&gt; &lt;value-form&gt;)</syntax>
-<syntax>(fref &lt;variable&gt;)</syntax>
-<syntax>(fset! &lt;variable&gt; &lt;value-form&gt;)</syntax>
-<syntax>(dref &lt;variable&gt;)</syntax>
-<syntax>(dset! &lt;variable&gt; &lt;value-form&gt;)</syntax>
-<syntax>&lt;variable&gt;</syntax>
-<para>A <code>&lt;variable&gt;</code> not in operator position is equivalent to <code>(vref &lt;variable&gt;)</code>.</para>
-<para>A <code>&lt;variable&gt;</code> in operator position is equivalent to <code>(fref &lt;variable&gt;)</code>.</para>
-(test '(1 2 2) ((vlambda (x) (list (vref x) (vset! x 2) (vref x))) 1))
-(test '(1 2 2) ((vlambda (x) (list (vref x) (vset! x (values 2)) (vref x))) 1))
-(test '(1 2 2) ((flambda (x) (list (fref x) (fset! x 2) (fref x))) 1))
-(test '(1 2 2) ((flambda (x) (list (fref x) (fset! x (values 2)) (fref x))) 1))
-(test '(1 2 2) ((dlambda (x) (list (dref x) (dset! x 2) (dref x))) 1))
-(test '(1 2 2) ((dlambda (x) (list (dref x) (dset! x (values 2)) (dref x))) 1))
-
-(test 3 (vlet ((counter 0))
-          (flet ((counter++ ()
-                   (vset! counter (+ counter 1))))
-            (counter++)
-            (counter++)
-            (counter++)
-            counter)))
-
-(test 3 (flet ((counter++ ()
-                 (dset! counter (+ (dref counter) 1))))
-          (dlet ((counter 0))
-            (counter++)
-            (counter++)
-            (counter++)
-            (dref counter))))
-</section>
-<section>
-<title>Sequencing</title>
-<syntax>(progn &lt;form&gt;*)</syntax>
-(test-mv '(#v) (progn))
-(test-mv '() (progn (values)))
-(test-mv '(1) (progn 1))
-(test-mv '(1) (progn (values 1)))
-(test-mv '(1 2) (progn (values 1 2)))
-(test-mv '() (progn #v (values)))
-(test-mv '(1) (progn #v 1))
-(test-mv '(1) (progn #v (values 1)))
-(test-mv '(1 2) (progn #v (values 1 2)))
-</section>
-<section>
-<title>Branching</title>
-<syntax>(if &lt;test-form&gt; &lt;then-form&gt; &lt;else-form&gt;)</syntax>
-(test-mv '() (if #t (values) #v))
-(test-mv '(1) (if #t 1 #v))
-(test-mv '(1) (if #t (values 1) #v))
-(test-mv '(1 2) (if #t (values 1 2) #v))
-(test-mv '() (if #f #v (values)))
-(test-mv '(1) (if #f #v 1))
-(test-mv '(1) (if #f #v (values 1)))
-(test-mv '(1 2) (if #f #v (values 1 2)))
-(test 1 (if (values #t) 1 2))
-(test 2 (if (values #f) 1 2))
-<macro>(cond &lt;clause&gt;* [&lt;else-clause&gt;])</macro>
-<macro>(econd &lt;clause&gt;* [&lt;else-clause&gt;])</macro>
-<para><code>&lt;clause&gt; ::= (&lt;test-form&gt; &lt;form&gt;*)</code></para>
-<para><code>&lt;else-clause&gt; ::= (else &lt;form&gt;*)</code></para>
-<para>The macros <code>cond</code> and <code>econd</code> are defined in the bootstrapping section.</para>
-(test #v (cond))
-(test 0 (cond (else 0)))
-(test 1 (cond (#t 1)))
-(test #v (cond (#f 1)))
-(test 1 (cond (#t 1) (else 0)))
-(test 0 (cond (#f 1) (else 0)))
-(test 1 (cond (#t 1) (#t 2)))
-(test 1 (cond (#t 1) (#f 2)))
-(test 2 (cond (#f 1) (#t 2)))
-(test #v (cond (#f 1) (#f 2)))
-(test 1 (cond (#t 1) (#t 2) (else 0)))
-(test 1 (cond (#t 1) (#f 2) (else 0)))
-(test 2 (cond (#f 1) (#t 2) (else 0)))
-(test 0 (cond (#f 1) (#f 2) (else 0)))
-
-(test-error (econd))
-(test 0 (econd (else 0)))
-(test 1 (econd (#t 1)))
-(test-error (econd (#f 1)))
-(test 1 (econd (#t 1) (else 0)))
-(test 0 (econd (#f 1) (else 0)))
-(test 1 (econd (#t 1) (#t 2)))
-(test 1 (econd (#t 1) (#f 2)))
-(test 2 (econd (#f 1) (#t 2)))
-(test-error  (econd (#f 1) (#f 2)))
-(test 1 (econd (#t 1) (#t 2) (else 0)))
-(test 1 (econd (#t 1) (#f 2) (else 0)))
-(test 2 (econd (#f 1) (#t 2) (else 0)))
-(test 0 (econd (#f 1) (#f 2) (else 0)))
-</section>
-<section>
-<title>Iterating</title>
-(fdef loop ()
-  (loop))
-
-(fdef test-loop (n)
-  (vlet ((start-time (now)))
-    (fletrec ((rec (n)
-                (if (> n 0) (rec (- n 1)) #v)))
-      (rec n))
-    (- (now) start-time)))
-</section>
-<section>
-<title>Returning Multiple Values</title>
-<primitivefunction>(values &lt;object&gt;*)</primitivefunction>
-(test-mv '() (values))
-(test-mv '(1) (values 1))
-(test-mv '(1 2) (values 1 2))
-</section>
-<section>
-<title>Signaling and Handling Conditions</title>
-<primitivefunction>(error &lt;string&gt;)</primitivefunction>
-(test-error (error "foo"))
-<syntax>(_catch-errors &lt;form&gt;*)</syntax>
-(test #v (_catch-errors :no-error))
-(test "Error" (_catch-errors (error "foo")))
-</section>
-<section>
-<title>Interacting with the Environment</title>
-<primitivefunction>(now)</primitivefunction>
-(test #t (number? (now)))
-</section>
-<section>
-<title>Primitive Datatype <code>object</code></title>
-<primitivefunction>(object? &lt;object&gt;)</primitivefunction>
+<title>Primitive Data Type <code>object</code></title>
+<primitivefunction>(object? $\object$)</primitivefunction>
 (test #t (object? #v))
 (test #t (object? #t))
 (test #t (object? #f))
@@ -762,20 +1252,43 @@
 (test #t (object? #(1 2 3)))
 (test #t (object? (fref eq?)))
 (test #t (object? (fref equal?)))
-<primitivefunction>(eq? &lt;object&gt; &lt;object&gt;)</primitivefunction>
-<primitivefunction>(eql? &lt;object&gt; &lt;object&gt;)</primitivefunction>
-<function>(equal? &lt;object&gt; &lt;object&gt;)</function>
-(fdef equal? (x y)
-  (cond ((eql? x y)
+<primitivefunction>(eq? $\object_1$ $\object_2$)</primitivefunction>
+<p>The function returns <code>#t</code> if and only if the two objects are one and the same. In other words, the function returns <code>#t</code> if and only if the two objects have the same address in the heap.</p>
+<primitivefunction>(eql? $\object_1$ $\object_2$)</primitivefunction>
+<p>If both objects are of type <code>number</code>, then the function returns <code>#t</code> if and only if the two objects represent the same mathematical number. Otherwise, if both objects are of type <code>character</code>, then the function returns <code>#t</code> if and only if the two objects represent the same UTF-$16$ code unit. Otherwise, if both objects are of type <code>string</code>, then the function returns <code>#t</code> if and only if the two objects represent the same indexed sequence of UTF-$16$ code units. Otherwise, the function returns <code>#t</code> if and only if the two objects are <code>eq?</code>.</p>
+<nonprimitivefunction>(equal? $\object_1$ $\object_2$)</nonprimitivefunction>
+<p>If both objects are of type <code>cons</code>, then the function returns <code>#t</code> if and only if the cars of the two objects are <code>equal?</code> and the cdrs of the two objects are <code>equal?</code>. Otherwise, if both objects are of type <code>vector</code>, then the function returns <code>#t</code> if and only if the two objects have the same length and their corresponding elements are <code>equal?</code>. Otherwise, the function returns <code>#t</code> if and only if the two objects are <code>eql?</code>. Note that, when testing the sameness of two objects of type <code>vector</code>, the function does not distinguish between an index with no associated value and an index associated with the value <code>#v</code>.</p>
+(fdef equal? (object-1 object-2)
+  (cond ((eql? object-1 object-2)
          #t)
         ((and
-          (cons? x)
-          (cons? y))
+          (cons? object-1)
+          (cons? object-2))
          (and
-          (equal? (car x) (car y))
-          (equal? (cdr x) (cdr y))))
+          (equal? (car object-1) (car object-2))
+          (equal? (cdr object-1) (cdr object-2))))
+        ((and
+          (vector? object-1)
+          (vector? object-2))
+         (vector-equal? object-1 object-2))
         (else
          #f)))
+
+(fdef vector-equal? (vector-1 vector-2)
+  (fletrec ((rec (vector-1 vector-2 i)
+              (cond ((>= i 0)
+                     (and
+                      (equal? (vector-ref vector-1 i) (vector-ref vector-2 i))
+                      (rec vector-1 vector-2 (- i 1))))
+                    (else
+                     #t))))
+    (vlet ((vector-1-length
+            (vector-length vector-1))
+           (vector-2-length
+            (vector-length vector-2)))
+      (and
+       (= vector-1-length vector-2-length)
+       (rec vector-1 vector-2 (- vector-1-length 1))))))
 
 (test #t (eq? #v #v))
 (test #t (eql? #v #v))
@@ -789,15 +1302,15 @@
 (test #t (eql? #f #f))
 (test #t (equal? #f #f))
 
-(test #f (eq? 0 0))
+(test #f (eq? 0 0)) <comment>actually unspecified</comment>
 (test #t (eql? 0 0))
 (test #t (equal? 0 0))
 
-(test #f (eq? #"_" #"_"))
+(test #f (eq? #"_" #"_")) <comment>actually unspecified</comment>
 (test #t (eql? #"_" #"_"))
 (test #t (equal? #"_" #"_"))
 
-(test #f (eq? "foo" "foo"))
+(test #f (eq? "foo" "foo")) <comment>actually unspecified</comment>
 (test #t (eql? "foo" "foo"))
 (test #t (equal? "foo" "foo"))
 
@@ -813,35 +1326,38 @@
 (test #t (eql? '() '()))
 (test #t (equal? '() '()))
 
-(test #f (eq? '(1 2 3) '(1 2 3)))
-(test #f (eql? '(1 2 3) '(1 2 3)))
+(test #f (eq? '(1 2 3) '(1 2 3))) <comment>actually unspecified</comment>
+(test #f (eql? '(1 2 3) '(1 2 3))) <comment>actually unspecified</comment>
 (test #t (equal? '(1 2 3) '(1 2 3)))
 
-(test #f (eq? #(1 2 3) #(1 2 3)))
-(test #f (eql? #(1 2 3) #(1 2 3)))
-(test #f (equal? #(1 2 3) #(1 2 3))) <comment>FIXME</comment>
+(test #f (eq? #(1 2 3) #(1 2 3))) <comment>actually unspecified</comment>
+(test #f (eql? #(1 2 3) #(1 2 3))) <comment>actually unspecified</comment>
+(test #t (equal? #(1 2 3) #(1 2 3)))
 </section>
 <section>
-<title>Primitive Datatype <code>void</code></title>
-<primitivefunction>(void? &lt;object&gt;)</primitivefunction>
+<title>Primitive Data Type <code>void</code></title>
+<primitivefunction>(void? $\object$)</primitivefunction>
 (test #t (void? #v))
-<function>(value? &lt;object&gt;)</function>
+<nonprimitivefunction>(value? $\object$)</nonprimitivefunction>
+<p>The function returns <code>#f</code> if $\object$ is <code>#v</code> and <code>#t</code> otherwise.</p>
 (fdef value? (object)
   (not (void? object)))
 
 (test #f (value? #v))
 </section>
 <section>
-<title>Primitive Datatype <code>boolean</code></title>
-<primitivefunction>(boolean? &lt;object&gt;)</primitivefunction>
+<title>Primitive Data Type <code>boolean</code></title>
+<primitivefunction>(boolean? $\object$)</primitivefunction>
 (test #t (boolean? #t))
 (test #t (boolean? #f))
-<function>(not &lt;boolean&gt;)</function>
-<para>The function <code>not</code> is defined in the bootstrapping section.</para>
+<nonprimitivefunction>(not $\boolean$)</nonprimitivefunction>
+<p>The function returns <code>#t</code> if $\boolean$ is <code>#f</code> and <code>#f</code> if $\boolean$ is <code>#t</code>.</p>
+<p>The function <code>not</code> is implemented in the bootstrapping section.</p>
 (test #f (not #t))
 (test #t (not #f))
-<macro>(and &lt;test-form&gt;*)</macro>
-<para>The macro <code>and</code> is defined in the bootstrapping section.</para>
+<macro>(and $\metavar{test-form}$*)</macro>
+<p>The macro returns <code>#t</code> if all its arguments are <code>#t</code> and <code>#f</code> otherwise. The exact behavior of the macro is as follows: The test forms are evaluated in sequence from left to right. If a test form evaluates to an object that is not a boolean, then the following test forms are not evaluated and the evaluation of the macro call completes abruptly for a reason of type <code>error</code>. If a test form evaluates to <code>#f</code>, then the following test forms are not evaluated and the macro call evaluates to <code>#f</code>. If all test forms evaluate to <code>#t</code>, then the macro call evaluates to <code>#t</code>.</p>
+<p>The macro <code>and</code> is implemented in the bootstrapping section.</p>
 (test #t (and))
 (test #t (and #t))
 (test #f (and #f))
@@ -849,8 +1365,9 @@
 (test #f (and #t #f))
 (test #f (and #f #t))
 (test #f (and #f #f))
-<macro>(or &lt;test-form&gt;*)</macro>
-<para>The macro <code>or</code> is defined in the bootstrapping section.</para>
+<macro>(or $\metavar{test-form}$*)</macro>
+<p>The macro returns <code>#f</code> if all its arguments are <code>#f</code> and <code>#t</code> otherwise. The exact behavior of the macro is as follows: The test forms are evaluated in sequence from left to right. If a test form evaluates to an object that is not a boolean, then the following test forms are not evaluated and the evaluation of the macro call completes abruptly for a reason of type <code>error</code>. If a test form evaluates to <code>#t</code>, then the following test forms are not evaluated and the macro call evaluates to <code>#t</code>. If all test forms evaluate to <code>#f</code>, then the macro call evaluates to <code>#f</code>.</p>
+<p>The macro <code>or</code> is implemented in the bootstrapping section.</p>
 (test #f (or))
 (test #t (or #t))
 (test #f (or #f))
@@ -860,20 +1377,21 @@
 (test #f (or #f #f))
 </section>
 <section>
-<title>Primitive Datatype <code>number</code></title>
-<primitivefunction>(number? &lt;object&gt;)</primitivefunction>
+<title>Primitive Data Type <code>number</code></title>
+<primitivefunction>(number? $\object$)</primitivefunction>
 (test #t (number? 0))
-<primitivefunction>(_+ &lt;number&gt; &lt;number&gt;)</primitivefunction>
-<primitivefunction>(_- &lt;number&gt; &lt;number&gt;)</primitivefunction>
-<primitivefunction>(_* &lt;number&gt; &lt;number&gt;)</primitivefunction>
-<primitivefunction>(_/ &lt;number&gt; &lt;number&gt;)</primitivefunction>
-<primitivefunction>(% &lt;number&gt; &lt;number&gt;)</primitivefunction>
+<primitivefunction>(_+ $\number_1$ $\number_2$)</primitivefunction>
+<primitivefunction>(_- $\number_1$ $\number_2$)</primitivefunction>
+<primitivefunction>(_* $\number_1$ $\number_2$)</primitivefunction>
+<primitivefunction>(_/ $\number_1$ $\number_2$)</primitivefunction>
+<primitivefunction>(% $\number_1$ $\number_2$)</primitivefunction>
 (test 8 (_+ 6 2))
 (test 4 (_- 6 2))
 (test 12 (_* 6 2))
 (test 3 (_/ 6 2))
 (test 0 (% 6 2))
-<function>(+ &lt;number&gt;*)</function>
+<nonprimitivefunction>(+ $\number_1\ldots\number_n$)</nonprimitivefunction>
+<p>If the function is invoked on zero numbers, then the number <code>0</code> is returned. If the function is invoked on one number, then that number is returned. If the function is invoked on more than one number, then the result of adding those numbers from left to right is returned: the second number is added to the first number, then the third number is added to the partial result just computed, &#x2026;</p>
 (fdef + (&rest numbers)
   (fletrec ((rec (numbers acc)
               (cond ((empty-list? numbers)
@@ -886,7 +1404,8 @@
 (test 1 (+ 1))
 (test 3 (+ 1 2))
 (test 6 (+ 1 2 3))
-<function>(- &lt;number&gt;+)</function>
+<nonprimitivefunction>(- $\number_1\ldots\number_n$)</nonprimitivefunction>
+<p>If the function is invoked on zero numbers, then the invocation completes abruptly for a reason of type <code>error</code>. If the function is invoked on one number, then the opposite of that number is returned. If the function is invoked on more than one number, then the result of subtracting those numbers from left to right is returned: the second number is subtracted from the first number, then the third number is subtracted from the partial result just computed, &#x2026;</p>
 (fdef - (&rest numbers)
   (fletrec ((rec (numbers acc)
               (cond ((empty-list? numbers)
@@ -904,7 +1423,8 @@
 (test -1 (- 0 1))
 (test -3 (- 0 1 2))
 (test -6 (- 0 1 2 3))
-<function>(* &lt;number&gt;*)</function>
+<nonprimitivefunction>(* $\number_1\ldots\number_n$)</nonprimitivefunction>
+<p>If the function is invoked on zero numbers, then the number <code>1</code> is returned. If the function is invoked on one number, then that number is returned. If the function is invoked on more than one number, then the result of multiplying those numbers from left to right is returned: the first number is multiplied by the second number, then the partial result just computed is multiplied by the third number, &#x2026;</p>
 (fdef * (&rest numbers)
   (fletrec ((rec (numbers acc)
               (cond ((empty-list? numbers)
@@ -917,7 +1437,8 @@
 (test 2 (* 2))
 (test 8 (* 2 4))
 (test 64 (* 2 4 8))
-<function>(/ &lt;number&gt;+)</function>
+<nonprimitivefunction>(/ $\number_1\ldots\number_n$)</nonprimitivefunction>
+<p>If the function is invoked on zero numbers, then the invocation completes abruptly for a reason of type <code>error</code>. If the function is invoked on one number, then the inverse of that number is returned. If the function is invoked on more than one number, then the result of dividing those numbers from left to right is returned: the first number is divided by the second number, then the partial result just computed is divided by the third number, &#x2026;</p>
 (fdef / (&rest numbers)
   (fletrec ((rec (numbers acc)
               (cond ((empty-list? numbers)
@@ -935,12 +1456,12 @@
 (test 0.5 (/ 1 2))
 (test 0.125 (/ 1 2 4))
 (test 0.015625 (/ 1 2 4 8))
-<primitivefunction>(= &lt;number&gt; &lt;number&gt;)</primitivefunction>
-<primitivefunction>(/= &lt;number&gt; &lt;number&gt;)</primitivefunction>
-<primitivefunction>(&lt; &lt;number&gt; &lt;number&gt;)</primitivefunction>
-<primitivefunction>(&lt;= &lt;number&gt; &lt;number&gt;)</primitivefunction>
-<primitivefunction>(&gt; &lt;number&gt; &lt;number&gt;)</primitivefunction>
-<primitivefunction>(&gt;= &lt;number&gt; &lt;number&gt;)</primitivefunction>
+<primitivefunction>(= $\number_1$ $\number_2$)</primitivefunction>
+<primitivefunction>(/= $\number_1$ $\number_2$)</primitivefunction>
+<primitivefunction>(&lt; $\number_1$ $\number_2$)</primitivefunction>
+<primitivefunction>(&lt;= $\number_1$ $\number_2$)</primitivefunction>
+<primitivefunction>(&gt; $\number_1$ $\number_2$)</primitivefunction>
+<primitivefunction>(&gt;= $\number_1$ $\number_2$)</primitivefunction>
 (test '(#f #t #f) (list (= -1 0) (= 0 0) (= 1 0)))
 (test '(#t #f #t) (list (/= -1 0) (/= 0 0) (/= 1 0)))
 (test '(#t #f #f) (list (< -1 0) (< 0 0) (< 1 0)))
@@ -949,8 +1470,8 @@
 (test '(#f #t #t) (list (>= -1 0) (>= 0 0) (>= 1 0)))
 </section>
 <section>
-<title>Primitive Datatype <code>character</code></title>
-<primitivefunction>(character? &lt;object&gt;)</primitivefunction>
+<title>Primitive Data Type <code>character</code></title>
+<primitivefunction>(character? $\object$)</primitivefunction>
 (test #t (character? #"_"))
 
 (test '(#"\U{D83E}" #"\U{DD77}") '(#"🥷"))
@@ -964,47 +1485,47 @@
 (test '(#"\U{D83E}" #"\U{DD77}" #"\U{D83C}" #"\U{DFFF}") '(#"🥷🏿"))
 </section>
 <section>
-<title>Primitive Datatype <code>string</code></title>
-<primitivefunction>(string? &lt;object&gt;)</primitivefunction>
+<title>Primitive Data Type <code>string</code></title>
+<primitivefunction>(string? $\object$)</primitivefunction>
 (test #t (string? "foo"))
 </section>
 <section>
-<title>Primitive Datatype <code>symbol</code></title>
-<primitivefunction>(symbol? &lt;object&gt;)</primitivefunction>
+<title>Primitive Data Type <code>symbol</code></title>
+<primitivefunction>(symbol? $\object$)</primitivefunction>
 (test #t (symbol? :foo))
 (test #t (symbol? 'foo))
 </section>
 <section>
-<title>Primitive Datatype <code>keyword</code></title>
-<primitivefunction>(keyword? &lt;object&gt;)</primitivefunction>
+<title>Primitive Data Type <code>keyword</code></title>
+<primitivefunction>(keyword? $\object$)</primitivefunction>
 (test #t (keyword? :foo))
-<primitivefunction>(make-keyword &lt;string&gt;)</primitivefunction>
+<primitivefunction>(make-keyword $\string$)</primitivefunction>
 (test #f (eq? (make-keyword "foo") (make-keyword "foo")))
-<function>(fresh-keyword)</function>
+<nonprimitivefunction>(fresh-keyword)</nonprimitivefunction>
+<p>The function returns a new uninterned keyword.</p>
 (fdef fresh-keyword ()
   (make-keyword "fresh"))
 
 (test #t (keyword? (fresh-keyword)))
 </section>
 <section>
-<title>Primitive Datatype <code>variable</code></title>
-<primitivefunction>(variable? &lt;object&gt;)</primitivefunction>
+<title>Primitive Data Type <code>variable</code></title>
+<primitivefunction>(variable? $\object$)</primitivefunction>
 (test #t (variable? 'foo))
-<primitivefunction>(make-variable &lt;string&gt;)</primitivefunction>
+<primitivefunction>(make-variable $\string$)</primitivefunction>
 (test #f (eq? (make-variable "foo") (make-variable "foo")))
-<function>(fresh-variable)</function>
-(fdef fresh-variable ()
-  (make-variable "fresh"))
-
+<nonprimitivefunction>(fresh-variable)</nonprimitivefunction>
+<p>The function returns a new uninterned variable.</p>
+<p>The function <code>fresh-variable</code> is implemented in the bootstrapping section.</p>
 (test #t (variable? (fresh-variable)))
-<primitivefunction>(variable-value &lt;variable&gt;)</primitivefunction>
-<primitivefunction>(variable-set-value! &lt;variable&gt; &lt;object&gt;)</primitivefunction>
-<primitivefunction>(variable-value-bound? &lt;variable&gt;)</primitivefunction>
-<primitivefunction>(variable-unbind-value! &lt;variable&gt;)</primitivefunction>
+<primitivefunction>(variable-value $\variable$)</primitivefunction>
+<primitivefunction>(variable-set-value! $\variable$ $\object$)</primitivefunction>
+<primitivefunction>(variable-value-bound? $\variable$)</primitivefunction>
+<primitivefunction>(variable-unbind-value! $\variable$)</primitivefunction>
 (test
  '(#f #v :foo #t :foo #v #f #v)
  (vlet ((variable
-         (make-variable "foo")))
+         (fresh-variable)))
    (list
     (variable-value-bound? variable)
     (variable-value variable)
@@ -1014,14 +1535,14 @@
     (variable-unbind-value! variable)
     (variable-value-bound? variable)
     (variable-value variable))))
-<primitivefunction>(variable-function &lt;variable&gt;)</primitivefunction>
-<primitivefunction>(variable-set-function! &lt;variable&gt; &lt;object&gt;)</primitivefunction>
-<primitivefunction>(variable-function-bound? &lt;variable&gt;)</primitivefunction>
-<primitivefunction>(variable-unbind-function! &lt;variable&gt;)</primitivefunction>
+<primitivefunction>(variable-function $\variable$)</primitivefunction>
+<primitivefunction>(variable-set-function! $\variable$ $\object$)</primitivefunction>
+<primitivefunction>(variable-function-bound? $\variable$)</primitivefunction>
+<primitivefunction>(variable-unbind-function! $\variable$)</primitivefunction>
 (test
  '(#f #v :foo #t :foo #v #f #v)
  (vlet ((variable
-         (make-variable "foo")))
+         (fresh-variable)))
    (list
     (variable-function-bound? variable)
     (variable-function variable)
@@ -1031,146 +1552,190 @@
     (variable-unbind-function! variable)
     (variable-function-bound? variable)
     (variable-function variable))))
+<primitivefunction>(variable-plist-ref $\variable$ $\keyword$)</primitivefunction>
+<primitivefunction>(variable-plist-set! $\variable$ $\keyword$ $\object$)</primitivefunction>
+<primitivefunction>(variable-plist-bound? $\variable$ $\keyword$)</primitivefunction>
+<primitivefunction>(variable-plist-unbind! $\variable$ $\keyword$)</primitivefunction>
+(test '(#f #v :bar #t :bar #v #f #v)
+      (vlet ((variable
+              (fresh-variable)))
+        (list
+         (variable-plist-bound? variable :foo)
+         (variable-plist-ref variable :foo)
+         (variable-plist-set! variable :foo :bar)
+         (variable-plist-bound? variable :foo)
+         (variable-plist-ref variable :foo)
+         (variable-plist-unbind! variable :foo)
+         (variable-plist-bound? variable :foo)
+         (variable-plist-ref variable :foo))))
 </section>
 <section>
-<title>Primitive Datatype <code>list</code></title>
-<primitivefunction>(list? &lt;object&gt;)</primitivefunction>
+<title>Primitive Data Type <code>list</code></title>
+<primitivefunction>(list? $\object$)</primitivefunction>
 (test #t (list? '()))
 (test #t (list? '(1 2 3)))
 (test #t (list? '(1 2 3 . 4)))
-<function>(proper-list? &lt;object&gt;)</function>
-<para>The function <code>proper-list?</code> is defined in the bootstrapping section.</para>
+<nonprimitivefunction>(proper-list? $\object$)</nonprimitivefunction>
+<p>The function return <code>#t</code> if $\object$ is a proper list and <code>#f</code> otherwise.</p>
+<p>The function <code>proper-list?</code> is implemented in the bootstrapping section.</p>
 (test #t (proper-list? '()))
 (test #t (proper-list? '(1 2 3)))
 (test #f (proper-list? '(1 2 3 . 4)))
-<function>(list &lt;object&gt;*)</function>
-<para>The function <code>list</code> is defined in the bootstrapping section.</para>
+<nonprimitivefunction>(list $\object_1\ldots\object_n$)</nonprimitivefunction>
+<p>The function collects its arguments into a list: when invoked on the arguments $\object_1,\ldots,\object_n$, the function returns a list whose elements are $\object_1,\ldots,\object_n$.</p>
+<p>The function <code>list</code> is implemented in the bootstrapping section.</p>
 (test '() (list))
 (test '(1 2 3) (list 1 2 3))
-<function>(list-reverse &lt;list&gt;)</function>
-<para>The function <code>list-reverse</code> is defined in the bootstrapping section.</para>
+<nonprimitivefunction>(list-reverse $\list$)</nonprimitivefunction>
+<p>The function returns a list whose elements are the elements of $\list$, which must be a proper list, in reverse order.</p>
+<p>The function <code>list-reverse</code> is implemented in the bootstrapping section.</p>
 (test '() (list-reverse '()))
 (test '(3 2 1) (list-reverse '(1 2 3)))
-<function>(list->values &lt;list&gt;)</function>
-<macro>(values->list &lt;form&gt;)</macro>
-(fdef list->values (list)
-  (apply values list))
-
-(mdef values->list (form)
-  (list 'multiple-value-call 'list form))
-
-(test '(1 2 3) (values->list (list->values '(1 2 3))))
-<syntax>(_for-each &lt;function-form&gt; &lt;list-form&gt;)</syntax>
-#+(or cps oocps sboocps)
-(test
- '(3 2 1)
- (vlet ((acc '()))
-   (_for-each
-    (vlambda (x) (vset! acc (cons x acc)))
-    '(1 2 3))
-   acc))
+<nonprimitivefunction>(list-append $\list_1\ldots\list_n$)</nonprimitivefunction>
+<p>Each argument except the last must be a proper list. The last argument can be any object. Let $\list$ be a list whose elements are the elements of the first proper list from first to last followed by the elements of the second proper list from first to last followed by &#x2026; followed by the elements of the last proper list from first to last. If each argument is a proper list, then the function returns $\list$. Otherwise, if $\list$ is the empty list, then the function returns the last argument. Otherwise, the function returns $\list$ after setting the cdr of its last cons to the last argument.</p>
+<p>The function <code>list-append</code> is implemented in the bootstrapping section.</p>
+(test '() (list-append))
+(test 1 (list-append 1))
+(test '(1) (list-append '(1)))
+(test '(1 . 2) (list-append '(1) 2))
+(test '(1 . 2) (list-append '(1 . 2)))
+(test '(1 2) (list-append '(1 2)))
+(test '(1 2) (list-append '(1) '(2)))
+(test '(1 2 . 3) (list-append '(1 2) 3))
+(test '(1 2 . 3) (list-append '(1) '(2) 3))
+(test '(1 2 . 3) (list-append '(1 2 . 3)))
+(test '(1 2 . 3) (list-append '(1) '(2 . 3)))
+(test '(1 2 3) (list-append '(1 2 3)))
+(test '(1 2 3) (list-append '(1 2) '(3)))
+(test '(1 2 3) (list-append '(1) '(2 3)))
+(test '(1 2 3) (list-append '(1) '(2) '(3)))
 </section>
 <section>
-<title>Primitive Datatype <code>empty-list</code></title>
-<primitivefunction>(empty-list? &lt;object&gt;)</primitivefunction>
+<title>Primitive Data Type <code>empty-list</code></title>
+<primitivefunction>(empty-list? $\object$)</primitivefunction>
 (test #t (empty-list? '()))
 </section>
 <section>
-<title>Primitive Datatype <code>cons</code></title>
-<primitivefunction>(cons? &lt;object&gt;)</primitivefunction>
+<title>Primitive Data Type <code>cons</code></title>
+<primitivefunction>(cons? $\object$)</primitivefunction>
 (test #t (cons? '(1 2 3)))
-<primitivefunction>(cons &lt;object&gt; &lt;object&gt;)</primitivefunction>
+<primitivefunction>(cons $\object$ $\object$)</primitivefunction>
 (test '(1 2 3) (cons 1 (cons 2 (cons 3 '()))))
-<primitivefunction>(car &lt;cons&gt;)</primitivefunction>
-<primitivefunction>(cdr &lt;cons&gt;)</primitivefunction>
-<function>(caar &lt;cons&gt;)</function>
-<function>(cdar &lt;cons&gt;)</function>
-<function>(cadr &lt;cons&gt;)</function>
-<function>(cddr &lt;cons&gt;)</function>
-<function>(caaar &lt;cons&gt;)</function>
-<function>(cdaar &lt;cons&gt;)</function>
-<function>(cadar &lt;cons&gt;)</function>
-<function>(cddar &lt;cons&gt;)</function>
-<function>(caadr &lt;cons&gt;)</function>
-<function>(cdadr &lt;cons&gt;)</function>
-<function>(caddr &lt;cons&gt;)</function>
-<function>(cdddr &lt;cons&gt;)</function>
-<function>(caaaar &lt;cons&gt;)</function>
-<function>(cdaaar &lt;cons&gt;)</function>
-<function>(cadaar &lt;cons&gt;)</function>
-<function>(cddaar &lt;cons&gt;)</function>
-<function>(caadar &lt;cons&gt;)</function>
-<function>(cdadar &lt;cons&gt;)</function>
-<function>(caddar &lt;cons&gt;)</function>
-<function>(cdddar &lt;cons&gt;)</function>
-<function>(caaadr &lt;cons&gt;)</function>
-<function>(cdaadr &lt;cons&gt;)</function>
-<function>(cadadr &lt;cons&gt;)</function>
-<function>(cddadr &lt;cons&gt;)</function>
-<function>(caaddr &lt;cons&gt;)</function>
-<function>(cdaddr &lt;cons&gt;)</function>
-<function>(cadddr &lt;cons&gt;)</function>
-<function>(cddddr &lt;cons&gt;)</function>
-<!-- FIXME &hellip; -->
-<para>The functions <code>caar</code>, ..., <code>cddddr</code> are defined in the bootstrapping section.</para>
-<primitivefunction>(set-car! &lt;cons&gt; &lt;object&gt;)</primitivefunction>
-<primitivefunction>(set-cdr! &lt;cons&gt; &lt;object&gt;)</primitivefunction>
-<function>(set-caar! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-cdar! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-cadr! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-cddr! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-caaar! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-cdaar! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-cadar! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-cddar! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-caadr! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-cdadr! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-caddr! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-cdddr! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-caaaar! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-cdaaar! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-cadaar! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-cddaar! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-caadar! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-cdadar! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-caddar! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-cdddar! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-caaadr! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-cdaadr! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-cadadr! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-cddadr! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-caaddr! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-cdaddr! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-cadddr! &lt;cons&gt; &lt;object&gt;)</function>
-<function>(set-cddddr! &lt;cons&gt; &lt;object&gt;)</function>
-(fdef set-caar! (x y) (set-car! (car x) y))
-(fdef set-cdar! (x y) (set-cdr! (car x) y))
-(fdef set-cadr! (x y) (set-car! (cdr x) y))
-(fdef set-cddr! (x y) (set-cdr! (cdr x) y))
-(fdef set-caaar! (x y) (set-car! (caar x) y))
-(fdef set-cdaar! (x y) (set-cdr! (caar x) y))
-(fdef set-cadar! (x y) (set-car! (cdar x) y))
-(fdef set-cddar! (x y) (set-cdr! (cdar x) y))
-(fdef set-caadr! (x y) (set-car! (cadr x) y))
-(fdef set-cdadr! (x y) (set-cdr! (cadr x) y))
-(fdef set-caddr! (x y) (set-car! (cddr x) y))
-(fdef set-cdddr! (x y) (set-cdr! (cddr x) y))
-(fdef set-caaaar! (x y) (set-car! (caaar x) y))
-(fdef set-cdaaar! (x y) (set-cdr! (caaar x) y))
-(fdef set-cadaar! (x y) (set-car! (cdaar x) y))
-(fdef set-cddaar! (x y) (set-cdr! (cdaar x) y))
-(fdef set-caadar! (x y) (set-car! (cadar x) y))
-(fdef set-cdadar! (x y) (set-cdr! (cadar x) y))
-(fdef set-caddar! (x y) (set-car! (cddar x) y))
-(fdef set-cdddar! (x y) (set-cdr! (cddar x) y))
-(fdef set-caaadr! (x y) (set-car! (caadr x) y))
-(fdef set-cdaadr! (x y) (set-cdr! (caadr x) y))
-(fdef set-cadadr! (x y) (set-car! (cdadr x) y))
-(fdef set-cddadr! (x y) (set-cdr! (cdadr x) y))
-(fdef set-caaddr! (x y) (set-car! (caddr x) y))
-(fdef set-cdaddr! (x y) (set-cdr! (caddr x) y))
-(fdef set-cadddr! (x y) (set-car! (cdddr x) y))
-(fdef set-cddddr! (x y) (set-cdr! (cdddr x) y))
+<primitivefunction>(car $\cons$)</primitivefunction>
+<primitivefunction>(cdr $\cons$)</primitivefunction>
+<nonprimitivefunction>(caar $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(cdar $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(cadr $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(cddr $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(caaar $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(cdaar $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(cadar $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(cddar $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(caadr $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(cdadr $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(caddr $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(cdddr $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(caaaar $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(cdaaar $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(cadaar $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(cddaar $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(caadar $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(cdadar $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(caddar $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(cdddar $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(caaadr $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(cdaadr $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(cadadr $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(cddadr $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(caaddr $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(cdaddr $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(cadddr $\cons$)</nonprimitivefunction>
+<nonprimitivefunction>(cddddr $\cons$)</nonprimitivefunction>
+<p>The function <code>caar</code> returns the <code>car</code> of the <code>car</code> of $\cons$, &#x2026;, the function <code>cddddr</code> returns the <code>cdr</code> of the <code>cdr</code> of the <code>cdr</code> of the <code>cdr</code> of $\cons$.</p>
+<p>The functions <code>caar</code>, <code>cdar</code>, <code>cadr</code>, and <code>cddr</code> are implemented in the bootstrapping section.</p>
+(fdef caaar (cons) (car (car (car cons))))
+(fdef cdaar (cons) (cdr (car (car cons))))
+(fdef cadar (cons) (car (cdr (car cons))))
+(fdef cddar (cons) (cdr (cdr (car cons))))
+(fdef caadr (cons) (car (car (cdr cons))))
+(fdef cdadr (cons) (cdr (car (cdr cons))))
+(fdef caddr (cons) (car (cdr (cdr cons))))
+(fdef cdddr (cons) (cdr (cdr (cdr cons))))
+(fdef caaaar (cons) (car (car (car (car cons)))))
+(fdef cdaaar (cons) (cdr (car (car (car cons)))))
+(fdef cadaar (cons) (car (cdr (car (car cons)))))
+(fdef cddaar (cons) (cdr (cdr (car (car cons)))))
+(fdef caadar (cons) (car (car (cdr (car cons)))))
+(fdef cdadar (cons) (cdr (car (cdr (car cons)))))
+(fdef caddar (cons) (car (cdr (cdr (car cons)))))
+(fdef cdddar (cons) (cdr (cdr (cdr (car cons)))))
+(fdef caaadr (cons) (car (car (car (cdr cons)))))
+(fdef cdaadr (cons) (cdr (car (car (cdr cons)))))
+(fdef cadadr (cons) (car (cdr (car (cdr cons)))))
+(fdef cddadr (cons) (cdr (cdr (car (cdr cons)))))
+(fdef caaddr (cons) (car (car (cdr (cdr cons)))))
+(fdef cdaddr (cons) (cdr (car (cdr (cdr cons)))))
+(fdef cadddr (cons) (car (cdr (cdr (cdr cons)))))
+(fdef cddddr (cons) (cdr (cdr (cdr (cdr cons)))))
+<primitivefunction>(set-car! $\cons$ $\object$)</primitivefunction>
+<primitivefunction>(set-cdr! $\cons$ $\object$)</primitivefunction>
+<nonprimitivefunction>(set-caar! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-cdar! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-cadr! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-cddr! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-caaar! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-cdaar! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-cadar! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-cddar! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-caadr! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-cdadr! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-caddr! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-cdddr! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-caaaar! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-cdaaar! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-cadaar! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-cddaar! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-caadar! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-cdadar! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-caddar! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-cdddar! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-caaadr! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-cdaadr! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-cadadr! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-cddadr! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-caaddr! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-cdaddr! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-cadddr! $\cons$ $\object$)</nonprimitivefunction>
+<nonprimitivefunction>(set-cddddr! $\cons$ $\object$)</nonprimitivefunction>
+<p>The function <code>set-caar!</code> sets the <code>car</code> of the <code>car</code> of $\cons$ to $\object$, &#x2026;, the function <code>set-cddddr!</code> sets the <code>cdr</code> of the <code>cdr</code> of the <code>cdr</code> of the <code>cdr</code> of $\cons$ to $\object$.</p>
+(fdef set-caar! (cons object) (set-car! (car cons) object))
+(fdef set-cdar! (cons object) (set-cdr! (car cons) object))
+(fdef set-cadr! (cons object) (set-car! (cdr cons) object))
+(fdef set-cddr! (cons object) (set-cdr! (cdr cons) object))
+(fdef set-caaar! (cons object) (set-car! (caar cons) object))
+(fdef set-cdaar! (cons object) (set-cdr! (caar cons) object))
+(fdef set-cadar! (cons object) (set-car! (cdar cons) object))
+(fdef set-cddar! (cons object) (set-cdr! (cdar cons) object))
+(fdef set-caadr! (cons object) (set-car! (cadr cons) object))
+(fdef set-cdadr! (cons object) (set-cdr! (cadr cons) object))
+(fdef set-caddr! (cons object) (set-car! (cddr cons) object))
+(fdef set-cdddr! (cons object) (set-cdr! (cddr cons) object))
+(fdef set-caaaar! (cons object) (set-car! (caaar cons) object))
+(fdef set-cdaaar! (cons object) (set-cdr! (caaar cons) object))
+(fdef set-cadaar! (cons object) (set-car! (cdaar cons) object))
+(fdef set-cddaar! (cons object) (set-cdr! (cdaar cons) object))
+(fdef set-caadar! (cons object) (set-car! (cadar cons) object))
+(fdef set-cdadar! (cons object) (set-cdr! (cadar cons) object))
+(fdef set-caddar! (cons object) (set-car! (cddar cons) object))
+(fdef set-cdddar! (cons object) (set-cdr! (cddar cons) object))
+(fdef set-caaadr! (cons object) (set-car! (caadr cons) object))
+(fdef set-cdaadr! (cons object) (set-cdr! (caadr cons) object))
+(fdef set-cadadr! (cons object) (set-car! (cdadr cons) object))
+(fdef set-cddadr! (cons object) (set-cdr! (cdadr cons) object))
+(fdef set-caaddr! (cons object) (set-car! (caddr cons) object))
+(fdef set-cdaddr! (cons object) (set-cdr! (caddr cons) object))
+(fdef set-cadddr! (cons object) (set-car! (cdddr cons) object))
+(fdef set-cddddr! (cons object) (set-cdr! (cdddr cons) object))
 
 (fdef test-cr ()
   (cons
@@ -1189,56 +1754,98 @@
      (cons #v #v)
      (cons #v #v)))))
 
-(test 'x (vlet ((tree (test-cr))) (set-car! tree 'x) (car tree)))
-(test 'x (vlet ((tree (test-cr))) (set-cdr! tree 'x) (cdr tree)))
-(test 'x (vlet ((tree (test-cr))) (set-caar! tree 'x) (caar tree)))
-(test 'x (vlet ((tree (test-cr))) (set-cdar! tree 'x) (cdar tree)))
-(test 'x (vlet ((tree (test-cr))) (set-cadr! tree 'x) (cadr tree)))
-(test 'x (vlet ((tree (test-cr))) (set-cddr! tree 'x) (cddr tree)))
-(test 'x (vlet ((tree (test-cr))) (set-caaar! tree 'x) (caaar tree)))
-(test 'x (vlet ((tree (test-cr))) (set-cdaar! tree 'x) (cdaar tree)))
-(test 'x (vlet ((tree (test-cr))) (set-cadar! tree 'x) (cadar tree)))
-(test 'x (vlet ((tree (test-cr))) (set-cddar! tree 'x) (cddar tree)))
-(test 'x (vlet ((tree (test-cr))) (set-caadr! tree 'x) (caadr tree)))
-(test 'x (vlet ((tree (test-cr))) (set-cdadr! tree 'x) (cdadr tree)))
-(test 'x (vlet ((tree (test-cr))) (set-caddr! tree 'x) (caddr tree)))
-(test 'x (vlet ((tree (test-cr))) (set-cdddr! tree 'x) (cdddr tree)))
-(test 'x (vlet ((tree (test-cr))) (set-caaaar! tree 'x) (caaaar tree)))
-(test 'x (vlet ((tree (test-cr))) (set-cdaaar! tree 'x) (cdaaar tree)))
-(test 'x (vlet ((tree (test-cr))) (set-cadaar! tree 'x) (cadaar tree)))
-(test 'x (vlet ((tree (test-cr))) (set-cddaar! tree 'x) (cddaar tree)))
-(test 'x (vlet ((tree (test-cr))) (set-caadar! tree 'x) (caadar tree)))
-(test 'x (vlet ((tree (test-cr))) (set-cdadar! tree 'x) (cdadar tree)))
-(test 'x (vlet ((tree (test-cr))) (set-caddar! tree 'x) (caddar tree)))
-(test 'x (vlet ((tree (test-cr))) (set-cdddar! tree 'x) (cdddar tree)))
-(test 'x (vlet ((tree (test-cr))) (set-caaadr! tree 'x) (caaadr tree)))
-(test 'x (vlet ((tree (test-cr))) (set-cdaadr! tree 'x) (cdaadr tree)))
-(test 'x (vlet ((tree (test-cr))) (set-cadadr! tree 'x) (cadadr tree)))
-(test 'x (vlet ((tree (test-cr))) (set-cddadr! tree 'x) (cddadr tree)))
-(test 'x (vlet ((tree (test-cr))) (set-caaddr! tree 'x) (caaddr tree)))
-(test 'x (vlet ((tree (test-cr))) (set-cdaddr! tree 'x) (cdaddr tree)))
-(test 'x (vlet ((tree (test-cr))) (set-cadddr! tree 'x) (cadddr tree)))
-(test 'x (vlet ((tree (test-cr))) (set-cddddr! tree 'x) (cddddr tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-car! tree 'foo) (car tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-cdr! tree 'foo) (cdr tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-caar! tree 'foo) (caar tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-cdar! tree 'foo) (cdar tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-cadr! tree 'foo) (cadr tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-cddr! tree 'foo) (cddr tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-caaar! tree 'foo) (caaar tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-cdaar! tree 'foo) (cdaar tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-cadar! tree 'foo) (cadar tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-cddar! tree 'foo) (cddar tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-caadr! tree 'foo) (caadr tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-cdadr! tree 'foo) (cdadr tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-caddr! tree 'foo) (caddr tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-cdddr! tree 'foo) (cdddr tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-caaaar! tree 'foo) (caaaar tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-cdaaar! tree 'foo) (cdaaar tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-cadaar! tree 'foo) (cadaar tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-cddaar! tree 'foo) (cddaar tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-caadar! tree 'foo) (caadar tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-cdadar! tree 'foo) (cdadar tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-caddar! tree 'foo) (caddar tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-cdddar! tree 'foo) (cdddar tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-caaadr! tree 'foo) (caaadr tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-cdaadr! tree 'foo) (cdaadr tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-cadadr! tree 'foo) (cadadr tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-cddadr! tree 'foo) (cddadr tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-caaddr! tree 'foo) (caaddr tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-cdaddr! tree 'foo) (cdaddr tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-cadddr! tree 'foo) (cadddr tree)))
+(test 'foo (vlet ((tree (test-cr))) (set-cddddr! tree 'foo) (cddddr tree)))
 </section>
 <section>
-<title>Primitive Datatype <code>vector</code></title>
-<primitivefunction>(vector? &lt;object&gt;)</primitivefunction>
+<title>Primitive Data Type <code>vector</code></title>
+<primitivefunction>(vector? $\object$)</primitivefunction>
 (test #t (vector? #(1 2 3)))
+<primitivefunction>(make-vector $\number$ $\object$)</primitivefunction>
+(test
+ '(3 #f #v)
+ (vlet ((vector
+         (make-vector 3)))
+   (list
+    (vector-length vector)
+    (vector-bound? vector 1)
+    (vector-ref vector 1))))
+
+(test
+ '(3 #t #v)
+ (vlet ((vector
+         (make-vector 3 #v)))
+   (list
+    (vector-length vector)
+    (vector-bound? vector 1)
+    (vector-ref vector 1))))
+<primitivefunction>(vector-length $\vector$)</primitivefunction>
+(test 3 (vector-length #(1 2 3)))
+<primitivefunction>(vector-ref $\vector$ $\number$)</primitivefunction>
+<primitivefunction>(vector-set! $\vector$ $\number$ $\object$)</primitivefunction>
+<primitivefunction>(vector-bound? $\vector$ $\number$)</primitivefunction>
+<primitivefunction>(vector-unbind! $\vector$ $\number$)</primitivefunction>
+(test
+ '(#f #v :foo #t :foo #v #f #v)
+ (vlet ((vector
+         (make-vector 3)))
+   (list
+    (vector-bound? vector 1)
+    (vector-ref vector 1)
+    (vector-set! vector 1 :foo)
+    (vector-bound? vector 1)
+    (vector-ref vector 1)
+    (vector-unbind! vector 1)
+    (vector-bound? vector 1)
+    (vector-ref vector 1))))
 </section>
 <section>
-<title>Primitive Datatype <code>function</code></title>
-<primitivefunction>(function? &lt;object&gt;)</primitivefunction>
+<title>Primitive Data Type <code>function</code></title>
+<primitivefunction>(function? $\object$)</primitivefunction>
 (test #t (function? (fref eq?)))
 (test #t (function? (fref equal?)))
 </section>
 <section>
-<title>Primitive Datatype <code>primitive-function</code></title>
-<primitivefunction>(primitive-function? &lt;object&gt;)</primitivefunction>
+<title>Primitive Data Type <code>primitive-function</code></title>
+<primitivefunction>(primitive-function? $\object$)</primitivefunction>
 (test #t (primitive-function? (fref eq?)))
 </section>
 <section>
-<title>Primitive Datatype <code>closure</code></title>
-<primitivefunction>(closure? &lt;object&gt;)</primitivefunction>
+<title>Primitive Data Type <code>closure</code></title>
+<primitivefunction>(closure? $\object$)</primitivefunction>
 (test #t (closure? (fref equal?)))
+</section>
+<section>
+<title>Miscellaneous</title>
+<primitivefunction>(now)</primitivefunction>
+(test #t (number? (now)))
 </section>
 </chapter>

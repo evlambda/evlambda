@@ -120,7 +120,7 @@ function makeRouter(fileSystem, options) {
   router.get('/get-file-contents', (req, res) => {
     res.send(fileSystem.getFileContents(validatePathnameParameter(req.query.pathname), options));
   });
-  router.put('/put-file-contents', express.raw({limit: '200kb'}), (req, res) => {
+  router.put('/put-file-contents', express.raw({limit: '250kb'}), (req, res) => {
     fileSystem.putFileContents(validatePathnameParameter(req.query.pathname), req.body, options);
     res.end();
   });

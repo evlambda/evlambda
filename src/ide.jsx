@@ -191,10 +191,10 @@ class AllCapsBuffer extends FileBuffer {
     return html();
   }
   toggleOnHTMLMode(ide, window) {
-    const css = findFileBuffer(ide.buffers, '/system/all-caps.css').transaction.state.sliceDoc();
+    const css = findFileBuffer(ide.buffers, '/system/common.css').transaction.state.sliceDoc();
     const cssBlob = new Blob([css], {type: 'text/css'});
     const cssURL = URL.createObjectURL(cssBlob);
-    const js = findFileBuffer(ide.buffers, '/system/all-caps.js').transaction.state.sliceDoc();
+    const js = findFileBuffer(ide.buffers, '/system/common.js').transaction.state.sliceDoc();
     const jsBlob = new Blob([js], {type: 'text/javascript'});
     const jsURL = URL.createObjectURL(jsBlob);
     const state = this.transaction.state;
@@ -219,10 +219,10 @@ class EVLBuffer extends FileBuffer {
   }
   toggleOnHTMLMode(ide, window) {
     const xslt = findFileBuffer(ide.buffers, '/system/evl2html.xslt').transaction.state.sliceDoc();
-    const css = findFileBuffer(ide.buffers, '/system/evl2html.css').transaction.state.sliceDoc();
+    const css = findFileBuffer(ide.buffers, '/system/common.css').transaction.state.sliceDoc();
     const cssBlob = new Blob([css], {type: 'text/css'});
     const cssURL = URL.createObjectURL(cssBlob);
-    const js = findFileBuffer(ide.buffers, '/system/evl2html.js').transaction.state.sliceDoc();
+    const js = findFileBuffer(ide.buffers, '/system/common.js').transaction.state.sliceDoc();
     const jsBlob = new Blob([js], {type: 'text/javascript'});
     const jsURL = URL.createObjectURL(jsBlob);
     const state = this.transaction.state;
@@ -1234,11 +1234,9 @@ init([
   'IMPLEMENTATION-NOTES',
   'BIBLIOGRAPHY',
   'LICENSE',
-  'all-caps.css',
-  'all-caps.js',
   'core.js',
+  'mantle.evl',
   'evl2html.xslt',
-  'evl2html.css',
-  'evl2html.js',
-  'mantle.evl'
+  'common.css',
+  'common.js'
 ]);

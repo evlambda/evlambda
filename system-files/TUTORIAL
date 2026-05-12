@@ -14,128 +14,113 @@
     <p>The tutorial provides an introduction to writing programs. It builds on the contents of the user manual, particularly the sections &ldquo;Programming Language&rdquo; and &ldquo;Listener Buffers&rdquo;.</p>
     <h2>Building Blocks</h2>
     <p>This section introduces the global functions and macros that will be used in the tutorial. Some global functions and macros are included for the sake of completeness and will not actually be used in the tutorial.</p>
-    <p>In template function calls, argument names imply the following type restrictions:</p>
-    <ul>
-      <li>Arguments named $\object$, with or without a subscript, can be of any type.</li>
-      <li>Arguments named $\boolean$, with or without a subscript, must be of type <code>boolean</code>.</li>
-      <li>Arguments named $\number$, with or without a subscript, must be of type <code>number</code>.</li>
-      <li>Arguments named $\cons$, with or without a subscript, must be of type <code>cons</code>.</li>
-    </ul>
-    <p>In template macro calls, names enclosed in angle brackets have the following meanings:</p>
-    <ul>
-      <li>$\metavar{test-forms}$ matches any sequence of zero or more objects</li>
-      <li>$\metavar{variable}$ matches any variable</li>
-      <li>$\metavar{value-form}$ matches any object</li>
-      <li>$\metavar{parameter-list}$ matches any list of distinct variables</li>
-      <li>$\metavar{body}$ matches any sequence of zero or more objects</li>
-    </ul>
     <p>It is customary for a function or macro that tests a condition and returns a boolean to have a name ending with a question mark. This rule has some notable exceptions, though.</p>
     <h3>Data Type <code>boolean</code></h3>
     <dl>
-      <dt><code>(not $\boolean$)</code></dt>
+      <dt><code>(not $\boolean$)</code> &DoubleRightArrow; $\boolean$</dt>
       <dd>The function returns <code>#t</code> if $\boolean$ is <code>#f</code> and <code>#f</code> if $\boolean$ is <code>#t</code>.</dd>
     </dl>
     <pre class="repl">&gt; (not #t)<br>#f<br><br>&gt; (not #f)<br>#t</pre>
+    <p>In the following two template macro calls, $\metavar{test-forms}$ matches any sequence of zero or more objects.</p>
     <dl>
       <dt><code>(and $\metavar{test-forms}$)</code></dt>
-      <dd>The macro returns <code>#t</code> if all its arguments are <code>#t</code> and <code>#f</code> otherwise. The exact behavior of the macro is as follows: The macro evaluates the test-forms in sequence from left to right. If a test-form evaluates to an object that is not a boolean, then the following test-forms are not evaluated and the evaluation of the macro call completes abruptly for a reason of type <code>error</code>.  If a test-form evaluates to <code>#f</code>, then the following test-forms are not evaluated and the macro call evaluates to <code>#f</code>. If all test-forms evaluate to <code>#t</code>, then the macro call evaluates to <code>#t</code>. Note that the previous condition is automatically satisfied if there are no test-forms.</dd>
+      <dd>The macro returns <code>#t</code> if all its arguments are <code>#t</code> and <code>#f</code> otherwise. The exact behavior of the macro is as follows: The test forms are evaluated in sequence from left to right. If a test form evaluates to an object that is not a boolean, then the following test forms are not evaluated and the evaluation of the macro call completes abruptly for a reason of type <code>error</code>. If a test form evaluates to <code>#f</code>, then the following test forms are not evaluated and the macro call evaluates to <code>#f</code>. If all test forms evaluate to <code>#t</code>, then the macro call evaluates to <code>#t</code>. Note that the previous condition is automatically satisfied if there are no test forms.</dd>
     </dl>
     <pre class="repl">&gt; (and)<br>#t<br><br>&gt; (and #t)<br>#t<br><br>&gt; (and #f)<br>#f<br><br>&gt; (and #t #t)<br>#t<br><br>&gt; (and #t #f)<br>#f<br><br>&gt; (and #f #t)<br>#f<br><br>&gt; (and #f #f)<br>#f</pre>
     <dl>
       <dt><code>(or $\metavar{test-forms}$)</code></dt>
-      <dd>The macro returns <code>#f</code> if all its arguments are <code>#f</code> and <code>#t</code> otherwise. The exact behavior of the macro is as follows: The macro evaluates the test-forms in sequence from left to right. If a test-form evaluates to an object that is not a boolean, then the following test-forms are not evaluated and the evaluation of the macro call completes abruptly for a reason of type <code>error</code>.  If a test-form evaluates to <code>#t</code>, then the following test-forms are not evaluated and the macro call evaluates to <code>#t</code>. If all test-forms evaluate to <code>#f</code>, then the macro call evaluates to <code>#f</code>. Note that the previous condition is automatically satisfied if there are no test-forms.</dd>
+      <dd>The macro returns <code>#f</code> if all its arguments are <code>#f</code> and <code>#t</code> otherwise. The exact behavior of the macro is as follows: The test forms are evaluated in sequence from left to right. If a test form evaluates to an object that is not a boolean, then the following test forms are not evaluated and the evaluation of the macro call completes abruptly for a reason of type <code>error</code>. If a test form evaluates to <code>#t</code>, then the following test forms are not evaluated and the macro call evaluates to <code>#t</code>. If all test forms evaluate to <code>#f</code>, then the macro call evaluates to <code>#f</code>. Note that the previous condition is automatically satisfied if there are no test forms.</dd>
     </dl>
     <pre class="repl">&gt; (or)<br>#f<br><br>&gt; (or #t)<br>#t<br><br>&gt; (or #f)<br>#f<br><br>&gt; (or #t #t)<br>#t<br><br>&gt; (or #t #f)<br>#t<br><br>&gt; (or #f #t)<br>#t<br><br>&gt; (or #f #f)<br>#f</pre>
-    <p>When we say that a macro does this and that, what we really mean is that the expansion of the macro does this and that. In the case of the macros <code>and</code> and <code>or</code>, it is their expansions that evaluate the test-forms in sequence from left to right, etc.</p>
-    <p>The macros <code>and</code> and <code>or</code> stop evaluating their operands as soon as they can determine that the result of the macro call is definitively true or definitively false. This short-circuiting behavior is possible only because <code>and</code> and <code>or</code> are macros. When a function call is evaluated, all the operand-forms are always evaluated (unless the evaluation of the operator-form completes abruptly or does not complete, the primary value of the operator-form is not a function, or the evaluation of one of the operand-forms other than the last one completes abruptly or does not complete).</p>
+    <p>The macros <code>and</code> and <code>or</code> stop evaluating the test forms as soon as they can determine that the result of the macro call is definitively true or definitively false. This short-circuiting behavior is possible only because <code>and</code> and <code>or</code> are macros. When a function call is evaluated, all the operand forms are always evaluated (unless the evaluation of the operator form completes abruptly or does not complete, the primary value of the operator form is not a function, or the evaluation of one of the operand forms other than the last one completes abruptly or does not complete).</p>
     <p>Here are two expansions illustrating the implementations of the macros <code>and</code> and <code>or</code>:</p>
     <ul>
-      <li><code>(and $\metavarn{test-form}{1}$ $\metavarn{test-form}{2}$ $\metavarn{test-form}{3}$)</code> expands into<br><code>(if $\metavarn{test-form}{1}$ (if $\metavarn{test-form}{2}$ (if $\metavarn{test-form}{3}$ #t #f) #f) #f)</code></li>
-      <li><code>(or $\metavarn{test-form}{1}$ $\metavarn{test-form}{2}$ $\metavarn{test-form}{3}$)</code> expands into<br><code>(if $\metavarn{test-form}{1}$ #t (if $\metavarn{test-form}{2}$ #t (if $\metavarn{test-form}{3}$ #t #f)))</code></li>
+      <li><code>(and $\metavar{test-form}_1$ $\metavar{test-form}_2$ $\metavar{test-form}_3$)</code> expands into<br><code>(if $\metavar{test-form}_1$ (if $\metavar{test-form}_2$ (if $\metavar{test-form}_3$ #t #f) #f) #f)</code></li>
+      <li><code>(or $\metavar{test-form}_1$ $\metavar{test-form}_2$ $\metavar{test-form}_3$)</code> expands into<br><code>(if $\metavar{test-form}_1$ #t (if $\metavar{test-form}_2$ #t (if $\metavar{test-form}_3$ #t #f)))</code></li>
     </ul>
     <p>The name of the function <code>not</code> and the names of the macros <code>and</code> and <code>or</code> do not end with a question mark because the function and the macros do not really test a condition. Instead, they combine booleans (they are boolean operators).</p>
     <h3>Data Type <code>number</code></h3>
     <h4>Arithmetic Operators</h4>
     <dl>
-      <dt><code>(+ $\number_1\ldots\number_n$)</code></dt>
-      <dd>If the function is invoked on zero numbers, then the number <code>0</code> is returned. If the function is invoked on one number, then that number is returned. If the function is invoked on more than one number, then the result of adding those numbers from left to right is returned: the second number is added to the first number, then the third number is added to the partial result just computed, &hellip; The function is a closure built on top of the primitive function <code>_+</code>, which must be invoked on exactly two numbers.</dd>
+      <dt><code>(+ $\number_1\ldots\number_n$)</code> &DoubleRightArrow; $\number$</dt>
+      <dd>If the function is invoked on zero numbers, then the number <code>0</code> is returned. If the function is invoked on one number, then that number is returned. If the function is invoked on more than one number, then the result of adding those numbers from left to right is returned: the second number is added to the first number, then the third number is added to the partial result just computed, &hellip; The function <code>+</code> is a nonprimitive function built on top of the primitive function <code>_+</code>, which must be invoked on exactly two numbers.</dd>
     </dl>
     <pre class="repl">&gt; (+)<br>0<br><br>&gt; (+ 1)<br>1<br><br>&gt; (+ 1 2)<br>3<br><br>&gt; (+ 1 2 3)<br>6</pre>
     <dl>
-      <dt><code>(- $\number_1\ldots\number_n$)</code></dt>
-      <dd>If the function is invoked on zero numbers, then the invocation completes abruptly for a reason of type <code>error</code>. If the function is invoked on one number, then the opposite of that number is returned. If the function is invoked on more than one number, then the result of subtracting those numbers from left to right is returned: the second number is subtracted from the first number, then the third number is subtracted from the partial result just computed, &hellip; The function is a closure built on top of the primitive function <code>_-</code>, which must be invoked on exactly two numbers.</dd>
+      <dt><code>(- $\number_1\ldots\number_n$)</code> &DoubleRightArrow; $\number$</dt>
+      <dd>If the function is invoked on zero numbers, then the invocation completes abruptly for a reason of type <code>error</code>. If the function is invoked on one number, then the opposite of that number is returned. If the function is invoked on more than one number, then the result of subtracting those numbers from left to right is returned: the second number is subtracted from the first number, then the third number is subtracted from the partial result just computed, &hellip; The function <code>-</code> is a nonprimitive function built on top of the primitive function <code>_-</code>, which must be invoked on exactly two numbers.</dd>
     </dl>
-    <pre class="repl">&gt; (-)<br>ERROR: Expecting at least one number.<br><br>&gt; (- 1)<br>-1<br><br>&gt; (- 0 1)<br>-1<br><br>&gt; (- 0 1 2)<br>-3<br><br>&gt; (- 0 1 2 3)<br>-6</pre>
+    <pre class="repl">&gt; (-)<br>EvaluatorError: program-error: Expecting at least one number.<br><br>&gt; (- 1)<br>-1<br><br>&gt; (- 0 1)<br>-1<br><br>&gt; (- 0 1 2)<br>-3<br><br>&gt; (- 0 1 2 3)<br>-6</pre>
     <dl>
-      <dt><code>(* $\number_1\ldots\number_n$)</code></dt>
-      <dd>If the function is invoked on zero numbers, then the number <code>1</code> is returned. If the function is invoked on one number, then that number is returned. If the function is invoked on more than one number, then the result of multiplying those numbers from left to right is returned: the first number is multiplied by the second number, then the partial result just computed is multiplied by the third number, &hellip; The function is a closure built on top of the primitive function <code>_*</code>, which must be invoked on exactly two numbers.</dd>
+      <dt><code>(* $\number_1\ldots\number_n$)</code> &DoubleRightArrow; $\number$</dt>
+      <dd>If the function is invoked on zero numbers, then the number <code>1</code> is returned. If the function is invoked on one number, then that number is returned. If the function is invoked on more than one number, then the result of multiplying those numbers from left to right is returned: the first number is multiplied by the second number, then the partial result just computed is multiplied by the third number, &hellip; The function <code>*</code> is a nonprimitive function built on top of the primitive function <code>_*</code>, which must be invoked on exactly two numbers.</dd>
     </dl>
     <pre class="repl">&gt; (*)<br>1<br><br>&gt; (* 2)<br>2<br><br>&gt; (* 2 4)<br>8<br><br>&gt; (* 2 4 8)<br>64</pre>
     <dl>
-      <dt><code>(/ $\number_1\ldots\number_n$)</code></dt>
-      <dd>If the function is invoked on zero numbers, then the invocation completes abruptly for a reason of type <code>error</code>. If the function is invoked on one number, then the inverse of that number is returned. If the function is invoked on more than one number, then the result of dividing those numbers from left to right is returned: the first number is divided by the second number, then the partial result just computed is divided by the third number, &hellip; The function is a closure built on top of the primitive function <code>_/</code>, which must be invoked on exactly two numbers.</dd>
+      <dt><code>(/ $\number_1\ldots\number_n$)</code> &DoubleRightArrow; $\number$</dt>
+      <dd>If the function is invoked on zero numbers, then the invocation completes abruptly for a reason of type <code>error</code>. If the function is invoked on one number, then the inverse of that number is returned. If the function is invoked on more than one number, then the result of dividing those numbers from left to right is returned: the first number is divided by the second number, then the partial result just computed is divided by the third number, &hellip; The function <code>/</code> is a nonprimitive function built on top of the primitive function <code>_/</code>, which must be invoked on exactly two numbers.</dd>
     </dl>
-    <pre class="repl">&gt; (/)<br>ERROR: Expecting at least one number.<br><br>&gt; (/ 2)<br>0.5<br><br>&gt; (/ 1 2)<br>0.5<br><br>&gt; (/ 1 2 4)<br>0.125<br><br>&gt; (/ 1 2 4 8)<br>0.015625</pre>
+    <pre class="repl">&gt; (/)<br>EvaluatorError: program-error: Expecting at least one number.<br><br>&gt; (/ 2)<br>0.5<br><br>&gt; (/ 1 2)<br>0.5<br><br>&gt; (/ 1 2 4)<br>0.125<br><br>&gt; (/ 1 2 4 8)<br>0.015625</pre>
     <h4>Comparison Operators</h4>
     <dl>
-      <dt><code>(= $\number_1$ $\number_2$)</code></dt>
+      <dt><code>(= $\number_1$ $\number_2$)</code> &DoubleRightArrow; $\boolean$</dt>
       <dd>The function returns <code>#t</code> if $\number_1$ and $\number_2$ are numerically equal and <code>#f</code> otherwise.</dd>
-      <dt><code>(/= $\number_1$ $\number_2$)</code></dt>
+      <dt><code>(/= $\number_1$ $\number_2$)</code> &DoubleRightArrow; $\boolean$</dt>
       <dd>The function returns <code>#t</code> if $\number_1$ and $\number_2$ are numerically different and <code>#f</code> otherwise.</dd>
-      <dt><code>(&lt; $\number_1$ $\number_2$)</code></dt>
+      <dt><code>(&lt; $\number_1$ $\number_2$)</code> &DoubleRightArrow; $\boolean$</dt>
       <dd>The function returns <code>#t</code> if $\number_1$ is numerically less than $\number_2$ and <code>#f</code> otherwise.</dd>
-      <dt><code>(&lt;= $\number_1$ $\number_2$)</code></dt>
+      <dt><code>(&lt;= $\number_1$ $\number_2$)</code> &DoubleRightArrow; $\boolean$</dt>
       <dd>The function returns <code>#t</code> if $\number_1$ is numerically less than or equal to $\number_2$ and <code>#f</code> otherwise.</dd>
-      <dt><code>(&gt; $\number_1$ $\number_2$)</code></dt>
+      <dt><code>(&gt; $\number_1$ $\number_2$)</code> &DoubleRightArrow; $\boolean$</dt>
       <dd>The function returns <code>#t</code> if $\number_1$ is numerically greater than $\number_2$ and <code>#f</code> otherwise.</dd>
-      <dt><code>(&gt;= $\number_1$ $\number_2$)</code></dt>
+      <dt><code>(&gt;= $\number_1$ $\number_2$)</code> &DoubleRightArrow; $\boolean$</dt>
       <dd>The function returns <code>#t</code> if $\number_1$ is numerically greater than or equal to $\number_2$ and <code>#f</code> otherwise.</dd>
     </dl>
     <pre class="repl">&gt; (list (= -1 0) (= 0 0) (= 1 0))<br>(#f #t #f)<br><br>&gt; (list (/= -1 0) (/= 0 0) (/= 1 0))<br>(#t #f #t)<br><br>&gt; (list (&lt; -1 0) (&lt; 0 0) (&lt; 1 0))<br>(#t #f #f)<br><br>&gt; (list (&lt;= -1 0) (&lt;= 0 0) (&lt;= 1 0))<br>(#t #t #f)<br><br>&gt; (list (&gt; -1 0) (&gt; 0 0) (&gt; 1 0))<br>(#f #f #t)<br><br>&gt; (list (&gt;= -1 0) (&gt;= 0 0) (&gt;= 1 0))<br>(#f #t #t)</pre>
     <p>The names of the comparison operators do not end with a question mark because they traditionally do not (in mathematics and other programming languages).</p>
     <h3>Data Type <code>list</code></h3>
     <dl>
-      <dt><code>(list? $\object$)</code></dt>
+      <dt><code>(list? $\object$)</code> &DoubleRightArrow; $\boolean$</dt>
       <dd>The function returns <code>#t</code> if $\object$ is of type <code>list</code> and <code>#f</code> otherwise.</dd>
     </dl>
     <pre class="repl">&gt; (list? '())<br>#t<br><br>&gt; (list? '(1 2 3))<br>#t</pre>
     <dl>
-      <dt><code>(list $\object_1\ldots\object_n$)</code></dt>
+      <dt><code>(list $\object_1\ldots\object_n$)</code> &DoubleRightArrow; $\list$</dt>
       <dd>The function collects its arguments into a list: when invoked on the arguments $\object_1,\ldots,\object_n$, the function returns a list whose elements are $\object_1,\ldots,\object_n$.</dd>
     </dl>
     <pre class="repl">&gt; (list)<br>()<br><br>&gt; (list 1 2 3)<br>(1 2 3)</pre>
     <h3>Data Type <code>empty-list</code></h3>
     <dl>
-      <dt><code>(empty-list? $\object$)</code></dt>
+      <dt><code>(empty-list? $\object$)</code> &DoubleRightArrow; $\boolean$</dt>
       <dd>The function returns <code>#t</code> if $\object$ is of type <code>empty-list</code> and <code>#f</code> otherwise.</dd>
     </dl>
     <pre class="repl">&gt; (empty-list? '())<br>#t<br><br>&gt; (empty-list? '(1 2 3))<br>#f</pre>
     <h3>Data Type <code>cons</code></h3>
     <dl>
-      <dt><code>(cons? $\object$)</code></dt>
+      <dt><code>(cons? $\object$)</code> &DoubleRightArrow; $\boolean$</dt>
       <dd>The function returns <code>#t</code> if $\object$ is of type <code>cons</code> and <code>#f</code> otherwise.</dd>
     </dl>
     <pre class="repl">&gt; (cons? '())<br>#f<br><br>&gt; (cons? '(1 2 3))<br>#t</pre>
     <dl>
-      <dt><code>(cons $\object_1$ $\object_2$)</code></dt>
+      <dt><code>(cons $\object_1$ $\object_2$)</code> &DoubleRightArrow; $\cons$</dt>
       <dd>The function returns a new cons whose first element is $\object_1$ and whose second element is $\object_2$.</dd>
     </dl>
     <pre class="repl">&gt; (cons 3 '())<br>(3)<br><br>&gt; (cons 2 (cons 3 '()))<br>(2 3)<br><br>&gt; (cons 1 (cons 2 (cons 3 '())))<br>(1 2 3)</pre>
     <dl>
-      <dt><code>(car $\cons$)</code></dt>
+      <dt><code>(car $\cons$)</code> &DoubleRightArrow; $\object$</dt>
       <dd>The function returns the first element of $\cons$.</dd>
-      <dt><code>(cdr $\cons$)</code></dt>
+      <dt><code>(cdr $\cons$)</code> &DoubleRightArrow; $\object$</dt>
       <dd>The function returns the second element of $\cons$.</dd>
     </dl>
     <pre class="repl">&gt; (car '(1 2 3))<br>1<br><br>&gt; (cdr '(1 2 3))<br>(2 3)<br><br>&gt; (car (cdr '(1 2 3)))<br>2<br><br>&gt; (cdr (cdr '(1 2 3)))<br>(3)<br><br>&gt; (car (cdr (cdr '(1 2 3))))<br>3<br><br>&gt; (cdr (cdr (cdr '(1 2 3))))<br>()</pre>
     <h3>Equality Predicates</h3>
     <p>The purpose of an equality predicate is to test the sameness of two objects. An equality predicate returns <code>#t</code> if the two objects are the same and <code>#f</code> otherwise. Because there are multiple notions of sameness, there are multiple equality predicates. The three main equality predicates are <code>eq?</code>, <code>eql?</code>, and <code>equal?</code>.</p>
     <dl>
-      <dt><code>(eq? $\object_1$ $\object_2$)</code></dt>
+      <dt><code>(eq? $\object_1$ $\object_2$)</code> &DoubleRightArrow; $\boolean$</dt>
       <dd>The function returns <code>#t</code> if and only if the two objects are one and the same. In other words, the function returns <code>#t</code> if and only if the two objects have the same address in the heap.</dd>
-      <dt><code>(eql? $\object_1$ $\object_2$)</code></dt>
+      <dt><code>(eql? $\object_1$ $\object_2$)</code> &DoubleRightArrow; $\boolean$</dt>
       <dd>If both objects are of type <code>number</code>, then the function returns <code>#t</code> if and only if the two objects represent the same mathematical number. Otherwise, if both objects are of type <code>character</code>, then the function returns <code>#t</code> if and only if the two objects represent the same Unicode character. Otherwise, if both objects are of type <code>string</code>, then the function returns <code>#t</code> if and only if the two objects represent the same indexed sequence of Unicode characters. Otherwise, the function returns <code>#t</code> if and only if the two objects are <code>eq?</code>.</dd>
-      <dt><code>(equal? $\object_1$ $\object_2$)</code></dt>
+      <dt><code>(equal? $\object_1$ $\object_2$)</code> &DoubleRightArrow; $\boolean$</dt>
       <dd>If both objects are of type <code>cons</code>, then the function returns <code>#t</code> if and only if the cars of the two objects are <code>equal?</code> and the cdrs of the two objects are <code>equal?</code>. Otherwise, if both objects are of type <code>vector</code>, then the function returns <code>#t</code> if and only if the two objects have the same length and their corresponding elements are <code>equal?</code>. Otherwise, the function returns <code>#t</code> if and only if the two objects are <code>eql?</code>.</dd>
     </dl>
     <p>The three main equality predicates are related as follows:</p>
@@ -152,21 +137,21 @@
     <p>When testing the sameness of two objects of type <code>number</code>, we want to test if the two objects represent the same mathematical number. Because there can exist in the heap more than one object of type <code>number</code> representing the same mathematical number, representing the same mathematical number is not equivalent to being one and the same. Therefore, <code>eq?</code> is not an appropriate equality predicate to test the sameness of two objects of type <code>number</code>. The appropriate equality predicates are <code>eql?</code> and the equivalent <code>equal?</code>.</p>
     <p>When testing the sameness of two objects of type <code>character</code>, we want to test if the two objects represent the same Unicode character. Because there can exist in the heap more than one object of type <code>character</code> representing the same Unicode character, representing the same Unicode character is not equivalent to being one and the same. Therefore, <code>eq?</code> is not an appropriate equality predicate to test the sameness of two objects of type <code>character</code>. The appropriate equality predicates are <code>eql?</code> and the equivalent <code>equal?</code>.</p>
     <p>When testing the sameness of two objects of type <code>string</code>, we want to test if the two objects represent the same indexed sequence of Unicode characters. Because there can exist in the heap more than one object of type <code>string</code> representing the same indexed sequence of Unicode characters, representing the same indexed sequence of Unicode characters is not equivalent to being one and the same. Therefore, <code>eq?</code> is not an appropriate equality predicate to test the sameness of two objects of type <code>string</code>. The appropriate equality predicates are <code>eql?</code> and the equivalent <code>equal?</code>.</p>
-    <p>Using <code>eq?</code> to test the sameness of two objects of type <code>number</code>, two objects of type <code>character</code>, or two objects of type <code>string</code> is never safe because the evaluator is free to make copies of objects of those types at any time. Let us illustrate the point by considering the form <code>((_vlambda (x) (eq? x x)) 0)</code>. It is not guaranteed that the object of type <code>number</code> created by the reader, the value of the variable <code>x</code>, the first argument passed to the function <code>eq?</code>, and the second argument passed to the function <code>eq?</code> are one and the same. If the two objects passed to the function <code>eq?</code> happen to be one and the same, then the test evaluates to <code>#t</code>.  If the two objects passed to the function <code>eq?</code> happen not to be one and the same, then the test evaluates to <code>#f</code>. Even in this seemingly straightforward case, the result of the test is unpredictable. The same goes for objects of type <code>character</code> and <code>string</code>.</p>
+    <p>Using <code>eq?</code> to test the sameness of two objects of type <code>number</code>, two objects of type <code>character</code>, or two objects of type <code>string</code> is never safe because the evaluator is free to make copies of objects of those types at any time. Let us illustrate the point by considering the form <code>((_vlambda (x) (eq? x x)) 0)</code>. It is not guaranteed that the object of type <code>number</code> created by the reader, the value of the variable <code>x</code>, the first argument passed to the function <code>eq?</code>, and the second argument passed to the function <code>eq?</code> are one and the same. If the two objects passed to the function <code>eq?</code> happen to be one and the same, then the test evaluates to <code>#t</code>. If the two objects passed to the function <code>eq?</code> happen not to be one and the same, then the test evaluates to <code>#f</code>. Even in this seemingly straightforward case, the result of the test is unpredictable. The same goes for objects of type <code>character</code> and <code>string</code>.</p>
     <p>By design, any two objects of type <code>keyword</code>/<code>variable</code> sharing the same name are considered to be the same object. Because there cannot exist in the heap more than one object of type <code>keyword</code>/<code>variable</code> with the same name, having the same name is equivalent to being one and the same. Therefore, the appropriate equality predicates to test the sameness of two objects of type <code>keyword</code>/<code>variable</code> are <code>eq?</code> and the equivalent <code>eql?</code> and <code>equal?</code>.</p>
     <p>By design, any two objects of type <code>empty-list</code> are considered to be the same object. Because there exists in the heap exactly one object of type <code>empty-list</code>, two objects of type <code>empty-list</code> are necessarily one and the same. Therefore, the appropriate equality predicates to test the sameness of two objects of type <code>empty-list</code> are <code>eq?</code> and the equivalent <code>eql?</code> and <code>equal?</code>.</p>
-    <p>When testing the sameness of two objects of type <code>cons</code> or two objects of type <code>vector</code>, we can use <code>eq?</code> or the equivalent <code>eql?</code> to test if the two objects are one and the same or we can use <code>equal?</code> to test if the two objects have the same elements. Whether to use (1) <code>eq?</code> or the equivalent <code>eql?</code> or (2) <code>equal?</code> is usually obvious from the purpose of the test.</p>
+    <p>When testing the sameness of two objects of type <code>cons</code> or two objects of type <code>vector</code>, we can use <code>eq?</code> or the equivalent <code>eql?</code> to test if the two objects are one and the same or we can use <code>equal?</code> to test if the two objects have the same elements. Whether to use <code>eq?</code>/<code>eql?</code> or <code>equal?</code> is usually obvious from the purpose of the test.</p>
     <p>When testing the sameness of two objects of type <code>primitive-function</code> or two objects of type <code>closure</code>, we would like to test if the two objects have the same behavior (same input/output mapping and same side effects). In practice, we can only test if the two objects are one and the same by using <code>eq?</code> or the equivalent <code>eql?</code> and <code>equal?</code>. For objects of type <code>primitive-function</code>, being one and the same is equivalent to having the same behavior. For objects of type <code>closure</code>, being one and the same implies having the same behavior but the converse is not true.</p>
-    <p>When testing the sameness of two objects that can each be of type $type_1$, $type_2$, &hellip;, an equality predicate that is appropriate to test the sameness of two objects of type $type_1$, two objects of type $type_2$, &hellip; must be used.</p>
+    <p>When testing the sameness of two objects that can each be of leaf type $type_1$, $type_2$, &hellip;, an equality predicate that is appropriate to test the sameness of two objects of type $type_1$, two objects of type $type_2$, &hellip; must be used.</p>
     <p>As a matter of style, when more than one equality predicate is appropriate, the most discriminating one should be used. As a matter of style again, when testing the sameness of two objects that can only be of type <code>number</code>, the comparison operator <code>=</code> should be used instead of the equality predicate <code>eql?</code>.</p>
     <h3>Global Definitions</h3>
     <dl>
       <dt><code>(vdef $\metavar{variable}$ $\metavar{value-form}$)</code></dt>
-      <dd>The purpose of the macro is to define a global variable by ensuring that the variable is bound in the value namespace of the global environment to the primary value of the value-form. The macro call evaluates to the variable.</dd>
+      <dd>The macro defines a global variable by ensuring that the variable is bound in the value namespace of the global environment to the primary value of the value form. The macro call evaluates to the variable.</dd>
       <dt><code>(fdef $\metavar{variable}$ $\metavar{parameter-list}$ $\metavar{body}$)</code></dt>
-      <dd>The purpose of the macro is to define a global function by ensuring that the variable is bound in the function namespace of the global environment to the closure resulting from the evaluation of the _vlambda-form <code>(_vlambda $\metavar{parameter-list}$ $\metavar{body}$)</code>. The macro call evaluates to the variable.</dd>
+      <dd>The macro defines a global function by ensuring that the variable is bound in the function namespace of the global environment to the closure resulting from the evaluation of the <code>_vlambda</code> form <code>(_vlambda $\metavar{parameter-list}$ $\metavar{body}$)</code>. The macro call evaluates to the variable.</dd>
       <dt><code>(mdef $\metavar{variable}$ $\metavar{parameter-list}$ $\metavar{body}$)</code></dt>
-      <dd>The purpose of the macro is to define a global macro by ensuring that the variable is bound in the function namespace of the global environment to the closure resulting from the evaluation of the _mlambda-form <code>(_mlambda $\metavar{parameter-list}$ $\metavar{body}$)</code>. The macro call evaluates to the variable.</dd>
+      <dd>The macro defines a global macro by ensuring that the variable is bound in the function namespace of the global environment to the closure resulting from the evaluation of the <code>_mlambda</code> form <code>(_mlambda $\metavar{parameter-list}$ $\metavar{body}$)</code>. The macro call evaluates to the variable.</dd>
     </dl>
     <h2>Evaluation and Invocation Traces</h2>
     <p>An evaluation trace is a structured recording of some or all of the evaluations, invocations, and various steps performed by the evaluator to evaluate a form. Evaluation traces have the following format:</p>
@@ -175,14 +160,14 @@
       <li>Times flows from top to bottom.</li>
       <li>Each recorded evaluation contributes two lines to the trace: an eval-in line of the form &ldquo;The form $\mlvar{form}$ is evaluated with respect to $\lexenv$ and $\dynenv$.&rdquo; recording the start of the evaluation and a matching eval-out line recording the completion of the evaluation. The eval-out line can take the following forms:
         <ul>
-          <li>&ldquo;The form $\mlvar{form}$ evaluates to $\obj_1,\ldots,\obj_n$.&rdquo;, which records the normal completion of the evaluation</li>
-          <li>&ldquo;The evaluation of the form $\mlvar{form}$ completes abruptly.&rdquo;, which records the abrupt completion of the evaluation</li>
+          <li>&ldquo;The form $\mlvar{form}$ evaluates to $\obj_1,\ldots,\obj_n$.&rdquo;, which records the normal completion of the evaluation.</li>
+          <li>&ldquo;The evaluation of the form $\mlvar{form}$ completes abruptly.&rdquo;, which records the abrupt completion of the evaluation.</li>
         </ul>
       </li>
       <li>Each recorded invocation contributes two lines to the trace: an invoke-in line of the form &ldquo;The function $\mlvar{function}$ is invoked on $\obj_1,\ldots,\obj_n$.&rdquo; recording the start of the invocation and a matching invoke-out line recording the completion of the invocation. The invoke-out line can take the following forms:
         <ul>
-          <li>&ldquo;The function $\mlvar{function}$ returns $\obj_1,\ldots,\obj_m$.&rdquo;, which records the normal completion of the invocation</li>
-          <li>&ldquo;The invocation of the function $\mlvar{function}$ completes abruptly.&rdquo;, which records the abrupt completion of the invocation</li>
+          <li>&ldquo;The function $\mlvar{function}$ returns $\obj_1,\ldots,\obj_m$.&rdquo;, which records the normal completion of the invocation.</li>
+          <li>&ldquo;The invocation of the function $\mlvar{function}$ completes abruptly.&rdquo;, which records the abrupt completion of the invocation.</li>
         </ul>
       </li>
       <li>A step line is a free-form line recording a step other than an evaluation or invocation.</li>
@@ -212,7 +197,7 @@
             <li>The form <code>(fref +)</code> is evaluated with respect to $[]$ and $[]$.</li>
             <li>
               <ul>
-                <li>The form <code>(fref +)</code> is analyzed as an fref-form.</li>
+                <li>The form <code>(fref +)</code> is analyzed as an <code>fref</code> form.</li>
                 <li>The variable <code>+</code> is looked up.</li>
               </ul>
             </li>
@@ -234,7 +219,7 @@
             <li>The global function <code>+</code> is invoked on the numbers <code>1</code> and <code>2</code>.</li>
             <li>
               <ul>
-                <li><i>The global function <code>+</code> is a closure recording the following two pieces of information: the _vlambda-form <code>(_vlambda (x y) (_+ x y))</code> and the lexical environment $[]$.</i></li>
+                <li><i>The global function <code>+</code> is a closure recording the following two pieces of information: the <code>_vlambda</code> form <code>(_vlambda (x y) (_+ x y))</code> and the lexical environment $[]$.</i></li>
                 <li>A new lexical environment is created that extends the lexical environment $[]$ to bind, in the value namespace, the variable <code>x</code> to the number <code>1</code> and the variable <code>y</code> to the number <code>2</code>.</li>
                 <li>The form <code>(_+ x y)</code> is evaluated with respect to $[\vbinding{x}{1},\vbinding{y}{2}]$ and $[]$.</li>
                 <li>
@@ -244,7 +229,7 @@
                     <li>The form <code>(fref _+)</code> is evaluated with respect to $[\vbinding{x}{1},\vbinding{y}{2}]$ and $[]$.</li>
                     <li>
                       <ul>
-                        <li>The form <code>(fref _+)</code> is analyzed as an fref-form.</li>
+                        <li>The form <code>(fref _+)</code> is analyzed as an <code>fref</code> form.</li>
                         <li>The variable <code>_+</code> is looked up.</li>
                       </ul>
                     </li>
@@ -253,7 +238,7 @@
                     <li>The form <code>(vref x)</code> is evaluated with respect to $[\vbinding{x}{1},\vbinding{y}{2}]$ and $[]$.</li>
                     <li>
                       <ul>
-                        <li>The form <code>(vref x)</code> is analyzed as a vref-form.</li>
+                        <li>The form <code>(vref x)</code> is analyzed as a <code>vref</code> form.</li>
                         <li>The variable <code>x</code> is looked up.</li>
                       </ul>
                     </li>
@@ -262,7 +247,7 @@
                     <li>The form <code>(vref y)</code> is evaluated with respect to $[\vbinding{x}{1},\vbinding{y}{2}]$ and $[]$.</li>
                     <li>
                       <ul>
-                        <li>The form <code>(vref y)</code> is analyzed as a vref-form.</li>
+                        <li>The form <code>(vref y)</code> is analyzed as a <code>vref</code> form.</li>
                         <li>The variable <code>y</code> is looked up.</li>
                       </ul>
                     </li>
@@ -292,7 +277,7 @@
         <li>The form <code>(+ 1 2)</code> evaluates to the number <code>3</code>.</li>
       </ul>
     </div>
-    <p>Let us consider the following global macro, whose purpose is to evaluate the form with respect to a lexical environment extending the current lexical environment to bind, in the value namespace, the variable to the primary value of the value-form:</p>
+    <p>Let us consider the following global macro, whose purpose is to evaluate the form with respect to the lexical environment extending the current lexical environment to bind, in the value namespace, the variable to the primary value of the value form:</p>
     <pre class="repl">&gt; (mdef simple-vlet (variable value-form form)<br>    (list (list '_vlambda (list variable) form) value-form))<br>simple-vlet<br><br>&gt; (simple-vlet x 1 (+ x 2))<br>3<br><br>&gt; (simple-vlet x 1 (simple-vlet y 2 (+ x y)))<br>3</pre>
     <p>Here is an evaluation trace of the evaluation of the top-level form <code>(simple-vlet x 1 (+ x 2))</code>:</p>
     <div class="trace">
@@ -308,7 +293,7 @@
               <ul>
                 <li>The form <code>((_vlambda (x) (+ x 2)) 1)</code> is analyzed as a plain function call.</li>
                 <li>The form <code>(_vlambda (x) (+ x 2))</code> is evaluated with respect to $[]$ and $[]$.</li>
-                <li>The form <code>(_vlambda (x) (+ x 2))</code> evaluates to a closure recording the following two pieces of information: the _vlambda-form <code>(_vlambda (x) (+ x 2))</code> and the lexical environment $[]$.</li>
+                <li>The form <code>(_vlambda (x) (+ x 2))</code> evaluates to a closure recording the following two pieces of information: the <code>_vlambda</code> form <code>(_vlambda (x) (+ x 2))</code> and the lexical environment $[]$.</li>
                 <li>The form <code>1</code> is evaluated with respect to $[]$ and $[]$.</li>
                 <li>The form <code>1</code> evaluates to the number <code>1</code>.</li>
                 <li>The closure is invoked on the number <code>1</code>.</li>
@@ -342,7 +327,7 @@
               <ul>
                 <li>The form <code>((_vlambda (x) (simple-vlet y 2 (+ x y))) 1)</code> is analyzed as a plain function call.</li>
                 <li>The form <code>(_vlambda (x) (simple-vlet y 2 (+ x y)))</code> is evaluated with respect to $[]$ and $[]$.</li>
-                <li>The form <code>(_vlambda (x) (simple-vlet y 2 (+ x y)))</code> evaluates to a closure recording the following two pieces of information: the _vlambda-form <code>(_vlambda (x) (simple-vlet y 2 (+ x y)))</code> and the lexical environment $[]$.</li>
+                <li>The form <code>(_vlambda (x) (simple-vlet y 2 (+ x y)))</code> evaluates to a closure recording the following two pieces of information: the <code>_vlambda</code> form <code>(_vlambda (x) (simple-vlet y 2 (+ x y)))</code> and the lexical environment $[]$.</li>
                 <li>The form <code>1</code> is evaluated with respect to $[]$ and $[]$.</li>
                 <li>The form <code>1</code> evaluates to the number <code>1</code>.</li>
                 <li>The closure is invoked on the number <code>1</code>.</li>
@@ -360,7 +345,7 @@
                           <ul>
                             <li>The form <code>((_vlambda (y) (+ x y)) 2)</code> is analyzed as a plain function call.</li>
                             <li>The form <code>(_vlambda (y) (+ x y))</code> is evaluated with respect to $[\vbinding{x}{1}]$ and $[]$.</li>
-                            <li>The form <code>(_vlambda (y) (+ x y))</code> evaluates to a closure recording the following two pieces of information: the _vlambda-form <code>(_vlambda (y) (+ x y))</code> and the lexical environment $[\vbinding{x}{1}]$.</li>
+                            <li>The form <code>(_vlambda (y) (+ x y))</code> evaluates to a closure recording the following two pieces of information: the <code>_vlambda</code> form <code>(_vlambda (y) (+ x y))</code> and the lexical environment $[\vbinding{x}{1}]$.</li>
                             <li>The form <code>2</code> is evaluated with respect to $[\vbinding{x}{1}]$ and $[]$.</li>
                             <li>The form <code>2</code> evaluates to the number <code>2</code>.</li>
                             <li>The closure is invoked on the number <code>2</code>.</li>
@@ -389,7 +374,7 @@
         <li>The form <code>(simple-vlet x 1 (simple-vlet y 2 (+ x y)))</code> evaluates to the number <code>3</code>.</li>
       </ul>
     </div>
-    <p>When debugging a macro, it is often useful to examine some expansions generated by the macro. The expansion of the macro call <code>($\metavar{macro-operator}$ $\metavarn{macro-operand}{1}\ldots\metavarn{macro-operand}{n}$)</code> can easily be obtained by evaluating the plain function call <code>((fref $\metavar{macro-operator}$) $\code{'}\metavarn{macro-operand}{1}\ldots\code{'}\metavarn{macro-operand}{n}$)</code>:</p>
+    <p>When debugging a macro, it is often useful to examine some expansions generated by the macro. The expansion of the macro call <code>($\metavar{macro-operator}$ $\metavar{macro-operand}_1\ldots\metavar{macro-operand}_n$)</code> can easily be obtained by evaluating the plain function call <code>((fref $\metavar{macro-operator}$) $\code{'}\metavar{macro-operand}_1\ldots\code{'}\metavar{macro-operand}_n$)</code>:</p>
     <pre class="repl">&gt; ((fref simple-vlet) 'x '1 '(+ x 2))<br>((_vlambda (x) (+ x 2)) 1)<br><br>&gt; ((fref simple-vlet) 'x '1 '(simple-vlet y 2 (+ x y)))<br>((_vlambda (x) (simple-vlet y 2 (+ x y))) 1)<br><br>&gt; ((fref simple-vlet) 'y '2 '(+ x y))<br>((_vlambda (y) (+ x y)) 2)<br><br>&gt; ((fref simple-vlet) 'x '1 ((fref simple-vlet) 'y '2 '(+ x y)))<br>((_vlambda (x) ((_vlambda (y) (+ x y)) 2)) 1)</pre>
     <p>Let us consider the following global function, which returns the absolute value of its argument:</p>
     <pre class="repl">&gt; (fdef abs (x)<br>    (if (&gt;= x 0) x (- x)))<br>abs<br><br>&gt; (abs 1)<br>1<br><br>&gt; (abs -1)<br>1</pre>
@@ -405,7 +390,7 @@
                 <li>The form <code>(if (&gt;= x 0) x (- x)))</code> is evaluated with respect to $[\vbinding{x}{1}]$ and $[]$.</li>
                 <li>
                   <ul>
-                    <li>The form <code>(if (&gt;= x 0) x (- x)))</code> is analyzed as an if-form.</li>
+                    <li>The form <code>(if (&gt;= x 0) x (- x)))</code> is analyzed as an <code>if</code> form.</li>
                     <li>The form <code>(&gt;= x 0)</code> is evaluated with respect to $[\vbinding{x}{1}]$ and $[]$.</li>
                     <li>
                       <ul>
@@ -414,7 +399,7 @@
                       </ul>
                     </li>
                     <li>The form <code>(&gt;= x 0)</code> evaluates to the boolean <code>#t</code>.</li>
-                    <li>Because the test-form evaluates to the boolean <code>#t</code>, the then-form is selected for evaluation.</li>
+                    <li><i>Because the test form evaluates to the boolean <code>#t</code>, the then form is selected for evaluation.</i></li>
                     <li>The form <code>x</code> is evaluated with respect to $[\vbinding{x}{1}]$ and $[]$.</li>
                     <li>The form <code>x</code> evaluates to the number <code>1</code>.</li>
                   </ul>
@@ -440,7 +425,7 @@
                 <li>The form <code>(if (&gt;= x 0) x (- x)))</code> is evaluated with respect to $[\vbinding{x}{-1}]$ and $[]$.</li>
                 <li>
                   <ul>
-                    <li>The form <code>(if (&gt;= x 0) x (- x)))</code> is analyzed as an if-form.</li>
+                    <li>The form <code>(if (&gt;= x 0) x (- x)))</code> is analyzed as an <code>if</code> form.</li>
                     <li>The form <code>(&gt;= x 0)</code> is evaluated with respect to $[\vbinding{x}{-1}]$ and $[]$.</li>
                     <li>
                       <ul>
@@ -449,7 +434,7 @@
                       </ul>
                     </li>
                     <li>The form <code>(&gt;= x 0)</code> evaluates to the boolean <code>#f</code>.</li>
-                    <li>Because the test-form evaluates to the boolean <code>#f</code>, the else-form is selected for evaluation.</li>
+                    <li><i>Because the test form evaluates to the boolean <code>#f</code>, the else form is selected for evaluation.</i></li>
                     <li>The form <code>(- x)</code> is evaluated with respect to $[\vbinding{x}{-1}]$ and $[]$.</li>
                     <li>
                       <ul>
@@ -503,13 +488,13 @@
     <h2>Recursive Functions</h2>
     <p>A recursive function is a function that invokes itself directly ($f\rightarrow f$) or indirectly ($f\rightarrow g\rightarrow\cdots\rightarrow f$).</p>
     <p>A recursive function call is a function call through which a recursive function invokes itself directly or indirectly.</p>
-    <p>A form is said to be in tail position with respect to a lambda abstraction if and only if one of the following mutually exclusive conditions is satisfied:</p>
+    <p>A form is said to be in tail position with respect to a lambda abstraction other than a <code>_dlambda</code> form if and only if one of the following conditions is satisfied:</p>
     <ul>
-      <li>The form is the last serial-form of the body of the lambda abstraction.</li>
-      <li>The form is the last serial-form of a progn-form in tail position with respect to the lambda abstraction.</li>
-      <li>The form is the then-form or the else-form of an if-form in tail position with respect to the lambda abstraction.</li>
+      <li>The form is the last serial form of the body of the lambda abstraction.</li>
+      <li>The form is the last serial form of a <code>progn</code> form in tail position with respect to the lambda abstraction.</li>
+      <li>The form is the then form or the else form of an <code>if</code> form in tail position with respect to the lambda abstraction.</li>
     </ul>
-    <p>A form in tail position with respect to a lambda abstraction has the following property: If (1) a closure resulting from the evaluation of the lambda abstraction is invoked and (2) the form happens to be evaluated during the invocation of the closure, then the result of the evaluation of the form becomes the result of the invocation of the closure without any further processing. (The values of the form are returned as is and not used otherwise.)</p>
+    <p>A form $\mlvar{form}$ in tail position with respect to a lambda abstraction has the following property: If (1) a closure resulting from the evaluation of the lambda abstraction is invoked and (2) the form $\mlvar{form}$ happens to be evaluated during the invocation of the closure, then the result of the evaluation of the form $\mlvar{form}$ becomes the result of the invocation of the closure without any further processing. (The values of the form are returned as is and not used otherwise.)</p>
     <h3>Factorial Function</h3>
     <p>The factorial function is defined by the following recurrence relation, where $n$ is a nonnegative integer:</p>
     <ul>
@@ -582,67 +567,67 @@
     </ol>
     <p>The factorial is computed during the contraction phase by adding factors to a running product. The running product is initialized to the number <code>1</code> by the innermost invocation and the whole product is equal to $6\times(5\times(4\times(3\times(2\times(1\times1)))))$.</p>
     <p>The values of the factorial function can also be computed by the global function <code>fact-iter</code>:</p>
-    <pre class="repl">&gt; (fdef fact-iter (n)<br>    (fact-iter-internal n 1))<br>fact-iter<br><br>&gt; (fdef fact-iter-internal (n acc)<br>    (if (= n 0) acc (fact-iter-internal (- n 1) (* n acc))))<br>fact-iter-internal<br><br>&gt; (fact-iter 10)<br>3628800</pre>
-    <p>The bulk of the work is done by the auxiliary global function <code>fact-iter-internal</code>, which contains one recursive function call. The call to <code>fact-iter-internal</code> in <code>fact-iter</code> and the recursive function call in <code>fact-iter-internal</code> are both in tail position.</p>
+    <pre class="repl">&gt; (fdef fact-iter (n)<br>    (fact-iter/internal n 1))<br>fact-iter<br><br>&gt; (fdef fact-iter/internal (n acc)<br>    (if (= n 0) acc (fact-iter/internal (- n 1) (* n acc))))<br>fact-iter/internal<br><br>&gt; (fact-iter 10)<br>3628800</pre>
+    <p>The bulk of the work is done by the auxiliary global function <code>fact-iter/internal</code>, which contains one recursive function call. The call to <code>fact-iter/internal</code> in <code>fact-iter</code> and the recursive function call in <code>fact-iter/internal</code> are both in tail position.</p>
     <p>Here is an invocation trace of the evaluation of the form <code>(fact-iter 6)</code>:</p>
     <div class="trace">
       <ul>
         <li>The global function <code>fact-iter</code> is invoked on the number <code>6</code>.</li>
         <li>
           <ul>
-            <li>The global function <code>fact-iter-internal</code> is invoked on the numbers <code>6</code> and <code>1</code>.</li>
+            <li>The global function <code>fact-iter/internal</code> is invoked on the numbers <code>6</code> and <code>1</code>.</li>
             <li>
               <ul>
-                <li>The global function <code>fact-iter-internal</code> is invoked on the numbers <code>5</code> and <code>6</code>.</li>
+                <li>The global function <code>fact-iter/internal</code> is invoked on the numbers <code>5</code> and <code>6</code>.</li>
                 <li>
                   <ul>
-                    <li>The global function <code>fact-iter-internal</code> is invoked on the numbers <code>4</code> and <code>30</code>.</li>
+                    <li>The global function <code>fact-iter/internal</code> is invoked on the numbers <code>4</code> and <code>30</code>.</li>
                     <li>
                       <ul>
-                        <li>The global function <code>fact-iter-internal</code> is invoked on the numbers <code>3</code> and <code>120</code>.</li>
+                        <li>The global function <code>fact-iter/internal</code> is invoked on the numbers <code>3</code> and <code>120</code>.</li>
                         <li>
                           <ul>
-                            <li>The global function <code>fact-iter-internal</code> is invoked on the numbers <code>2</code> and <code>360</code>.</li>
+                            <li>The global function <code>fact-iter/internal</code> is invoked on the numbers <code>2</code> and <code>360</code>.</li>
                             <li>
                               <ul>
-                                <li>The global function <code>fact-iter-internal</code> is invoked on the numbers <code>1</code> and <code>720</code>.</li>
+                                <li>The global function <code>fact-iter/internal</code> is invoked on the numbers <code>1</code> and <code>720</code>.</li>
                                 <li>
                                   <ul>
-                                    <li>The global function <code>fact-iter-internal</code> is invoked on the numbers <code>0</code> and <code>720</code>.</li>
-                                    <li>The global function <code>fact-iter-internal</code> returns the number <code>720</code>.</li>
+                                    <li>The global function <code>fact-iter/internal</code> is invoked on the numbers <code>0</code> and <code>720</code>.</li>
+                                    <li>The global function <code>fact-iter/internal</code> returns the number <code>720</code>.</li>
                                   </ul>
                                 </li>
-                                <li>The global function <code>fact-iter-internal</code> returns the number <code>720</code>.</li>
+                                <li>The global function <code>fact-iter/internal</code> returns the number <code>720</code>.</li>
                               </ul>
                             </li>
-                            <li>The global function <code>fact-iter-internal</code> returns the number <code>720</code>.</li>
+                            <li>The global function <code>fact-iter/internal</code> returns the number <code>720</code>.</li>
                           </ul>
                         </li>
-                        <li>The global function <code>fact-iter-internal</code> returns the number <code>720</code>.</li>
+                        <li>The global function <code>fact-iter/internal</code> returns the number <code>720</code>.</li>
                       </ul>
                     </li>
-                    <li>The global function <code>fact-iter-internal</code> returns the number <code>720</code>.</li>
+                    <li>The global function <code>fact-iter/internal</code> returns the number <code>720</code>.</li>
                   </ul>
                 </li>
-                <li>The global function <code>fact-iter-internal</code> returns the number <code>720</code>.</li>
+                <li>The global function <code>fact-iter/internal</code> returns the number <code>720</code>.</li>
               </ul>
             </li>
-            <li>The global function <code>fact-iter-internal</code> returns the number <code>720</code>.</li>
+            <li>The global function <code>fact-iter/internal</code> returns the number <code>720</code>.</li>
           </ul>
         </li>
         <li>The global function <code>fact-iter</code> returns the number <code>720</code>.</li>
       </ul>
     </div>
-    <p>There are two phases in the evaluation of the form <code>(fact-iter 6)</code>: (1) an expansion phase during which the number of active invocations increases and (2) a contraction phase during which the number of active invocations decreases. When the evaluator is processing the invocation of <code>fact-iter-internal</code> on the numbers <code>0</code> and <code>720</code>, there are $8$ active invocations ($1$ of <code>fact-iter</code> and $7$ of <code>fact-iter-internal</code>):</p>
+    <p>There are two phases in the evaluation of the form <code>(fact-iter 6)</code>: (1) an expansion phase during which the number of active invocations increases and (2) a contraction phase during which the number of active invocations decreases. When the evaluator is processing the invocation of <code>fact-iter/internal</code> on the numbers <code>0</code> and <code>720</code>, there are $8$ active invocations ($1$ of <code>fact-iter</code> and $7$ of <code>fact-iter/internal</code>):</p>
     <ol>
-      <li>One invocation evaluating the body of <code>fact-iter</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>6</code>. That invocation is waiting for the value of the invocation of <code>fact-iter-internal</code> on the numbers <code>n</code> = <code>6</code> and <code>1</code>. When that value is eventually available, it will be returned as the value of the invocation without any further processing.</li>
-      <li>One invocation evaluating the body of <code>fact-iter-internal</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>6</code> and the variable <code>acc</code> to the number <code>1</code>. That invocation is waiting for the value of the recursive invocation of <code>fact-iter-internal</code> on the numbers <code>(- n 1)</code> = <code>5</code> and <code>(* n acc)</code> = <code>6</code>. When that value is eventually available, it will be returned as the value of the invocation without any further processing.</li>
-      <li>One invocation evaluating the body of <code>fact-iter-internal</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>5</code> and the variable <code>acc</code> to the number <code>6</code>. That invocation is waiting&hellip;</li>
-      <li>One invocation evaluating the body of <code>fact-iter-internal</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>4</code> and the variable <code>acc</code> to the number <code>30</code>. That invocation is waiting&hellip;</li>
-      <li>One invocation evaluating the body of <code>fact-iter-internal</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>3</code> and the variable <code>acc</code> to the number <code>120</code>. That invocation is waiting&hellip;</li>
-      <li>One invocation evaluating the body of <code>fact-iter-internal</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>2</code> and the variable <code>acc</code> to the number <code>360</code>. That invocation is waiting&hellip;</li>
-      <li>One invocation evaluating the body of <code>fact-iter-internal</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>1</code> and the variable <code>acc</code> to the number <code>720</code>. That invocation is waiting for the value of the recursive invocation of <code>fact-iter-internal</code> on the numbers <code>(- n 1)</code> = <code>0</code> and <code>(* n acc)</code> = <code>720</code>. When that value is eventually available, it will be returned as the value of the invocation without any further processing.</li>
-      <li>One invocation evaluating the body of <code>fact-iter-internal</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>0</code> and the variable <code>acc</code> to the number <code>720</code>. That invocation directly returns the number <code>acc</code> = <code>720</code> as its value without any further recursive invocation of <code>fact-iter-internal</code>.</li>
+      <li>One invocation evaluating the body of <code>fact-iter</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>6</code>. That invocation is waiting for the value of the invocation of <code>fact-iter/internal</code> on the numbers <code>n</code> = <code>6</code> and <code>1</code>. When that value is eventually available, it will be returned as the value of the invocation without any further processing.</li>
+      <li>One invocation evaluating the body of <code>fact-iter/internal</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>6</code> and the variable <code>acc</code> to the number <code>1</code>. That invocation is waiting for the value of the recursive invocation of <code>fact-iter/internal</code> on the numbers <code>(- n 1)</code> = <code>5</code> and <code>(* n acc)</code> = <code>6</code>. When that value is eventually available, it will be returned as the value of the invocation without any further processing.</li>
+      <li>One invocation evaluating the body of <code>fact-iter/internal</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>5</code> and the variable <code>acc</code> to the number <code>6</code>. That invocation is waiting&hellip;</li>
+      <li>One invocation evaluating the body of <code>fact-iter/internal</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>4</code> and the variable <code>acc</code> to the number <code>30</code>. That invocation is waiting&hellip;</li>
+      <li>One invocation evaluating the body of <code>fact-iter/internal</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>3</code> and the variable <code>acc</code> to the number <code>120</code>. That invocation is waiting&hellip;</li>
+      <li>One invocation evaluating the body of <code>fact-iter/internal</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>2</code> and the variable <code>acc</code> to the number <code>360</code>. That invocation is waiting&hellip;</li>
+      <li>One invocation evaluating the body of <code>fact-iter/internal</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>1</code> and the variable <code>acc</code> to the number <code>720</code>. That invocation is waiting for the value of the recursive invocation of <code>fact-iter/internal</code> on the numbers <code>(- n 1)</code> = <code>0</code> and <code>(* n acc)</code> = <code>720</code>. When that value is eventually available, it will be returned as the value of the invocation without any further processing.</li>
+      <li>One invocation evaluating the body of <code>fact-iter/internal</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>0</code> and the variable <code>acc</code> to the number <code>720</code>. That invocation directly returns the number <code>acc</code> = <code>720</code> as its value without any further recursive invocation of <code>fact-iter/internal</code>.</li>
     </ol>
     <p>The factorial is computed during the expansion phase by adding factors to a running product. The running product, which is initialized to the number <code>1</code> by <code>fact-iter</code>, is propagated up the invocation chain through the variable <code>acc</code>. The whole product, which is equal to $1\times(2\times(3\times(4\times(5\times(6\times1)))))$, is propagated down the invocation chain without any further processing.</p>
     <h3>Fibonacci Sequence</h3>
@@ -814,75 +799,75 @@
     <p>During the evaluation of the form <code>(fib 6)</code>, the global function <code>fib</code> is invoked $1$ time on the number <code>6</code>, $1$ time on the number <code>5</code>, $2$ times on the number <code>4</code>, $3$ times on the number <code>3</code>, $5$ times on the number <code>2</code>, $8$ times on the number <code>1</code>, and $5$ times on the number <code>0</code>.</p>
     <p>When the evaluator is processing the first invocation of <code>fib</code> on the number <code>0</code> (that invocation has a gray background in the invocation trace), there are $6$ active invocations of <code>fib</code>:</p>
     <ol>
-      <li>One invocation evaluating the body of <code>fib</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>6</code>. That invocation is waiting for the value of the recursive invocation of <code>fib</code> on the number <code>(- n 1)</code> = <code>5</code>. When that value is eventually available, it will be stored in a temporary location and <code>fib</code> will be invoked recursively on the number <code>(- n 2)</code> = <code>4</code>. When the value of the second recursive invocation of <code>fib</code> is eventually available, it will be added to the stored value of the first recursive invocation of <code>fib</code> and the result of the addition will be returned as the value of the invocation.</li>
+      <li>One invocation evaluating the body of <code>fib</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>6</code>. That invocation is waiting for the value of the recursive invocation of <code>fib</code> on the number <code>(- n 1)</code> = <code>5</code>. When that value is eventually available, it will be saved in a temporary location and <code>fib</code> will be invoked recursively on the number <code>(- n 2)</code> = <code>4</code>. When the value of the second recursive invocation of <code>fib</code> is eventually available, it will be added to the saved value of the first recursive invocation of <code>fib</code> and the result of the addition will be returned as the value of the invocation.</li>
       <li>One invocation evaluating the body of <code>fib</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>5</code>. That invocation is waiting&hellip;</li>
       <li>One invocation evaluating the body of <code>fib</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>4</code>. That invocation is waiting&hellip;</li>
-      <li>One invocation evaluating the body of <code>fib</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>3</code>. That invocation is waiting for the value of the recursive invocation of <code>fib</code> on the number <code>(- n 1)</code> = <code>2</code>. When that value is eventually available, it will be stored in a temporary location and <code>fib</code> will be invoked recursively on the number <code>(- n 2)</code> = <code>1</code>. When the value of the second recursive invocation of <code>fib</code> is eventually available, it will be added to the stored value of the first recursive invocation of <code>fib</code> and the result of the addition will be returned as the value of the invocation.</li>
-      <li>One invocation evaluating the body of <code>fib</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>2</code>. That invocation has already stored in a temporary location the value of the recursive invocation of <code>fib</code> on the number <code>(- n 1)</code> = <code>1</code> and is waiting for the value of the recursive invocation of <code>fib</code> on the number <code>(- n 2)</code> = <code>0</code>. When the value of the second recursive invocation of <code>fib</code> is eventually available, it will be added to the stored value of the first recursive invocation of <code>fib</code> and the result of the addition will be returned as the value of the invocation.</li>
+      <li>One invocation evaluating the body of <code>fib</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>3</code>. That invocation is waiting for the value of the recursive invocation of <code>fib</code> on the number <code>(- n 1)</code> = <code>2</code>. When that value is eventually available, it will be saved in a temporary location and <code>fib</code> will be invoked recursively on the number <code>(- n 2)</code> = <code>1</code>. When the value of the second recursive invocation of <code>fib</code> is eventually available, it will be added to the saved value of the first recursive invocation of <code>fib</code> and the result of the addition will be returned as the value of the invocation.</li>
+      <li>One invocation evaluating the body of <code>fib</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>2</code>. That invocation has already saved in a temporary location the value of the recursive invocation of <code>fib</code> on the number <code>(- n 1)</code> = <code>1</code> and is waiting for the value of the recursive invocation of <code>fib</code> on the number <code>(- n 2)</code> = <code>0</code>. When the value of the second recursive invocation of <code>fib</code> is eventually available, it will be added to the saved value of the first recursive invocation of <code>fib</code> and the result of the addition will be returned as the value of the invocation.</li>
       <li>One invocation evaluating the body of <code>fib</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>0</code>. That invocation directly returns the number <code>0</code> as its value without any further recursive invocation of <code>fib</code>.</li>
     </ol>
     <p>The values of the Fibonacci sequence can also be computed by the global function <code>fib-iter</code>:</p>
-    <pre class="repl">&gt; (fdef fib-iter (n)<br>    (fib-iter-internal n 0 1))<br>fib-iter<br><br>&gt; (fdef fib-iter-internal (n a b)<br>    (if (= n 0)<br>        a<br>      (if (= n 1)<br>          b<br>        (fib-iter-internal (- n 1) b (+ a b)))))<br>fib-iter-internal<br><br>&gt; (fib-iter 10)<br>55</pre>
-    <p>The bulk of the work is done by the auxiliary global function <code>fib-iter-internal</code>, which contains one recursive function call. The call to <code>fib-iter-internal</code> in <code>fib-iter</code> and the recursive function call in <code>fib-iter-internal</code> are both in tail position.</p>
-    <p>Whereas the global function <code>fib</code> computes the Fibonacci sequence top-down in a branching process that repeats the computation of some Fibonacci numbers, the global function <code>fib-iter</code> computes the Fibonacci sequence bottom-up in a linear process that do not repeat the computation of any Fibonacci numbers:</p>
+    <pre class="repl">&gt; (fdef fib-iter (n)<br>    (fib-iter/internal n 0 1))<br>fib-iter<br><br>&gt; (fdef fib-iter/internal (n a b)<br>    (if (= n 0)<br>        a<br>      (if (= n 1)<br>          b<br>        (fib-iter/internal (- n 1) b (+ a b)))))<br>fib-iter/internal<br><br>&gt; (fib-iter 10)<br>55</pre>
+    <p>The bulk of the work is done by the auxiliary global function <code>fib-iter/internal</code>, which contains one recursive function call. The call to <code>fib-iter/internal</code> in <code>fib-iter</code> and the recursive function call in <code>fib-iter/internal</code> are both in tail position.</p>
+    <p>Whereas the global function <code>fib</code> computes the Fibonacci sequence top-down in a branching process that repeats the computation of some Fibonacci numbers, the global function <code>fib-iter</code> computes the Fibonacci sequence bottom-up in a linear process that does not repeat the computation of any Fibonacci numbers:</p>
     <ul>
       <li>$F_2$ is computed from $F_1$ and $F_0$</li>
       <li>$F_3$ is computed from $F_2$ and $F_1$</li>
       <li>&hellip;</li>
     </ul>
-    <p>Let $n_\textrm{init}$ be the the argument of <code>fib-iter</code> and $n$, $a$, and $b$ be the arguments of the invocation of <code>fib-iter-internal</code> under consideration. When processing the invocation of <code>fib-iter-internal</code> from <code>fib-iter</code>, $n=n_\textrm{init}$, $a=F_0$, and $b=F_1$. If $n_\textrm{init}=0$, then <code>fib-iter-internal</code> returns $a=F_0$. Otherwise, if $n_\textrm{init}=1$, then <code>fib-iter-internal</code> returns $b=F_1$. Otherwise, <code>fib-iter-internal</code> invokes itself recursively. On each recursive invocation of <code>fib-iter-internal</code>, $n$ is decremented by $1$, $a$ is replaced by the next Fibonacci number in the sequence $F_0,F_1,F_2,\ldots$, and $b$ is replaced by the next Fibonacci number in the sequence $F_1,F_2,F_3,\ldots$ When processing the $(n_\textrm{init}-1)$-th recursive invocation of <code>fib-iter-internal</code>, $n=n_\textrm{init}-(n_\textrm{init}-1)=1$, $a=F_{0+n_\textrm{init}-1}=F_{n_\textrm{init}-1}$, and $b=F_{1+n_\textrm{init}-1}=F_{n_\textrm{init}}$ and <code>fib-iter-internal</code> returns $b=F_{n_\textrm{init}}$.</p>
+    <p>Let $n_\textrm{init}$ be the the argument of <code>fib-iter</code> and $n$, $a$, and $b$ be the arguments of the invocation of <code>fib-iter/internal</code> under consideration. When processing the invocation of <code>fib-iter/internal</code> from <code>fib-iter</code>, $n=n_\textrm{init}$, $a=F_0$, and $b=F_1$. If $n_\textrm{init}=0$, then <code>fib-iter/internal</code> returns $a=F_0$. Otherwise, if $n_\textrm{init}=1$, then <code>fib-iter/internal</code> returns $b=F_1$. Otherwise, <code>fib-iter/internal</code> invokes itself recursively. On each recursive invocation of <code>fib-iter/internal</code>, $n$ is decremented by $1$, $a$ is replaced by the next Fibonacci number in the sequence $F_0,F_1,F_2,\ldots$, and $b$ is replaced by the next Fibonacci number in the sequence $F_1,F_2,F_3,\ldots$ When processing the $(n_\textrm{init}-1)$-th recursive invocation of <code>fib-iter/internal</code>, $n=n_\textrm{init}-(n_\textrm{init}-1)=1$, $a=F_{0+n_\textrm{init}-1}=F_{n_\textrm{init}-1}$, and $b=F_{1+n_\textrm{init}-1}=F_{n_\textrm{init}}$ and <code>fib-iter/internal</code> returns $b=F_{n_\textrm{init}}$.</p>
     <p>Here is an invocation trace of the evaluation of the form <code>(fib-iter 6)</code>:</p>
     <div class="trace">
       <ul>
         <li>The global function <code>fib-iter</code> is invoked on the number <code>6</code>.</li>
         <li>
           <ul>
-            <li>The global function <code>fib-iter-internal</code> is invoked on the numbers <code>6</code>, <code>0</code>, and <code>1</code>.</li>
+            <li>The global function <code>fib-iter/internal</code> is invoked on the numbers <code>6</code>, <code>0</code>, and <code>1</code>.</li>
             <li>
               <ul>
-                <li>The global function <code>fib-iter-internal</code> is invoked on the numbers <code>5</code>, <code>1</code>, and <code>1</code>.</li>
+                <li>The global function <code>fib-iter/internal</code> is invoked on the numbers <code>5</code>, <code>1</code>, and <code>1</code>.</li>
                 <li>
                   <ul>
-                    <li>The global function <code>fib-iter-internal</code> is invoked on the numbers <code>4</code>, <code>1</code>, and <code>2</code>.</li>
+                    <li>The global function <code>fib-iter/internal</code> is invoked on the numbers <code>4</code>, <code>1</code>, and <code>2</code>.</li>
                     <li>
                       <ul>
-                        <li>The global function <code>fib-iter-internal</code> is invoked on the numbers <code>3</code>, <code>2</code>, and <code>3</code>.</li>
+                        <li>The global function <code>fib-iter/internal</code> is invoked on the numbers <code>3</code>, <code>2</code>, and <code>3</code>.</li>
                         <li>
                           <ul>
-                            <li>The global function <code>fib-iter-internal</code> is invoked on the numbers <code>2</code>, <code>3</code>, and <code>5</code>.</li>
+                            <li>The global function <code>fib-iter/internal</code> is invoked on the numbers <code>2</code>, <code>3</code>, and <code>5</code>.</li>
                             <li>
                               <ul>
-                                <li>The global function <code>fib-iter-internal</code> is invoked on the numbers <code>1</code>, <code>5</code>, and <code>8</code>.</li>
-                                <li>The global function <code>fib-iter-internal</code> returns the number <code>8</code>.</li>
+                                <li>The global function <code>fib-iter/internal</code> is invoked on the numbers <code>1</code>, <code>5</code>, and <code>8</code>.</li>
+                                <li>The global function <code>fib-iter/internal</code> returns the number <code>8</code>.</li>
                               </ul>
                             </li>
-                            <li>The global function <code>fib-iter-internal</code> returns the number <code>8</code>.</li>
+                            <li>The global function <code>fib-iter/internal</code> returns the number <code>8</code>.</li>
                           </ul>
                         </li>
-                        <li>The global function <code>fib-iter-internal</code> returns the number <code>8</code>.</li>
+                        <li>The global function <code>fib-iter/internal</code> returns the number <code>8</code>.</li>
                       </ul>
                     </li>
-                    <li>The global function <code>fib-iter-internal</code> returns the number <code>8</code>.</li>
+                    <li>The global function <code>fib-iter/internal</code> returns the number <code>8</code>.</li>
                   </ul>
                 </li>
-                <li>The global function <code>fib-iter-internal</code> returns the number <code>8</code>.</li>
+                <li>The global function <code>fib-iter/internal</code> returns the number <code>8</code>.</li>
               </ul>
             </li>
-            <li>The global function <code>fib-iter-internal</code> returns the number <code>8</code>.</li>
+            <li>The global function <code>fib-iter/internal</code> returns the number <code>8</code>.</li>
           </ul>
         </li>
         <li>The global function <code>fib-iter</code> returns the number <code>8</code>.</li>
       </ul>
     </div>
-    <p>When the evaluator is processing the invocation of <code>fib-iter-internal</code> on the numbers <code>1</code>, <code>5</code>, and <code>8</code>, there are $7$ active invocations ($1$ of <code>fib-iter</code> and $6$ of <code>fib-iter-internal</code>):</p>
+    <p>When the evaluator is processing the invocation of <code>fib-iter/internal</code> on the numbers <code>1</code>, <code>5</code>, and <code>8</code>, there are $7$ active invocations ($1$ of <code>fib-iter</code> and $6$ of <code>fib-iter/internal</code>):</p>
     <ol>
-      <li>One invocation evaluating the body of <code>fib-iter</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>6</code>. That invocation is waiting for the value of the invocation of <code>fib-iter-internal</code> on the numbers <code>n</code> = <code>6</code>, <code>0</code> and <code>1</code>. When that value is eventually available, it will be returned as the value of the invocation without any further processing.</li>
-      <li>One invocation evaluating the body of <code>fib-iter-internal</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>6</code>, the variable <code>a</code> to the number <code>0</code>, and the variable <code>b</code> to the number <code>1</code>. That invocation is waiting for the value of the recursive invocation of <code>fib-iter-internal</code> on the numbers <code>(- n 1)</code> = <code>5</code>, <code>b</code> = <code>1</code>, and <code>(+ a b)</code> = <code>1</code>. When that value is eventually available, it will be returned as the value of the invocation without any further processing.</li>
-      <li>One invocation evaluating the body of <code>fib-iter-internal</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>5</code>, the variable <code>a</code> to the number <code>1</code>, and the variable <code>b</code> to the number <code>1</code>. That invocation is waiting&hellip;</li>
-      <li>One invocation evaluating the body of <code>fib-iter-internal</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>4</code>, the variable <code>a</code> to the number <code>1</code>, and the variable <code>b</code> to the number <code>2</code>. That invocation is waiting&hellip;</li>
-      <li>One invocation evaluating the body of <code>fib-iter-internal</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>3</code>, the variable <code>a</code> to the number <code>2</code>, and the variable <code>b</code> to the number <code>3</code>. That invocation is waiting&hellip;</li>
-      <li>One invocation evaluating the body of <code>fib-iter-internal</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>2</code>, the variable <code>a</code> to the number <code>3</code>, and the variable <code>b</code> to the number <code>5</code>. That invocation is waiting for the value of the recursive invocation of <code>fib-iter-internal</code> on the numbers <code>(- n 1)</code> = <code>1</code>, <code>b</code> = <code>5</code>, and <code>(+ a b)</code> = <code>8</code>. When that value is eventually available, it will be returned as the value of the invocation without any further processing.</li>
-      <li>One invocation evaluating the body of <code>fib-iter-internal</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>1</code>, the variable <code>a</code> to the number <code>5</code>, and the variable <code>8</code> to the number <code>5</code>. That invocation directly returns the number <code>b</code> = <code>8</code> as its value without any further recursive invocation of <code>fib-iter-internal</code>.</li>
+      <li>One invocation evaluating the body of <code>fib-iter</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>6</code>. That invocation is waiting for the value of the invocation of <code>fib-iter/internal</code> on the numbers <code>n</code> = <code>6</code>, <code>0</code> and <code>1</code>. When that value is eventually available, it will be returned as the value of the invocation without any further processing.</li>
+      <li>One invocation evaluating the body of <code>fib-iter/internal</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>6</code>, the variable <code>a</code> to the number <code>0</code>, and the variable <code>b</code> to the number <code>1</code>. That invocation is waiting for the value of the recursive invocation of <code>fib-iter/internal</code> on the numbers <code>(- n 1)</code> = <code>5</code>, <code>b</code> = <code>1</code>, and <code>(+ a b)</code> = <code>1</code>. When that value is eventually available, it will be returned as the value of the invocation without any further processing.</li>
+      <li>One invocation evaluating the body of <code>fib-iter/internal</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>5</code>, the variable <code>a</code> to the number <code>1</code>, and the variable <code>b</code> to the number <code>1</code>. That invocation is waiting&hellip;</li>
+      <li>One invocation evaluating the body of <code>fib-iter/internal</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>4</code>, the variable <code>a</code> to the number <code>1</code>, and the variable <code>b</code> to the number <code>2</code>. That invocation is waiting&hellip;</li>
+      <li>One invocation evaluating the body of <code>fib-iter/internal</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>3</code>, the variable <code>a</code> to the number <code>2</code>, and the variable <code>b</code> to the number <code>3</code>. That invocation is waiting&hellip;</li>
+      <li>One invocation evaluating the body of <code>fib-iter/internal</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>2</code>, the variable <code>a</code> to the number <code>3</code>, and the variable <code>b</code> to the number <code>5</code>. That invocation is waiting for the value of the recursive invocation of <code>fib-iter/internal</code> on the numbers <code>(- n 1)</code> = <code>1</code>, <code>b</code> = <code>5</code>, and <code>(+ a b)</code> = <code>8</code>. When that value is eventually available, it will be returned as the value of the invocation without any further processing.</li>
+      <li>One invocation evaluating the body of <code>fib-iter/internal</code> with respect to a lexical environment binding, in the value namespace, the variable <code>n</code> to the number <code>1</code>, the variable <code>a</code> to the number <code>5</code>, and the variable <code>8</code> to the number <code>5</code>. That invocation directly returns the number <code>b</code> = <code>8</code> as its value without any further recursive invocation of <code>fib-iter/internal</code>.</li>
     </ol>
   </body>
 </html>

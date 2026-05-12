@@ -18,6 +18,9 @@
       $\DeclareMathOperator{\spread}{spread}$
       $\DeclareMathOperator{\serialform}{serial-form}$
       $\DeclareMathOperator{\iftestform}{if-test-form}$
+      $\DeclareMathOperator{\foreachfunctionform}{\_for-each-function-form}$
+      $\DeclareMathOperator{\foreachlistform}{\_for-each-list-form}$
+      $\DeclareMathOperator{\foreachinvocation}{\_for-each-invocation}$
       $\DeclareMathOperator{\setvalueform}{set-value-form}$
       $\DeclareMathOperator{\blockserialforms}{block-serial-forms}$
       $\DeclareMathOperator{\returnfromvaluesform}{return-from-values-form}$
@@ -27,11 +30,9 @@
       $\DeclareMathOperator{\throwvaluesform}{throw-values-form}$
       $\DeclareMathOperator{\handlerbindhandlerform}{\_handler-bind-handler-form}$
       $\DeclareMathOperator{\handlerbindserialforms}{\_handler-bind-serial-forms}$
+      $\DeclareMathOperator{\handlerbindinvocation}{\_handler-bind-invocation}$
       $\DeclareMathOperator{\unwindprotectprotectedform}{unwind-protect-protected-form}$
       $\DeclareMathOperator{\unwindprotectcleanupforms}{unwind-protect-cleanup-forms}$
-      $\DeclareMathOperator{\foreachfunctionform}{\_for-each-function-form}$
-      $\DeclareMathOperator{\foreachlistform}{\_for-each-list-form}$
-      $\DeclareMathOperator{\foreachelement}{\_for-each-element}$
       $\DeclareMathOperator{\functioncalloperatorform}{function-call-operator-form}$
       $\DeclareMathOperator{\functioncalloperandform}{function-call-operand-form}$
       $\DeclareMathOperator{\macro}{macro}$
@@ -63,7 +64,7 @@
     </ul>
     <p>Note that some whitespace is needed to separate the lexeme <span class="charseq"><span class="char">+</span></span> from the lexeme <span class="charseq"><span class="char">1</span><span class="char">2</span><span class="char">3</span></span> and the lexeme <span class="charseq"><span class="char">1</span><span class="char">2</span><span class="char">3</span></span> from the lexeme <span class="charseq"><span class="char">4</span><span class="char">5</span><span class="char">6</span></span> but no whitespace is needed to separate the lexeme <span class="charseq"><span class="char">(</span></span> from the lexeme <span class="charseq"><span class="char">+</span></span> or the lexeme <span class="charseq"><span class="char">4</span><span class="char">5</span><span class="char">6</span></span> from the lexeme <span class="charseq"><span class="char">)</span></span>.</p>
     <p><b>Step 2.2</b> A component of the reader called the parser converts the sequence of tokens from step 2.1 (minus the tokens of category <code>whitespace</code>, which are ignored by the parser) into a cons whose car is the variable from step 2.1 and whose cdr is a cons whose car is the first number from step 2.1 and whose cdr is a cons whose car is the second number from step 2.1 and whose cdr is the empty list. Together, those three conses represent the list <code>(+ 123 456)</code>.</p>
-    <p><b>Step 3</b> The evaluator evaluates the list <code>(+ 123 456)</code> to the number <code>579</code>. The evaluation of the top-level form <code>(+ 123 456)</code> entails the evaluation of other non-top-level forms. Each form must be analyzed in order to determine how it should be evaluated. The form <code>(+ 123 456)</code> is analyzed as a plain function call. The variable <code>+</code> is treated as an abbreviation for the form <code>(fref +)</code>. The form <code>(fref +)</code> is analyzed as an fref-form. The forms <code>123</code> and <code>456</code> are analyzed as self-evaluating objects. Because the global function <code>+</code> is a closure, its invocation entails the evaluation (and thus the analysis) of other forms. The component of the evaluator responsible for analyzing forms is called the form analyzer.</p>
+    <p><b>Step 3</b> The evaluator evaluates the list <code>(+ 123 456)</code> to the number <code>579</code>. The evaluation of the top-level form <code>(+ 123 456)</code> entails the evaluation of other non-top-level forms. Each form must be analyzed in order to determine how it should be evaluated. The form <code>(+ 123 456)</code> is analyzed as a plain function call. The variable <code>+</code> is treated as an abbreviation for the form <code>(fref +)</code>. The form <code>(fref +)</code> is analyzed as an <code>fref</code> form. The forms <code>123</code> and <code>456</code> are analyzed as self-evaluating objects. Because the global function <code>+</code> is a closure, its invocation entails the evaluation (and thus the analysis) of other forms. The component of the evaluator responsible for analyzing forms is called the form analyzer.</p>
     <p><b>Step 4</b> The printer converts the number <code>579</code> into the sequence of characters <span class="charseq"><span class="char">5</span><span class="char">7</span><span class="char">9</span></span>. (The sequence of characters is the printable representation of the number.)</p>
     <p><b>Step 5</b> The sequence of characters <span class="charseq"><span class="char">5</span><span class="char">7</span><span class="char">9</span></span> is written into the listener buffer.</p>
     <p>EVLambda has three levels of syntax:</p>
@@ -75,19 +76,19 @@
     <p>Each level of syntax is described later in its own section.</p>
     <h4>EVLambda Source Files</h4>
     <p>The reader is used not only to convert the characters typed into a listener buffer into an object but also to convert the characters contained inside an EVLambda source file into a sequence of objects.</p>
-    <p>EVLambda source files come in two varieties: the plain EVLambda source files, which contain only EVLambda source code, and the documented EVLambda source files, which contain a mix of EVLambda source code and documentation in XML format.</p>
+    <p>EVLambda source files come in two varieties: the plain EVLambda source files, which only contain EVLambda source code, and the documented EVLambda source files, which contain a mix of EVLambda source code and documentation in XML format.</p>
     <p>Here is an example of a plain EVLambda source file:</p>
     <pre class="repl">(fdef fact (n)<br>  (if (= n 0)<br>      1<br>    (* n (fact (- n 1)))))<br><br>(test 1 (fact 0))<br>(test 120 (fact 5))<br>(test 3628800 (fact 10))<br><br>(fdef fib (n)<br>  (if (= n 0)<br>      0<br>    (if (= n 1)<br>        1<br>      (+ (fib (- n 1)) (fib (- n 2))))))<br><br>(test 0 (fib 0))<br>(test 5 (fib 5))<br>(test 55 (fib 10))</pre>
     <p>Here is an example of a documented EVLambda source file:</p>
-    <pre class="repl">&lt;chapter&gt;<br>&lt;title&gt;Recursive Functions&lt;/title&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;section&gt;<br>&lt;title&gt;Factorial Function&lt;/title&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>(fdef fact (n)<br>  &lt;para&gt;...block...&lt;/para&gt;<br>  &lt;para&gt;...block...&lt;/para&gt;<br>  (if (= n 0)<br>      1 &lt;comment&gt;...eol...&lt;/comment&gt;<br>    (* n (fact (- n 1))))) &lt;comment&gt;...eoll...&lt;/comment&gt;<br><br>(test 1 (fact 0))<br>(test 120 (fact 5))<br>(test 3628800 (fact 10))<br>&lt;/section&gt;<br>&lt;section&gt;<br>&lt;title&gt;Fibonacci Sequence&lt;/title&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>(fdef fib (n)<br>  &lt;para&gt;...block...&lt;/para&gt;<br>  &lt;para&gt;...block...&lt;/para&gt;<br>  (if (= n 0)<br>      0 &lt;comment&gt;...eol...&lt;/comment&gt;<br>    (if (= n 1)<br>        1 &lt;comment&gt;...eol...&lt;/comment&gt;<br>      (+ (fib (- n 1)) (fib (- n 2)))))) &lt;comment&gt;...eoll...&lt;/comment&gt;<br><br>(test 0 (fib 0))<br>(test 5 (fib 5))<br>(test 55 (fib 10))<br>&lt;/section&gt;<br>&lt;/chapter&gt;</pre>
+    <pre class="repl">&lt;chapter&gt;<br>&lt;title&gt;Recursive Functions&lt;/title&gt;<br>&lt;p&gt;...para...&lt;/p&gt;<br>&lt;p&gt;...para...&lt;/p&gt;<br>&lt;section&gt;<br>&lt;title&gt;Factorial Function&lt;/title&gt;<br>&lt;p&gt;...para...&lt;/p&gt;<br>&lt;p&gt;...para...&lt;/p&gt;<br>(fdef fact (n)<br>  &lt;p&gt;...block...&lt;/p&gt;<br>  &lt;p&gt;...block...&lt;/p&gt;<br>  (if (= n 0)<br>      1 &lt;comment&gt;...eol...&lt;/comment&gt;<br>    (* n (fact (- n 1))))) &lt;comment&gt;...eoll...&lt;/comment&gt;<br><br>(test 1 (fact 0))<br>(test 120 (fact 5))<br>(test 3628800 (fact 10))<br>&lt;/section&gt;<br>&lt;section&gt;<br>&lt;title&gt;Fibonacci Sequence&lt;/title&gt;<br>&lt;p&gt;...para...&lt;/p&gt;<br>&lt;p&gt;...para...&lt;/p&gt;<br>(fdef fib (n)<br>  &lt;p&gt;...block...&lt;/p&gt;<br>  &lt;p&gt;...block...&lt;/p&gt;<br>  (if (= n 0)<br>      0 &lt;comment&gt;...eol...&lt;/comment&gt;<br>    (if (= n 1)<br>        1 &lt;comment&gt;...eol...&lt;/comment&gt;<br>      (+ (fib (- n 1)) (fib (- n 2)))))) &lt;comment&gt;...eoll...&lt;/comment&gt;<br><br>(test 0 (fib 0))<br>(test 5 (fib 5))<br>(test 55 (fib 10))<br>&lt;/section&gt;<br>&lt;/chapter&gt;</pre>
     <p>Documented EVLambda source files can be converted to HTML by a component of the programming language called the documentation generator.</p>
     <h4>Extensible Markup Language (XML)</h4>
     <p>An <a href="https://en.wikipedia.org/wiki/XML" target="_blank">extensible markup language</a> (XML) document is a annotated text document. An XML document is divided into two intermingled parts: the character data (the content) and the markup (the annotations). Markup can take many forms. Documented EVLambda source files use the following forms of markup:</p>
     <dl>
       <dt>start tags (without attributes)</dt>
-      <dd><code>&lt;chapter&gt;</code>, <code>&lt;section&gt;</code>, <code>&lt;title&gt;</code>, <code>&lt;para&gt;</code>, <code>&lt;comment&gt;</code>, &hellip;</dd>
+      <dd><code>&lt;chapter&gt;</code>, <code>&lt;section&gt;</code>, <code>&lt;title&gt;</code>, <code>&lt;p&gt;</code>, <code>&lt;comment&gt;</code>, &hellip;</dd>
       <dt>end tags</dt>
-      <dd><code>&lt;/chapter&gt;</code>, <code>&lt;/section&gt;</code>, <code>&lt;/title&gt;</code>, <code>&lt;/para&gt;</code>, <code>&lt;/comment&gt;</code>, &hellip;</dd>
+      <dd><code>&lt;/chapter&gt;</code>, <code>&lt;/section&gt;</code>, <code>&lt;/title&gt;</code>, <code>&lt;/p&gt;</code>, <code>&lt;/comment&gt;</code>, &hellip;</dd>
       <dt>empty-element tags (without attributes)</dt>
       <dd><code>&lt;br/&gt;</code>, &hellip;</dd>
       <dt>comments</dt>
@@ -453,7 +454,7 @@
           <dd>Value: The value is an object of type <code>number</code> representing the mathematical number of which the value matching the pattern is a decimal representation.</dd>
           <dt><code>keyword</code></dt>
           <dd>Pattern: <code>':' [^:]+</code></dd>
-          <dd>Value: The value is the object of type <code>keyword</code> whose name is the value matching the pattern.</dd>
+          <dd>Value: The value is the object of type <code>keyword</code> whose name is the value matching the pattern minus the initial colon.</dd>
           <dt><code>variable</code></dt>
           <dd>Pattern: <code>[^:]+</code></dd>
           <dd>Value: The value is the object of type <code>variable</code> whose name is the value matching the pattern.</dd>
@@ -582,18 +583,18 @@
       <!-- input -->
       <dt>$\metavar{input}\Coloneq$ <code>$\metavar{object}$</code></dt>
       <dd>$\mathcal{M}(\metavar{input})=[\mathcal{M}(\metavar{object})]$</dd>
-      <dt>$\metavar{input}\Coloneq$ <code>$\metavarn{object}{1}\ldots\metavarn{object}{n\geq0}$</code></dt>
-      <dd>$\mathcal{M}(\metavar{input})=[\mathcal{M}(\metavarn{object}{1}),\ldots,\mathcal{M}(\metavarn{object}{n})]$</dd>
-      <dt>$\metavar{input}\Coloneq$ <code>$\metavar{xml-comment}$* $\metavar{xml-element}$ $\metavar{xml-comment}$*</code></dt>
-      <dd>$\mathcal{M}(\metavar{input})=\mathcal{M}(\metavar{xml-element})$</dd>
+      <dt>$\metavar{input}\Coloneq$ <code>$\metavar{object}_1\ldots\metavar{object}_{n\ge0}$</code></dt>
+      <dd>$\mathcal{M}(\metavar{input})=[\mathcal{M}(\metavar{object}_1),\ldots,\mathcal{M}(\metavar{object}_n)]$</dd>
+      <dt>$\metavar{input}\Coloneq$ <code>$\metavar{cmt}_1\ldots\metavar{cmt}_{n\ge0}$ $\metavar{xml-element}$ $\metavar{cmt}'_1\ldots\metavar{cmt}'_{n'\ge0}$</code></dt>
+      <dd>$\mathcal{M}(\metavar{input})=\mathcal{M}(\metavar{cmt}_1)\|\cdots\|\mathcal{M}(\metavar{cmt}_n)\|\mathcal{M}(\metavar{xml-element})\|\mathcal{M}(\metavar{cmt}'_1)\|\cdots\|\mathcal{M}(\metavar{cmt}'_{n'})$</dd>
       <!-- xml-markup -->
       <dt>$\metavar{xml-markup}\Coloneq$ <code>$\metavar{xml-element}$</code></dt>
       <dd>$\mathcal{M}(\metavar{xml-markup})=\mathcal{M}(\metavar{xml-element})$</dd>
       <dt>$\metavar{xml-markup}\Coloneq$ <code>$\metavar{xml-comment}$</code></dt>
       <dd>$\mathcal{M}(\metavar{xml-markup})=\mathcal{M}(\metavar{xml-comment})$</dd>
       <!-- xml-element -->
-      <dt>$\metavar{xml-element}\Coloneq$ <code>xml-start-tag $\metavarn{xml-element-content}{1}\ldots\metavarn{xml-element-content}{n\geq0}$ xml-end-tag</code></dt>
-      <dd>$\mathcal{M}(\metavar{xml-element})=\mathcal{M}(\metavarn{xml-element-content}{1})\|\cdots\|\mathcal{M}(\metavarn{xml-element-content}{n})$</dd>
+      <dt>$\metavar{xml-element}\Coloneq$ <code>xml-start-tag $\metavar{xml-element-content}_1\ldots\metavar{xml-element-content}_{n\ge0}$ xml-end-tag</code></dt>
+      <dd>$\mathcal{M}(\metavar{xml-element})=\mathcal{M}(\metavar{xml-element-content}_1)\|\cdots\|\mathcal{M}(\metavar{xml-element-content}_n)$</dd>
       <dt>$\metavar{xml-element}\Coloneq$ <code>xml-empty-element-tag</code></dt>
       <dd>$\mathcal{M}(\metavar{xml-element})=[]$</dd>
       <!-- xml-element-content -->
@@ -654,14 +655,14 @@
       <!-- proper-list -->
       <dt>$\metavar{proper-list}\Coloneq$ <code>left-parenthesis right-parenthesis</code></dt>
       <dd>$\mathcal{M}(\metavar{proper-list})=$ the empty list</dd>
-      <dt>$\metavar{proper-list}\Coloneq$ <code>left-parenthesis $\metavarn{object}{1}\ldots\metavarn{object}{n\geq1}$ right-parenthesis</code></dt>
-      <dd>$\mathcal{M}(\metavar{proper-list})=$ the first cons of a chain of $n$ conses $\cons_1,\ldots,\cons_n$ such that the car of $\cons_i$ is $\mathcal{M}(\metavarn{object}{i})$, the cdr of $\cons_{i\lt n}$ is $\cons_{i+1}$, and the cdr of $\cons_n$ is the empty list</dd>
+      <dt>$\metavar{proper-list}\Coloneq$ <code>left-parenthesis $\metavar{object}_1\ldots\metavar{object}_{n\ge1}$ right-parenthesis</code></dt>
+      <dd>$\mathcal{M}(\metavar{proper-list})=$ the first cons of a chain of $n$ conses $\cons_1,\ldots,\cons_n$ such that the car of $\cons_i$ is $\mathcal{M}(\metavar{object}_i)$, the cdr of $\cons_{i\lt n}$ is $\cons_{i+1}$, and the cdr of $\cons_n$ is the empty list</dd>
       <!-- dotted-list -->
-      <dt>$\metavar{dotted-list}\Coloneq$ <code>left-parenthesis $\metavarn{object}{1}\ldots\metavarn{object}{n\geq1}$ dot $\metavarn{object}{n+1}$ right-parenthesis</code></dt>
-      <dd>$\mathcal{M}(\metavar{dotted-list})=$ the first cons of a chain of $n$ conses $\cons_1,\ldots,\cons_n$ such that the car of $\cons_i$ is $\mathcal{M}(\metavarn{object}{i})$, the cdr of $\cons_{i\lt n}$ is $\cons_{i+1}$, and the cdr of $\cons_n$ is $\mathcal{M}(\metavarn{object}{n+1})$</dd>
+      <dt>$\metavar{dotted-list}\Coloneq$ <code>left-parenthesis $\metavar{object}_1\ldots\metavar{object}_{n\ge1}$ dot $\metavar{object}_{n+1}$ right-parenthesis</code></dt>
+      <dd>$\mathcal{M}(\metavar{dotted-list})=$ the first cons of a chain of $n$ conses $\cons_1,\ldots,\cons_n$ such that the car of $\cons_i$ is $\mathcal{M}(\metavar{object}_i)$, the cdr of $\cons_{i\lt n}$ is $\cons_{i+1}$, and the cdr of $\cons_n$ is $\mathcal{M}(\metavar{object}_{n+1})$</dd>
       <!-- vector -->
-      <dt>$\metavar{vector}\Coloneq$ <code>hash-left-parenthesis $\metavarn{object}{1}\ldots\metavarn{object}{n\geq0}$ right-parenthesis</code></dt>
-      <dd>$\mathcal{M}(\metavar{vector})=$ a vector of $n$ elements $\mlvar{elem}_1,\ldots,\mlvar{elem}_n$ such that $\mlvar{elem}_i$ is $\mathcal{M}(\metavarn{object}{i})$</dd>
+      <dt>$\metavar{vector}\Coloneq$ <code>hash-left-parenthesis $\metavar{object}_1\ldots\metavar{object}_{n\ge0}$ right-parenthesis</code></dt>
+      <dd>$\mathcal{M}(\metavar{vector})=$ a vector of $n$ elements $\mlvar{elem}_1,\ldots,\mlvar{elem}_n$ such that $\mlvar{elem}_i$ is $\mathcal{M}(\metavar{object}_i)$</dd>
     </dl>
     <p>Note that the XML markup inside abbreviations, lists, and vectors cannot produce objects and has therefore been omitted from the definition of the function $\mathcal{M}$.</p>
     <h3>Pattern Language and Template Languages</h3>
@@ -745,14 +746,14 @@
         <td class="rhs"><code>#($\metavar{pattern}$*)</code></td>
       </tr>
     </table>
-    <p>The rules specifying if an object matches a pattern are the following:</p>
+    <p>The rules specifying whether an object matches a pattern are the following:</p>
     <ul>
       <li>An object matches the name of a type if and only if the object is a member of the type.</li>
-      <li>An object matches a readable representation if and only if the object is (or is <code>eql</code> to) the object denoted by the readable representation.</li>
+      <li>An object matches a readable representation if and only if the object is <code>eql?</code> to the object denoted by the readable representation.</li>
       <li>An object matches the pattern <code>()</code> if and only if the object is the empty list.</li>
-      <li>An object matches the pattern <code>($\metavarn{pattern}{1}\ldots\metavarn{pattern}{n\geq0}$)</code> if and only if the object is the first cons of a chain of $n$ conses $\cons_1,\ldots,\cons_n$ such that the car of $\cons_i$ matches $\metavarn{pattern}{i}$, the cdr of $\cons_{i\lt n}$ is $\cons_{i+1}$, and the cdr of $\cons_n$ is the empty list.</li>
-      <li>An object matches the pattern <code>($\metavarn{pattern}{1}\ldots\metavarn{pattern}{n\geq1}$ . $\metavarn{pattern}{n+1}$)</code> if and only if the object is the first cons of a chain of $n$ conses $\cons_1,\ldots,\cons_n$ such that the car of $\cons_i$ matches $\metavarn{pattern}{i}$, the cdr of $\cons_{i\lt n}$ is $\cons_{i+1}$, and the cdr of $\cons_n$ matches $\metavarn{pattern}{n+1}$.</li>
-      <li>An object matches the pattern <code>#($\metavarn{pattern}{1}\ldots\metavarn{pattern}{n\geq0}$)</code> if and only if the object is a vector of $n$ elements $\mlvar{elem}_1,\ldots,\mlvar{elem}_n$ such that $\mlvar{elem}_i$ matches $\metavarn{pattern}{i}$.</li>
+      <li>An object matches the pattern <code>($\metavar{pattern}_1\ldots\metavar{pattern}_{n\ge0}$)</code> if and only if the object is the first cons of a chain of $n$ conses $\cons_1,\ldots,\cons_n$ such that the car of $\cons_i$ matches $\metavar{pattern}_i$, the cdr of $\cons_{i\lt n}$ is $\cons_{i+1}$, and the cdr of $\cons_n$ is the empty list.</li>
+      <li>An object matches the pattern <code>($\metavar{pattern}_1\ldots\metavar{pattern}_{n\ge1}$ . $\metavar{pattern}_{n+1}$)</code> if and only if the object is the first cons of a chain of $n$ conses $\cons_1,\ldots,\cons_n$ such that the car of $\cons_i$ matches $\metavar{pattern}_i$, the cdr of $\cons_{i\lt n}$ is $\cons_{i+1}$, and the cdr of $\cons_n$ matches $\metavar{pattern}_{n+1}$.</li>
+      <li>An object matches the pattern <code>#($\metavar{pattern}_1\ldots\metavar{pattern}_{n\ge0}$)</code> if and only if the object is a vector of $n$ elements $\mlvar{elem}_1,\ldots,\mlvar{elem}_n$ such that $\mlvar{elem}_i$ matches $\metavar{pattern}_i$.</li>
     </ul>
     <p>By way of example, let us consider the template language specified by the following context-free grammar:</p>
     <table class="ebnf">
@@ -782,7 +783,18 @@
     </ul>
     <p>The objects specified by the example template language (= the objects matching at least one sentence of the example template language) are the proper lists of conses of arbitrary objects. As suggested by the names of the nonterminal symbols, the first object of each cons operates as a key, the second object of each cons operates as a value, and the proper list as a whole is called an association list.</p>
     <h3>Read-Time Conditionalization Facility</h3>
-    <p>The purpose of the read-time conditionalization facility is to alter the flow of tokens according to some conditions. Because the facility is conceptually located between the tokenizer and the parser, its associated syntax does not belong to the context-free grammar used by the parser. It is however convenient to specify the syntax of a read-time conditional by the following production rule:</p>
+    <p>A feature is a symbol associated with a property of the implementation. The feature list is the proper list of features that is the value of the global variable <code>*features*</code>. For each feature, the meanings of the presence of the feature on the feature list and the absence of the feature from the feature list must be specified.</p>
+    <p>Each evaluator has an associated feature:</p>
+    <table class="plain">
+      <tr><th>Feature</th><th>Meaning</th></tr>
+      <tr><td><code>directstyle</code></td><td>The feature is present on the feature list if and only if the evaluator is an instance of the direct style evaluator.</td></tr>
+      <tr><td><code>cps</code></td><td>The feature is present on the feature list if and only if the evaluator is an instance of the continuation passing style evaluator.</td></tr>
+      <tr><td><code>oocps</code></td><td>The feature is present on the feature list if and only if the evaluator is an instance of the object-oriented CPS evaluator.</td></tr>
+      <tr><td><code>sboocps</code></td><td>The feature is present on the feature list if and only if the evaluator is an instance of the stack-based object-oriented CPS evaluator.</td></tr>
+      <tr><td><code>trampoline</code></td><td>The feature is present on the feature list if and only if the evaluator is an instance of the trampoline evaluator.</td></tr>
+      <tr><td><code>trampolinepp</code></td><td>The feature is present on the feature list if and only if the evaluator is an instance of the trampoline++ evaluator.</td></tr>
+    </table>
+    <p>The purpose of the read-time conditionalization facility is to alter the flow of tokens according to whether or not some features belong or do not belong to the feature list. Because the facility is conceptually located between the tokenizer and the parser, its associated syntax does not belong to the context-free grammar used by the parser. It is however convenient to specify the syntax of a read-time conditional by the following production rule:</p>
     <table class="ebnf">
       <tr>
         <td class="lhs">$\metavar{read-time-conditional}$</td>
@@ -791,13 +803,18 @@
       </tr>
     </table>
     <p>The first object is called the feature expression and the second object is called the conditionalized object.</p>
-    <p>When the facility encounters a <code>hash-plus</code> or a <code>hash-minus</code> token, it instructs the parser to parse, hand over, and discard the feature expression. The feature expression is then evaluated by the facility according to the rules stated below. If the feature expression evaluates to true, then the facility ends its processing of the read-time conditional by instructing the parser to parse and retain the conditionalized object. (The net effect is the same as if only the tokens of the conditionalized object had existed.) If the feature expression evaluates to false, then the facility ends its processing of the read-time conditional by instructing the parser to parse and discard the conditionalized object. (The net effect is the same as if the tokens of the read-time conditional had not existed.)</p>
-    <p>Feature expressions must belong to the set objects specified by the template language specified by the following context-free grammar:</p>
+    <p>When the facility encounters a <code>hash-plus</code> or a <code>hash-minus</code> token, it instructs the parser to parse, hand over, and discard the feature expression. The feature expression is then evaluated by the facility according to the rules stated below. If the read-time conditional starts with a <code>hash-plus</code> token and the feature expression evaluates to true or the read-time conditional starts with a <code>hash-minus</code> token and the feature expression evaluates to false, then the facility ends its processing of the read-time conditional by instructing the parser to parse and retain the conditionalized object. (The net effect is the same as if only the tokens of the conditionalized object had existed.) If the read-time conditional starts with a <code>hash-plus</code> token and the feature expression evaluates to false or the read-time conditional starts with a <code>hash-minus</code> token and the feature expression evaluates to true, then the facility ends its processing of the read-time conditional by instructing the parser to parse and discard the conditionalized object. (The net effect is the same as if the tokens of the read-time conditional had not existed.)</p>
+    <p>Feature expressions must belong to the set of objects specified by the template language specified by the following context-free grammar:</p>
     <table class="ebnf">
       <tr>
         <td class="lhs">$\metavar{feature-expression}$</td>
         <td class="def">$\Coloneq$</td>
-        <td class="rhs"><code>$\symbol$ | (not $\metavar{operand}$) | (and $\metavar{operand}$*) | (or $\metavar{operand}$*)</code></td>
+        <td class="rhs"><code>$\metavar{feature}$ | (not $\metavar{operand}$) | (and $\metavar{operand}$*) | (or $\metavar{operand}$*)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{feature}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\symbol$</code></td>
       </tr>
       <tr>
         <td class="lhs">$\metavar{operand}$</td>
@@ -807,20 +824,21 @@
     </table>
     <p>Feature expressions are evaluated as follows:</p>
     <dl>
-      <dt>$\metavar{feature-expression}\Coloneq$ <code>$\symbol$</code></dt>
-      <dd>The feature expression evaluates to true if the symbol belongs to the value of the global variable <code>*features*</code> and to false otherwise.</dd>
+      <dt>$\metavar{feature-expression}\Coloneq$ <code>$\metavar{feature}$</code></dt>
+      <dd>The feature expression evaluates to true if the feature belongs to the feature list and to false otherwise.</dd>
       <dt>$\metavar{feature-expression}\Coloneq$ <code>(not $\metavar{operand}$)</code></dt>
       <dd>The feature expression evaluates to true if its operand evaluates to false and to false otherwise.</dd>
-      <dt>$\metavar{feature-expression}\Coloneq$ <code>(and $\metavar{operand}$*)</code></dt>
+      <dt>$\metavar{feature-expression}\Coloneq$ <code>(and $\metavar{operand}_1\ldots\metavar{operand}_{n\ge0}$)</code></dt>
       <dd>The feature expression evaluates to true if all its operands evaluate to true and to false otherwise.</dd>
-      <dt>$\metavar{feature-expression}\Coloneq$ <code>(or $\metavar{operand}$*)</code></dt>
+      <dt>$\metavar{feature-expression}\Coloneq$ <code>(or $\metavar{operand}_1\ldots\metavar{operand}_{n\ge0}$)</code></dt>
       <dd>The feature expression evaluates to false if all its operands evaluate to false and to true otherwise.</dd>
     </dl>
     <p>By way of example, let us consider the following sequence of characters:</p>
     <blockquote><code>(1 . #+foo 2 #-foo 3)</code></blockquote>
-    <p>If the symbol <code>foo</code> belongs to the value of the global variable <code>*features*</code>, then the sequence of characters is parsed as the dotted list <code>(1 . 2)</code>. Otherwise, the sequence of characters is parsed as the dotted list <code>(1 . 3)</code>.</p>
+    <p>If the feature <code>foo</code> belongs to the feature list, then the sequence of characters is parsed as the dotted list <code>(1 . 2)</code>. Otherwise, the sequence of characters is parsed as the dotted list <code>(1 . 3)</code>.</p>
     <h3>Form Analyzer</h3>
-    <p>The forms recognized by the form analyzer are specified by the template language specified by the following context-free grammar:</p>
+    <p>A form is any object submitted to the evaluator. A top-level form is a form submitted to the evaluator by an entity other than the evaluator, the IDE for instance. A non-top-level form is a form submitted to the evaluator by the evaluator in the course of the evaluation of a top-level form.</p>
+    <p>Analyzing a form is the first step in evaluating a form. If a form is not recognized by the form analyzer, then the evaluation of the form completes abruptly for a reason of type <code>error</code>. The forms recognized by the form analyzer are specified by the template language specified by the following context-free grammar ($\metavar{form}$ is a misnomer as any object submitted to the evaluator is a form):</p>
     <table class="ebnf">
       <tr>
         <td class="lhs">$\metavar{form}$</td>
@@ -830,7 +848,7 @@
       <tr>
         <td class="lhs">$\metavar{special-form}$</td>
         <td class="def">$\Coloneq$</td>
-        <td class="rhs"><code>$\metavar{quote-form}$ | $\metavar{progn-form}$ | $\metavar{if-form}$ | $\metavar{lambda-abstraction}$ | $\metavar{variable-reference}$ | $\metavar{variable-assignment}$ | $\metavar{block-form}$ | $\metavar{return-from-form}$ | $\metavar{catch-form}$ | $\metavar{throw-form}$ | $\metavar{\_handler-bind-form}$ | $\metavar{unwind-protect-form}$ | $\metavar{\_for-each-form}$ | $\metavar{apply-form}$ | $\metavar{multiple-value-call-form}$ | $\metavar{multiple-value-apply-form}$</code></td>
+        <td class="rhs"><code>$\metavar{quote-form}$ | $\metavar{progn-form}$ | $\metavar{if-form}$ | $\metavar{\_for-each-form}$ | $\metavar{lambda-abstraction}$ | $\metavar{variable-reference}$ | $\metavar{variable-assignment}$ | $\metavar{block-form}$ | $\metavar{return-from-form}$ | $\metavar{catch-form}$ | $\metavar{throw-form}$ | $\metavar{\_handler-bind-form}$ | $\metavar{unwind-protect-form}$ | $\metavar{apply-form}$ | $\metavar{multiple-value-call-form}$ | $\metavar{multiple-value-apply-form}$</code></td>
       </tr>
       <tr>
         <td class="lhs">$\metavar{quote-form}$</td>
@@ -869,6 +887,21 @@
       </tr>
       <tr>
         <td class="lhs">$\metavar{else-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{form}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{\_for-each-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>(_for-each $\metavar{function-form}$ $\metavar{list-form}$)</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{function-form}$</td>
+        <td class="def">$\Coloneq$</td>
+        <td class="rhs"><code>$\metavar{form}$</code></td>
+      </tr>
+      <tr>
+        <td class="lhs">$\metavar{list-form}$</td>
         <td class="def">$\Coloneq$</td>
         <td class="rhs"><code>$\metavar{form}$</code></td>
       </tr>
@@ -1013,21 +1046,6 @@
         <td class="rhs"><code>$\metavar{form}$</code></td>
       </tr>
       <tr>
-        <td class="lhs">$\metavar{\_for-each-form}$</td>
-        <td class="def">$\Coloneq$</td>
-        <td class="rhs"><code>(_for-each $\metavar{function-form}$ $\metavar{list-form}$)</code></td>
-      </tr>
-      <tr>
-        <td class="lhs">$\metavar{function-form}$</td>
-        <td class="def">$\Coloneq$</td>
-        <td class="rhs"><code>$\metavar{form}$</code></td>
-      </tr>
-      <tr>
-        <td class="lhs">$\metavar{list-form}$</td>
-        <td class="def">$\Coloneq$</td>
-        <td class="rhs"><code>$\metavar{form}$</code></td>
-      </tr>
-      <tr>
         <td class="lhs">$\metavar{apply-form}$</td>
         <td class="def">$\Coloneq$</td>
         <td class="rhs"><code>(apply $\metavar{operator-form}$ $\metavar{operand-form}$*)</code></td>
@@ -1084,7 +1102,7 @@
       <tr>
         <td class="lhs">$\metavar{special-operator}$</td>
         <td class="def">$\Coloneq$</td>
-        <td class="rhs"><code>quote | progn | if | _vlambda | _mlambda | _flambda | _dlambda | vref | fref | dref | vset! | fset! | dset! | block | return-from | catch | throw | _handler-bind | unwind-protect | _for-each | apply | multiple-value-call | multiple-value-apply</code></td>
+        <td class="rhs"><code>quote | progn | if | _for-each | _vlambda | _mlambda | _flambda | _dlambda | vref | fref | dref | vset! | fset! | dset! | block | return-from | catch | throw | _handler-bind | unwind-protect | apply | multiple-value-call | multiple-value-apply</code></td>
       </tr>
       <tr>
         <td class="lhs">$\metavar{call}$</td>
@@ -1105,29 +1123,27 @@
       <tr><td><code>($\var_1\ldots\var_{n\ge1}$ . $\var_{n+1}$)</code></td><td>$\var_1,\ldots,\var_n$</td><td>$\var_{n+1}$</td></tr>
     </table>
     <p>The variables <code>quasiquote</code>, <code>unquote</code>, and <code>unquote-splicing</code> are not special operators. The variable <code>quasiquote</code> is the name of a global macro and the variables <code>unquote</code> and <code>unquote-splicing</code> are variables having special meanings in the context of a call to the global macro <code>quasiquote</code>.</p>
-    <p>A form consisting of a variable $\var$ is treated as an abbreviation. If it appears in operator position, then it is treated as an abbreviation for the special form <code>(fref $\var$)</code>. Otherwise, it is treated as an abbreviation for the special form <code>(vref $\var$)</code>.</p>
-    <p>Analyzing a form is the first step in evaluating a form. If the analysis fails, then the evaluation fails.</p>
-    <p>Some form analyzers analyze a form without analyzing the subforms of the form. With such form analyzers, the subforms of the form are analyzed if and when they are evaluated. Form analyzers associated with interpreters usually function this way.</p>
+    <p>A form consisting of a variable $\variable$ is treated as an abbreviation. If it appears in operator position, then it is treated as an abbreviation for the special form <code>(fref $\variable$)</code>. Otherwise, it is treated as an abbreviation for the special form <code>(vref $\variable$)</code>.</p>
     <p>According to the template language, some objects can simultaneously be a special form, a macro call, and a plain function call. Additional rules are needed to disambiguate the situation.</p>
     <p>The following rules used by the form analyzer are not expressed by the template language:</p>
     <ul>
-      <li>A list whose first element is a special operator is never analyzed as a call. Either the list is successfully analyzed as a special form or the analysis fails.</li>
-      <li>A list whose first element is a variable (other than a special operator) naming a macro according to the lookup rule used by <code>fref</code> is never analyzed as a plain function call. Either the list is successfully analyzed as a macro call or the analysis fails.</li>
+      <li>A list whose first element is a special operator is never analyzed as a call.</li>
+      <li>A list whose first element is a variable (other than a special operator) naming a macro according to the lookup rule used by <code>fref</code> is never analyzed as a plain function call.</li>
       <li>The variables of a parameter list must be distinct.</li>
     </ul>
-    <p>The subforms of a form are the forms that are directly or indirectly contained inside the form but are not contained inside a lambda abstraction. The serial-forms of the body of a lambda abstraction are not considered to be subforms of the lambda abstraction because the evaluation of a lambda abstraction does not entail the evaluation of the serial-forms of its body.</p>
-    <p>A form is said to be in tail position with respect to a lambda abstraction if and only if one of the following mutually exclusive conditions is satisfied:</p>
+    <p>The direct subforms of a form are the direct components of the form that are identified as forms by the form's production rule. Note that the body of a lambda abstraction is not considered to be a direct subform of the lambda abstraction as the evaluation of a lambda abstraction does not entail the evaluation of its body. The subforms of a form are the direct subforms of the form, the direct subforms of the direct subforms of the form, &hellip;</p>
+    <p>A form is said to be in tail position with respect to a lambda abstraction other than a <code>_dlambda</code> form if and only if one of the following conditions is satisfied:</p>
     <ul>
-      <li>The form is the last serial-form of the body of the lambda abstraction.</li>
-      <li>The form is the last serial-form of a progn-form in tail position with respect to the lambda abstraction.</li>
-      <li>The form is the then-form or the else-form of an if-form in tail position with respect to the lambda abstraction.</li>
+      <li>The form is the last serial form of the body of the lambda abstraction.</li>
+      <li>The form is the last serial form of a <code>progn</code> form in tail position with respect to the lambda abstraction.</li>
+      <li>The form is the then form or the else form of an <code>if</code> form in tail position with respect to the lambda abstraction.</li>
     </ul>
     <h3>Documentation Generator</h3>
     <p>In this section, the character &#x21F0; marks the places where line breaks have been added to wrap long lines.</p>
     <p>Let us consider the following documented EVLambda source file:</p>
-    <pre class="repl">&lt;chapter&gt;<br>&lt;title&gt;Recursive Functions&lt;/title&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;section&gt;<br>&lt;title&gt;Factorial Function&lt;/title&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>(fdef fact (n)<br>  &lt;para&gt;...block...&lt;/para&gt;<br>  &lt;para&gt;...block...&lt;/para&gt;<br>  (if (= n 0)<br>      1 &lt;comment&gt;...eol...&lt;/comment&gt;<br>    (* n (fact (- n 1))))) &lt;comment&gt;...eoll...&lt;/comment&gt;<br><br>(test 1 (fact 0))<br>(test 120 (fact 5))<br>(test 3628800 (fact 10))<br>&lt;/section&gt;<br>&lt;section&gt;<br>&lt;title&gt;Fibonacci Sequence&lt;/title&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>(fdef fib (n)<br>  &lt;para&gt;...block...&lt;/para&gt;<br>  &lt;para&gt;...block...&lt;/para&gt;<br>  (if (= n 0)<br>      0 &lt;comment&gt;...eol...&lt;/comment&gt;<br>    (if (= n 1)<br>        1 &lt;comment&gt;...eol...&lt;/comment&gt;<br>      (+ (fib (- n 1)) (fib (- n 2)))))) &lt;comment&gt;...eoll...&lt;/comment&gt;<br><br>(test 0 (fib 0))<br>(test 5 (fib 5))<br>(test 55 (fib 10))<br>&lt;/section&gt;<br>&lt;/chapter&gt;</pre>
+    <pre class="repl">&lt;chapter&gt;<br>&lt;title&gt;Recursive Functions&lt;/title&gt;<br>&lt;p&gt;...para...&lt;/p&gt;<br>&lt;p&gt;...para...&lt;/p&gt;<br>&lt;section&gt;<br>&lt;title&gt;Factorial Function&lt;/title&gt;<br>&lt;p&gt;...para...&lt;/p&gt;<br>&lt;p&gt;...para...&lt;/p&gt;<br>(fdef fact (n)<br>  &lt;p&gt;...block...&lt;/p&gt;<br>  &lt;p&gt;...block...&lt;/p&gt;<br>  (if (= n 0)<br>      1 &lt;comment&gt;...eol...&lt;/comment&gt;<br>    (* n (fact (- n 1))))) &lt;comment&gt;...eoll...&lt;/comment&gt;<br><br>(test 1 (fact 0))<br>(test 120 (fact 5))<br>(test 3628800 (fact 10))<br>&lt;/section&gt;<br>&lt;section&gt;<br>&lt;title&gt;Fibonacci Sequence&lt;/title&gt;<br>&lt;p&gt;...para...&lt;/p&gt;<br>&lt;p&gt;...para...&lt;/p&gt;<br>(fdef fib (n)<br>  &lt;p&gt;...block...&lt;/p&gt;<br>  &lt;p&gt;...block...&lt;/p&gt;<br>  (if (= n 0)<br>      0 &lt;comment&gt;...eol...&lt;/comment&gt;<br>    (if (= n 1)<br>        1 &lt;comment&gt;...eol...&lt;/comment&gt;<br>      (+ (fib (- n 1)) (fib (- n 2)))))) &lt;comment&gt;...eoll...&lt;/comment&gt;<br><br>(test 0 (fib 0))<br>(test 5 (fib 5))<br>(test 55 (fib 10))<br>&lt;/section&gt;<br>&lt;/chapter&gt;</pre>
     <p>The first step of the documentation generation process converts the documented EVLambda source file into the following XML document:</p>
-    <pre class="repl">&lt;chapter&gt;<br>&lt;title&gt;Recursive Functions&lt;/title&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;section&gt;<br>&lt;title&gt;Factorial Function&lt;/title&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;toplevelcode&gt;&lt;blockcode&gt;(fdef fact (n)&#x21F0;<br>&lt;/blockcode&gt;&lt;indentation style="margin-left: 2ch;"&gt;&lt;blockcomment&gt;<br>  &lt;para&gt;...block...&lt;/para&gt;<br>  &lt;para&gt;...block...&lt;/para&gt;&lt;/blockcomment&gt;&lt;/indentation&gt;&lt;blockcode&gt;<br>  (if (= n 0)<br>      1 &lt;comment&gt;...eol...&lt;/comment&gt;<br>    (* n (fact (- n 1))))) &#x21F0;<br>&lt;comment&gt;...eoll...&lt;/comment&gt;&lt;/blockcode&gt;&lt;/toplevelcode&gt;<br><br>&lt;toplevelcode&gt;&lt;blockcode&gt;(test 1 (fact 0))<br>(test 120 (fact 5))<br>(test 3628800 (fact 10))&lt;/blockcode&gt;&lt;/toplevelcode&gt;<br>&lt;/section&gt;<br>&lt;section&gt;<br>&lt;title&gt;Fibonacci Sequence&lt;/title&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;para&gt;...para...&lt;/para&gt;<br>&lt;toplevelcode&gt;&lt;blockcode&gt;(fdef fib (n)&#x21F0;<br>&lt;/blockcode&gt;&lt;indentation style="margin-left: 2ch;"&gt;&lt;blockcomment&gt;<br>  &lt;para&gt;...block...&lt;/para&gt;<br>  &lt;para&gt;...block...&lt;/para&gt;&lt;/blockcomment&gt;&lt;/indentation&gt;&lt;blockcode&gt;<br>  (if (= n 0)<br>      0 &lt;comment&gt;...eol...&lt;/comment&gt;<br>    (if (= n 1)<br>        1 &lt;comment&gt;...eol...&lt;/comment&gt;<br>      (+ (fib (- n 1)) (fib (- n 2)))))) &#x21F0;<br>&lt;comment&gt;...eoll...&lt;/comment&gt;&lt;/blockcode&gt;&lt;/toplevelcode&gt;<br><br>&lt;toplevelcode&gt;&lt;blockcode&gt;(test 0 (fib 0))<br>(test 5 (fib 5))<br>(test 55 (fib 10))&lt;/blockcode&gt;&lt;/toplevelcode&gt;<br>&lt;/section&gt;<br>&lt;/chapter&gt;</pre>
+    <pre class="repl">&lt;chapter&gt;<br>&lt;title&gt;Recursive Functions&lt;/title&gt;<br>&lt;p&gt;...para...&lt;/p&gt;<br>&lt;p&gt;...para...&lt;/p&gt;<br>&lt;section&gt;<br>&lt;title&gt;Factorial Function&lt;/title&gt;<br>&lt;p&gt;...para...&lt;/p&gt;<br>&lt;p&gt;...para...&lt;/p&gt;<br>&lt;toplevelcode&gt;&lt;blockcode&gt;(fdef fact (n)&#x21F0;<br>&lt;/blockcode&gt;&lt;indentation style="margin-left: 2ch;"&gt;&lt;blockcomment&gt;<br>  &lt;p&gt;...block...&lt;/p&gt;<br>  &lt;p&gt;...block...&lt;/p&gt;&lt;/blockcomment&gt;&lt;/indentation&gt;&lt;blockcode&gt;<br>  (if (= n 0)<br>      1 &lt;comment&gt;...eol...&lt;/comment&gt;<br>    (* n (fact (- n 1))))) &#x21F0;<br>&lt;comment&gt;...eoll...&lt;/comment&gt;&lt;/blockcode&gt;&lt;/toplevelcode&gt;<br><br>&lt;toplevelcode&gt;&lt;blockcode&gt;(test 1 (fact 0))<br>(test 120 (fact 5))<br>(test 3628800 (fact 10))&lt;/blockcode&gt;&lt;/toplevelcode&gt;<br>&lt;/section&gt;<br>&lt;section&gt;<br>&lt;title&gt;Fibonacci Sequence&lt;/title&gt;<br>&lt;p&gt;...para...&lt;/p&gt;<br>&lt;p&gt;...para...&lt;/p&gt;<br>&lt;toplevelcode&gt;&lt;blockcode&gt;(fdef fib (n)&#x21F0;<br>&lt;/blockcode&gt;&lt;indentation style="margin-left: 2ch;"&gt;&lt;blockcomment&gt;<br>  &lt;p&gt;...block...&lt;/p&gt;<br>  &lt;p&gt;...block...&lt;/p&gt;&lt;/blockcomment&gt;&lt;/indentation&gt;&lt;blockcode&gt;<br>  (if (= n 0)<br>      0 &lt;comment&gt;...eol...&lt;/comment&gt;<br>    (if (= n 1)<br>        1 &lt;comment&gt;...eol...&lt;/comment&gt;<br>      (+ (fib (- n 1)) (fib (- n 2)))))) &#x21F0;<br>&lt;comment&gt;...eoll...&lt;/comment&gt;&lt;/blockcode&gt;&lt;/toplevelcode&gt;<br><br>&lt;toplevelcode&gt;&lt;blockcode&gt;(test 0 (fib 0))<br>(test 5 (fib 5))<br>(test 55 (fib 10))&lt;/blockcode&gt;&lt;/toplevelcode&gt;<br>&lt;/section&gt;<br>&lt;/chapter&gt;</pre>
     <p>Here are a few remarks about the XML document:</p>
     <ul>
       <li>The XML document is well-formed. (In this case, the documented EVLambda source file was already well-formed because the code does not contain any &lt; or &amp; character.)</li>
@@ -1141,235 +1157,251 @@
     <h2>Semantics</h2>
     <h3>Primitive Data Types and Primitive Functions</h3>
     <p>This section inventories all the primitive data types and all the primitive functions.</p>
-    <p>For each primitive function, a template function call, an indication of the outcome of the corresponding invocation, and a description of the primitive function's behavior are provided.</p>
-    <p>In template function calls, argument names imply the following type restrictions:</p>
-    <ul>
-      <li>Arguments named $\object$, with or without a subscript, can be of any type.</li>
-      <li>Arguments named $\number$, with or without a subscript, must be of type <code>number</code>.</li>
-      <li>Arguments named $\string$, with or without a subscript, must be of type <code>string</code>.</li>
-      <li>Arguments named $\variable$, with or without a subscript, must be of type <code>variable</code>.</li>
-      <li>Arguments named $\cons$, with or without a subscript, must be of type <code>cons</code>.</li>
-    </ul>
-    <p>If any argument is not of its required type, then the invocation of the primitive function completes abruptly for a reason of type <code>error</code>.</p>
     <h4>Primitive Data Types</h4>
     <p>Here is a tree-view representation of the hierarchy of primitive data types:</p>
     <pre>object<br>  |-void<br>  |-boolean<br>  |-number<br>  |-character<br>  |-string<br>  |-symbol<br>  |   |-keyword<br>  |   |-variable<br>  |-list<br>  |   |-empty-list<br>  |   |-cons<br>  |-vector<br>  |-function<br>  |   |-primitive-function<br>  |   |-closure</pre>
     <h4>Primitive Data Type <code>object</code> and Related Primitive Functions</h4>
     <dl>
       <dt><code>(object? $\object$)</code> &DoubleRightArrow; $\boolean$</dt>
-      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>object</code> (which is always the case) and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\object$ is of type <code>object</code> (which is always the case) and <code>#f</code> otherwise.</dd>
       <dt><code>(eq? $\object_1$ $\object_2$)</code> &DoubleRightArrow; $\boolean$</dt>
-      <dd>The primitive function is an equality predicate. It returns <code>#t</code> if and only if the two objects are one and the same. In other words, it returns <code>#t</code> if and only if the two objects have the same address in the heap.</dd>
+      <dd>The function returns <code>#t</code> if and only if the two objects are one and the same. In other words, the function returns <code>#t</code> if and only if the two objects have the same address in the heap.</dd>
       <dt><code>(eql? $\object_1$ $\object_2$)</code> &DoubleRightArrow; $\boolean$</dt>
-      <dd>The primitive function is an equality predicate. If both objects are of type <code>number</code>, then it returns <code>#t</code> if and only if the two objects represent the same mathematical number. Otherwise, if both objects are of type <code>character</code>, then it returns <code>#t</code> if and only if the two objects represent the same UTF-$16$ code unit. Otherwise, if both objects are of type <code>string</code>, then it returns <code>#t</code> if and only if the two objects represent the same indexed sequence of UTF-$16$ code units. Otherwise, it returns <code>#t</code> if and only if the two objects are <code>eq?</code>.</dd>
+      <dd>If both objects are of type <code>number</code>, then the function returns <code>#t</code> if and only if the two objects represent the same mathematical number. Otherwise, if both objects are of type <code>character</code>, then the function returns <code>#t</code> if and only if the two objects represent the same UTF-$16$ code unit. Otherwise, if both objects are of type <code>string</code>, then the function returns <code>#t</code> if and only if the two objects represent the same indexed sequence of UTF-$16$ code units. Otherwise, the function returns <code>#t</code> if and only if the two objects are <code>eq?</code>.</dd>
     </dl>
     <h4>Primitive Data Type <code>void</code> and Related Primitive Functions</h4>
     <dl>
       <dt><code>(void? $\object$)</code> &DoubleRightArrow; $\boolean$</dt>
-      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>void</code> and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\object$ is of type <code>void</code> and <code>#f</code> otherwise.</dd>
     </dl>
     <h4>Primitive Data Type <code>boolean</code> and Related Primitive Functions</h4>
     <dl>
       <dt><code>(boolean? $\object$)</code> &DoubleRightArrow; $\boolean$</dt>
-      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>boolean</code> and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\object$ is of type <code>boolean</code> and <code>#f</code> otherwise.</dd>
     </dl>
     <h4>Primitive Data Type <code>number</code> and Related Primitive Functions</h4>
     <p>Objects of type <code>number</code> represent mathematical numbers using the floating-point format <a href="https://en.wikipedia.org/wiki/Double-precision_floating-point_format" target="_blank">IEEE 754 binary 64</a>. Some (but not all) of the integers that can be represented exactly by an object of type <code>number</code> are the integers between $-2^{53}=−9,007,199,254,740,992$ and $2^{53}=9,007,199,254,740,992$ (bounds included).</p>
     <dl>
       <dt><code>(number? $\object$)</code> &DoubleRightArrow; $\boolean$</dt>
-      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>number</code> and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\object$ is of type <code>number</code> and <code>#f</code> otherwise.</dd>
       <dt><code>(_+ $\number_1$ $\number_2$)</code> &DoubleRightArrow; $\number$</dt>
-      <dd>The primitive function returns the sum $\number_1+\number_2$.</dd>
+      <dd>The function returns the sum $\number_1+\number_2$.</dd>
       <dt><code>(_- $\number_1$ $\number_2$)</code> &DoubleRightArrow; $\number$</dt>
-      <dd>The primitive function returns the difference $\number_1-\number_2$.</dd>
+      <dd>The function returns the difference $\number_1-\number_2$.</dd>
       <dt><code>(_* $\number_1$ $\number_2$)</code> &DoubleRightArrow; $\number$</dt>
-      <dd>The primitive function returns the product $\number_1\times\number_2$.</dd>
+      <dd>The function returns the product $\number_1\times\number_2$.</dd>
       <dt><code>(_/ $\number_1$ $\number_2$)</code> &DoubleRightArrow; $\number$</dt>
-      <dd>The primitive function returns the quotient $\number_1\div\number_2$.</dd>
+      <dd>The function returns the quotient $\number_1\div\number_2$.</dd>
       <dt><code>(% $\number_1$ $\number_2$)</code> &DoubleRightArrow; $\number$</dt>
-      <dd>The primitive function returns the remainder of the division of $\number_1$ by $\number_2$ when the quotient is forced to be an integer.</dd>
+      <dd>The function returns the remainder of the division of $\number_1$ by $\number_2$ when the quotient is forced to be an integer.</dd>
       <dt><code>(= $\number_1$ $\number_2$)</code> &DoubleRightArrow; $\boolean$</dt>
-      <dd>The primitive function returns <code>#t</code> if $\number_1$ and $\number_2$ are numerically equal and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\number_1$ and $\number_2$ are numerically equal and <code>#f</code> otherwise.</dd>
       <dt><code>(/= $\number_1$ $\number_2$)</code> &DoubleRightArrow; $\boolean$</dt>
-      <dd>The primitive function returns <code>#t</code> if $\number_1$ and $\number_2$ are numerically different and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\number_1$ and $\number_2$ are numerically different and <code>#f</code> otherwise.</dd>
       <dt><code>(&lt; $\number_1$ $\number_2$)</code> &DoubleRightArrow; $\boolean$</dt>
-      <dd>The primitive function returns <code>#t</code> if $\number_1$ is numerically less than $\number_2$ and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\number_1$ is numerically less than $\number_2$ and <code>#f</code> otherwise.</dd>
       <dt><code>(&lt;= $\number_1$ $\number_2$)</code> &DoubleRightArrow; $\boolean$</dt>
-      <dd>The primitive function returns <code>#t</code> if $\number_1$ is numerically less than or equal to $\number_2$ and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\number_1$ is numerically less than or equal to $\number_2$ and <code>#f</code> otherwise.</dd>
       <dt><code>(&gt; $\number_1$ $\number_2$)</code> &DoubleRightArrow; $\boolean$</dt>
-      <dd>The primitive function returns <code>#t</code> if $\number_1$ is numerically greater than $\number_2$ and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\number_1$ is numerically greater than $\number_2$ and <code>#f</code> otherwise.</dd>
       <dt><code>(&gt;= $\number_1$ $\number_2$)</code> &DoubleRightArrow; $\boolean$</dt>
-      <dd>The primitive function returns <code>#t</code> if $\number_1$ is numerically greater than or equal to $\number_2$ and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\number_1$ is numerically greater than or equal to $\number_2$ and <code>#f</code> otherwise.</dd>
     </dl>
-    <p>The primitive functions <code>_+</code>, <code>_-</code>, <code>_*</code>, and <code>_/</code> have an underscore at the beginning of their names to distinguish them from the similarly named nonprimitive functions <code>+</code>, <code>-</code>, <code>*</code>, and <code>/</code>, which all accept a variable number of arguments.</p>
+    <p>The functions <code>_+</code>, <code>_-</code>, <code>_*</code>, and <code>_/</code> have an underscore at the beginning of their names to distinguish them from the similarly named nonprimitive functions <code>+</code>, <code>-</code>, <code>*</code>, and <code>/</code>, which all accept a variable number of arguments.</p>
     <h4>Primitive Data Type <code>character</code> and Related Primitive Functions</h4>
     <p>Contrary to what was said in the user manual, an object of type <code>character</code> represents a UTF-$16$ code unit (instead of a Unicode character).</p>
     <dl>
       <dt><code>(character? $\object$)</code> &DoubleRightArrow; $\boolean$</dt>
-      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>character</code> and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\object$ is of type <code>character</code> and <code>#f</code> otherwise.</dd>
     </dl>
     <h4>Primitive Data Type <code>string</code> and Related Primitive Functions</h4>
     <p>Contrary to what was said in the user manual, an object of type <code>string</code> represents an indexed sequence of UTF-$16$ code units (instead of an indexed sequence of Unicode characters).</p>
     <dl>
       <dt><code>(string? $\object$)</code> &DoubleRightArrow; $\boolean$</dt>
-      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>string</code> and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\object$ is of type <code>string</code> and <code>#f</code> otherwise.</dd>
     </dl>
     <h4>Primitive Data Type <code>symbol</code> and Related Primitive Functions</h4>
     <dl>
       <dt><code>(symbol? $\object$)</code> &DoubleRightArrow; $\boolean$</dt>
-      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>symbol</code> and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\object$ is of type <code>symbol</code> and <code>#f</code> otherwise.</dd>
     </dl>
     <h4>Primitive Data Type <code>keyword</code> and Related Primitive Functions</h4>
     <dl>
       <dt><code>(keyword? $\object$)</code> &DoubleRightArrow; $\boolean$</dt>
-      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>keyword</code> and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\object$ is of type <code>keyword</code> and <code>#f</code> otherwise.</dd>
       <dt><code>(make-keyword? $\string$)</code> &DoubleRightArrow; $\keyword$</dt>
-      <dd>The primitive function returns a new keyword whose name is $\string$. The keyword is not interned.</dd>
+      <dd>The function returns a new uninterned keyword whose name is $\string$.</dd>
     </dl>
     <h4>Primitive Data Type <code>variable</code> and Related Primitive Functions</h4>
     <dl>
       <dt><code>(variable? $\object$)</code> &DoubleRightArrow; $\boolean$</dt>
-      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>variable</code> and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\object$ is of type <code>variable</code> and <code>#f</code> otherwise.</dd>
       <dt><code>(make-variable $\string$)</code> &DoubleRightArrow; $\variable$</dt>
-      <dd>The primitive function returns a new variable whose name is $\string$. The variable is not interned.</dd>
+      <dd>The function returns a new uninterned variable whose name is $\string$.</dd>
       <dt><code>(variable-value $\variable$)</code> &DoubleRightArrow; $\object$</dt>
-      <dd>If there exists a binding for $\variable$ in the value namespace of the global environment, then the primitive function returns the value of that binding. Otherwise, the primitive function returns <code>#v</code>.</dd>
+      <dd>If there exists a binding for $\variable$ in the value namespace of the global environment, then the function returns the value of that binding. Otherwise, the function returns <code>#v</code>.</dd>
       <dt><code>(variable-set-value! $\variable$ $\object$)</code> &DoubleRightArrow; $\object$</dt>
-      <dd>If there exists a binding for $\variable$ in the value namespace of the global environment, then the primitive function replaces the value of that binding by $\object$. Otherwise, the primitive function adds to the value namespace of the global environment a new binding between $\variable$ and $\object$. In both cases, the primitive function returns $\object$.</dd>
+      <dd>If there exists a binding for $\variable$ in the value namespace of the global environment, then the value of that binding is replaced by $\object$ and the functions returns $\object$. Otherwise, a new binding between $\variable$ and $\object$ is added to the value namespace of the global environment and the function returns $\object$.</dd>
       <dt><code>(variable-value-bound? $\variable$)</code> &DoubleRightArrow; $\boolean$</dt>
-      <dd>If there exists a binding for $\variable$ in the value namespace of the global environment, then the primitive function returns <code>#t</code>. Otherwise, the primitive function returns <code>#f</code>.</dd>
+      <dd>If there exists a binding for $\variable$ in the value namespace of the global environment, then the function returns <code>#t</code>. Otherwise, the function returns <code>#f</code>.</dd>
       <dt><code>(variable-unbind-value! $\variable$)</code> &DoubleRightArrow; <code>#v</code></dt>
-      <dd>If there exists a binding for $\variable$ in the value namespace of the global environment, then that binding is deleted and the primitive function returns <code>#v</code>. Otherwise, the primitive function simply returns <code>#v</code>.</dd>
+      <dd>If there exists a binding for $\variable$ in the value namespace of the global environment, then that binding is deleted and the function returns <code>#v</code>. Otherwise, the function simply returns <code>#v</code>.</dd>
       <dt><code>(variable-function $\variable$)</code> &DoubleRightArrow; $\object$</dt>
-      <dd>If there exists a binding for $\variable$ in the function namespace of the global environment, then the primitive function returns the value of that binding. Otherwise, the primitive function returns <code>#v</code>.</dd>
+      <dd>If there exists a binding for $\variable$ in the function namespace of the global environment, then the function returns the value of that binding. Otherwise, the function returns <code>#v</code>.</dd>
       <dt><code>(variable-set-function! $\variable$ $\object$)</code> &DoubleRightArrow; $\object$</dt>
-      <dd>If there exists a binding for $\variable$ in the function namespace of the global environment, then the primitive function replaces the value of that binding by $\object$. Otherwise, the primitive function adds to the function namespace of the global environment a new binding between $\variable$ and $\object$. In both cases, the primitive function returns $\object$.</dd>
+      <dd>If there exists a binding for $\variable$ in the function namespace of the global environment, then the value of that binding is replaced by $\object$ and the function returns $\object$. Otherwise, a new binding between $\variable$ and $\object$ is added to the function namespace of the global environment and the function returns $\object$.</dd>
       <dt><code>(variable-function-bound? $\variable$)</code> &DoubleRightArrow; $\boolean$</dt>
-      <dd>If there exists a binding for $\variable$ in the function namespace of the global environment, then the primitive function returns <code>#t</code>. Otherwise, the primitive function returns <code>#f</code>.</dd>
+      <dd>If there exists a binding for $\variable$ in the function namespace of the global environment, then the function returns <code>#t</code>. Otherwise, the function returns <code>#f</code>.</dd>
       <dt><code>(variable-unbind-function! $\variable$)</code> &DoubleRightArrow; <code>#v</code></dt>
-      <dd>If there exists a binding for $\variable$ in the function namespace of the global environment, then that binding is deleted and the primitive function returns <code>#v</code>. Otherwise, the primitive function simply returns <code>#v</code>.</dd>
+      <dd>If there exists a binding for $\variable$ in the function namespace of the global environment, then that binding is deleted and the function returns <code>#v</code>. Otherwise, the function simply returns <code>#v</code>.</dd>
+    </dl>
+    <p>A property list is an association between keys (usually of type <code>keyword</code>) and values (of any type). Each variable has an associated property list. The keys must be of type <code>keyword</code> and the values are accessed through the following primitive functions:</p>
+    <dl>
+      <dt><code>(variable-plist-ref $\variable$ $\keyword$)</code> &DoubleRightArrow; $\object$</dt>
+      <dd>If there exists an association between $\keyword$ and a value, then the function returns that value. Otherwise, the function returns <code>#v</code>.</dd>
+      <dt><code>(variable-plist-set! $\variable$ $\keyword$ $\object$)</code> &DoubleRightArrow; $\object$</dt>
+      <dd>If there exists an association between $\keyword$ and a value, then that value by replaced by $\object$ and the function returns $\object$. Otherwise, an association between $\keyword$ and $\object$ is created and the function returns $\object$.</dd>
+      <dt><code>(variable-plist-bound? $\variable$ $\keyword$)</code> &DoubleRightArrow; $\boolean$</dt>
+      <dd>If there exists an association between $\keyword$ and a value, then the function returns <code>#t</code>. Otherwise, the function returns <code>#f</code>.</dd>
+      <dt><code>(variable-plist-unbind! $\variable$ $\keyword$)</code> &DoubleRightArrow; <code>#v</code></dt>
+      <dd>If there exists an association between $\keyword$ and a value, then that association is deleted and the function returns <code>#v</code>. Otherwise, the function simply returns <code>#v</code>.</dd>
     </dl>
     <h4>Primitive Data Type <code>list</code> and Related Primitive Functions</h4>
     <dl>
       <dt><code>(list? $\object$)</code> &DoubleRightArrow; $\boolean$</dt>
-      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>list</code> and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\object$ is of type <code>list</code> and <code>#f</code> otherwise.</dd>
+      <dt><code>(_make-list $\number$)</code> &DoubleRightArrow; $\list$</dt>
+      <dd>If $\number$ is not a nonnegative integer, then the function completes abruptly for a reason of type <code>error</code>. Otherwise, the function returns a new list of length $\number$ whose elements are all <code>#v</code>. The function exists mainly for testing purposes.</dd>
     </dl>
     <h4>Primitive Data Type <code>empty-list</code> and Related Primitive Functions</h4>
     <dl>
       <dt><code>(empty-list? $\object$)</code> &DoubleRightArrow; $\boolean$</dt>
-      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>empty-list</code> and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\object$ is of type <code>empty-list</code> and <code>#f</code> otherwise.</dd>
     </dl>
     <h4>Primitive Data Type <code>cons</code> and Related Primitive Functions</h4>
     <dl>
       <dt><code>(cons? $\object$)</code> &DoubleRightArrow; $\boolean$</dt>
-      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>cons</code> and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\object$ is of type <code>cons</code> and <code>#f</code> otherwise.</dd>
       <dt><code>(cons $\object_1$ $\object_2$)</code> &DoubleRightArrow; $\cons$</dt>
-      <dd>The primitive function returns a new cons whose first element is $\object_1$ and whose second element is $\object_2$.</dd>
+      <dd>The function returns a new cons whose first element is $\object_1$ and whose second element is $\object_2$.</dd>
       <dt><code>(car $\cons$)</code> &DoubleRightArrow; $\object$</dt>
-      <dd>The primitive function returns the first element of $\cons$.</dd>
+      <dd>The function returns the first element of $\cons$.</dd>
       <dt><code>(set-car! $\cons$ $\object$)</code> &DoubleRightArrow; $\object$</dt>
-      <dd>The primitive function replaces the first element of $\cons$ by $\object$ and returns $\object$.</dd>
+      <dd>The function replaces the first element of $\cons$ by $\object$ and returns $\object$.</dd>
       <dt><code>(cdr $\cons$)</code> &DoubleRightArrow; $\object$</dt>
-      <dd>The primitive function returns the second element of $\cons$</dd>
+      <dd>The function returns the second element of $\cons$</dd>
       <dt><code>(set-cdr! $\cons$ $\object$)</code> &DoubleRightArrow; $\object$</dt>
-      <dd>The primitive function replaces the second element of $\cons$ by $\object$ and returns $\object$.</dd>
+      <dd>The function replaces the second element of $\cons$ by $\object$ and returns $\object$.</dd>
     </dl>
     <h4>Primitive Data Type <code>vector</code> and Related Primitive Functions</h4>
+    <p>A vector is an association between indexes (nonnegative integers between zero and the length of the vector minus one) and values of arbitrary types. Not all indexes need to have an associated value. Vectors with missing values have no readable representations. In printable representations, indexes with no associated value appear to be associated with the value <code>#v</code>.</p>
     <dl>
       <dt><code>(vector? $\object$)</code> &DoubleRightArrow; $\boolean$</dt>
-      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>vector</code> and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\object$ is of type <code>vector</code> and <code>#f</code> otherwise.</dd>
+      <dt><code>(make-vector $\number$ $\object$)</code> &DoubleRightArrow; $\vector$</dt>
+      <dd>If $\number$ is not a nonnegative integer, then the function completes abruptly for a reason of type <code>error</code>. Otherwise, the function returns a new vector of length $\number$. The argument $\object$ is optional. If $\object$ is not provided, then the indexes are all with no associated value. If $\object$ is provided, then the indexes are all associated with the value $\object$.</dd>
+      <dt><code>(vector-length $\vector$)</code> &DoubleRightArrow; $\number$</dt>
+      <dd>The function returns the length of $\vector$.</dd>
+      <dt><code>(vector-ref $\vector$ $\number$)</code> &DoubleRightArrow; $\object$</dt>
+      <dd>If $\number$ is not a nonnegative integer between zero and the length of $\vector$ minus one, then the function completes abruptly for a reason of type <code>error</code>. Otherwise, if there exists an association between $\number$ and a value, then the function returns that value. Otherwise, the function returns <code>#v</code>.</dd>
+      <dt><code>(vector-set! $\vector$ $\number$ $\object$)</code> &DoubleRightArrow; $\object$</dt>
+      <dd>If $\number$ is not a nonnegative integer between zero and the length of $\vector$ minus one, then the function completes abruptly for a reason of type <code>error</code>. Otherwise, if there exists an association between $\number$ and a value, then that value is replaced by $\object$ and the function returns $\object$. Otherwise, an association between $\number$ and $\object$ is created and the function returns $\object$.</dd>
+      <dt><code>(vector-bound? $\vector$ $\number$)</code> &DoubleRightArrow; $\boolean$</dt>
+      <dd>If $\number$ is not a nonnegative integer between zero and the length of $\vector$ minus one, then the function completes abruptly for a reason of type <code>error</code>. Otherwise, if there exists an association between $\number$ and a value, then the function returns <code>#t</code>. Otherwise, the function returns <code>#f</code>.</dd>
+      <dt><code>(vector-unbind! $\vector$ $\number$)</code> &DoubleRightArrow; <code>#v</code></dt>
+      <dd>If $\number$ is not a nonnegative integer between zero and the length of $\vector$ minus one, then the function completes abruptly for a reason of type <code>error</code>. Otherwise, if there exists an association between $\number$ and a value, then that association is deleted and the function returns <code>#v</code>. Otherwise, the function simply returns <code>#v</code>.</dd>
     </dl>
     <h4>Primitive Data Type <code>function</code> and Related Primitive Functions</h4>
     <dl>
       <dt><code>(function? $\object$)</code> &DoubleRightArrow; $\boolean$</dt>
-      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>function</code> and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\object$ is of type <code>function</code> and <code>#f</code> otherwise.</dd>
     </dl>
     <h4>Primitive Data Type <code>primitive-function</code> and Related Primitive Functions</h4>
     <dl>
       <dt><code>(primitive-function? $\object$)</code> &DoubleRightArrow; $\boolean$</dt>
-      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>primitive-function</code> and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\object$ is of type <code>primitive-function</code> and <code>#f</code> otherwise.</dd>
     </dl>
     <h4>Primitive Data Type <code>closure</code> and Related Primitive Functions</h4>
     <dl>
       <dt><code>(closure? $\object$)</code> &DoubleRightArrow; $\boolean$</dt>
-      <dd>The primitive function returns <code>#t</code> if $\object$ is of type <code>closure</code> and <code>#f</code> otherwise.</dd>
+      <dd>The function returns <code>#t</code> if $\object$ is of type <code>closure</code> and <code>#f</code> otherwise.</dd>
     </dl>
     <h4>Miscellaneous Primitive Functions</h4>
     <dl>
       <dt><code>(values $\object_1\ldots\object_n$)</code> &DoubleRightArrow; $\object_1,\ldots,\object_n$</dt>
-      <dd>The primitive function converts its arguments into values: when invoked on the arguments $\object_1,\ldots,\object_n$, the primitive function returns the values $\object_1,\ldots,\object_n$.</dd>
+      <dd>The function converts its arguments into values: when invoked on the arguments $\object_1,\ldots,\object_n$, the function returns the values $\object_1,\ldots,\object_n$.</dd>
       <dt><code>(error $\string$)</code> &DoubleRightArrow; completes abruptly for a reason of type <code>error</code></dt>
-      <dd>The invocation of the primitive function completes abruptly for a reason of type <code>error</code> whose payload is $\string$.</dd>
+      <dd>The invocation of the function completes abruptly for a reason of type <code>error</code> carrying the category <code>"Error"</code> and the description $\string$.</dd>
       <dt><code>(now)</code> &DoubleRightArrow; $\number$</dt>
-      <dd>The primitive function returns the number of milliseconds elapsed since 1970-01-01 00:00:00.000 UTC.</dd>
+      <dd>The function returns the number of milliseconds elapsed since 1970-01-01 00:00:00.000 UTC.</dd>
     </dl>
     <h3>Forms</h3>
     <p>This section supplements and amends the evaluation rules stated in the user manual.</p>
+    <h4>Special Form <code>_for-each</code></h4>
+    <p>The special form <code>_for-each</code> is evaluated as follows:</p>
+    <dl>
+      <dt><code>(_for-each $\metavar{function-form}$ $\metavar{list-form}$)</code></dt>
+      <dd>The function form is evaluated. Let $\mlvar{function}$ be the primary value of the function form. If $\mlvar{function}$ is not a function, then the evaluation of the <code>_for-each</code> form completes abruptly for a reason of type <code>error</code>. Otherwise, the list form is evaluated. Let $\mlvar{list}$ be the primary value of the list form. If $\mlvar{list}$ is not a proper list, then the evaluation of the <code>_for-each</code> form completes abruptly for a reason of type <code>error</code>. Otherwise, the function $\mlvar{function}$ is invoked in sequence on each element of the list $\mlvar{list}$, from the first element to the last element. If any invocation completes abruptly for any reason or does not complete, then the following invocations do not happen and the evaluation of the <code>_for-each</code> form also completes abruptly for the same reason or does not complete either. Otherwise, the <code>_for-each</code> form evaluates to <code>#v</code>.</dd>
+    </dl>
     <h4>Advanced Control Structures</h4>
-    <p>The two pairs of special forms <code>block</code>/<code>return-from</code> and <code>catch</code>/<code>throw</code> use two additional namespaces: the block-name namespace and the exit-point namespace.</p>
+    <p>The two pairs of special forms <code>block</code>/<code>return-from</code> and <code>catch</code>/<code>throw</code> use two additional namespaces: the block namespace, which is only found in lexical environments, and the exit-point namespace, which is only found in dynamic environments.</p>
     <h5>Special Forms <code>block</code>/<code>return-from</code></h5>
     <p>The special forms <code>block</code> and <code>return-from</code> are evaluated as follows:</p>
     <dl>
       <dt><code>(block $\metavar{block-name}$ $\metavar{serial-form}$*)</code></dt>
-      <dd>Let $\mlvar{exit-tag}$ be a new uninterned variable. The serial-forms are evaluated in sequence from left to right with respect to (1) the environment extending the current lexical environment to bind, in the block namespace, the variable $\mlvar{block-name}$ to $\mlvar{exit-tag}$ and (2) the environment extending the current dynamic environment to bind, in the exit-point namespace, the variable $\mlvar{exit-tag}$ to <code>#v</code> (the value is unimportant). If the evaluation of any serial-form completes abruptly for any reason, then the following serial-forms are not evaluated and the evaluation of the block-form proceeds as follows:
-        <blockquote>Let $\mlvar{reason}$ be the reason for the abrupt completion of the serial-form. If $\mlvar{reason}$ is of type <code>nonlocal-exit</code> and carries an exit tag <code>eq?</code> to $\mlvar{exit-tag}$, then the evaluation of the block-form completes normally and produces the values carried by $\mlvar{reason}$. Otherwise, the evaluation of the block-form completes abruptly for the reason $\mlvar{reason}$.</blockquote>
-        Otherwise, the evaluations of the serial-forms all complete normally and the evaluation of the block-form completes normally and produces the values of the last serial-form or <code>#v</code> if there are no serial-forms.</dd>
+      <dd>Let $\mlvar{exit-tag}$ be a new uninterned variable. The serial forms are evaluated in sequence from left to right with respect to (1) the environment extending the current lexical environment to bind, in the block namespace, the variable $\metavar{block-name}$ to $\mlvar{exit-tag}$ and (2) the environment extending the current dynamic environment to bind, in the exit-point namespace, the variable $\mlvar{exit-tag}$ to <code>#v</code> (the value is unimportant). If the evaluation of any serial form completes abruptly for any reason, then the following serial forms are not evaluated and the evaluation of the <code>block</code> form proceeds as follows:
+        <blockquote>Let $\mlvar{reason}$ be the reason for the abrupt completion of the serial form. If $\mlvar{reason}$ is of type <code>nonlocal-exit</code> and carries an exit tag <code>eq?</code> to $\mlvar{exit-tag}$, then the evaluation of the <code>block</code> form completes normally and produces the values carried by $\mlvar{reason}$. Otherwise, the evaluation of the <code>block</code> form completes abruptly for the reason $\mlvar{reason}$.</blockquote>
+        Otherwise, the evaluations of the serial forms all complete normally and the evaluation of the <code>block</code> form completes normally and produces the values of the last serial form or <code>#v</code> if there are no serial forms.</dd>
       <dt><code>(return-from $\metavar{block-name}$ $\metavar{values-form}$)</code></dt>
-      <dd>If there exists no binding for the variable $\metavar{block-name}$ in the block namespace of the current lexical environment, then the evaluation of the return-from-form completes abruptly for a reason of type <code>error</code>. Otherwise, let $\mlvar{exit-tag}$ be the value of the binding for the variable $\mlvar{block-name}$ in the block namespace of the current lexical environment. If there exists no binding for the variable $\mlvar{exit-tag}$ in the exit-point namespace of the current dynamic environment, then the evaluation of the return-from-form completes abruptly for a reason of type <code>error</code>. Otherwise, the values-form is evaluated. If the evaluation of the values-form completes abruptly for any reason, then the evaluation of the return-from-form completes abruptly for the same reason. Otherwise, the evaluation of the return-from-form completes abruptly for a reason of type <code>nonlocal-exit</code> carrying $\mlvar{exit-tag}$ and the values of the values-form.</dd>
+      <dd>If there exists no binding for the variable $\metavar{block-name}$ in the block namespace of the current lexical environment, then the evaluation of the <code>return-from</code> form completes abruptly for a reason of type <code>error</code>. Otherwise, let $\mlvar{exit-tag}$ be the value of the binding for the variable $\metavar{block-name}$ in the block namespace of the current lexical environment. If there exists no binding for the variable $\mlvar{exit-tag}$ in the exit-point namespace of the current dynamic environment, then the evaluation of the <code>return-from</code> form completes abruptly for a reason of type <code>error</code>. Otherwise, the values form is evaluated. If the evaluation of the values form completes abruptly for any reason, then the evaluation of the <code>return-from</code> form completes abruptly for the same reason. Otherwise, the evaluation of the <code>return-from</code> form completes abruptly for a reason of type <code>nonlocal-exit</code> carrying $\mlvar{exit-tag}$ and the values of the values form.</dd>
     </dl>
     <h5>Special Forms <code>catch</code>/<code>throw</code></h5>
     <p>The special forms <code>catch</code> and <code>throw</code> are evaluated as follows:</p>
     <dl>
       <dt><code>(catch $\metavar{exit-tag-form}$ $\metavar{serial-form}$*)</code></dt>
-      <dd>The exit-tag-form is evaluated. If the evaluation of the exit-tag-form completes abruptly for any reason, then the evaluation of the catch-form completes abruptly for the same reason. Otherwise, let $\mlvar{exit-tag}$ be the primary value of the exit-tag-form. If $\mlvar{exit-tag}$ is not a variable, then the evaluation of the catch-form completes abruptly for a reason of type <code>error</code>. Otherwise, the serial-forms are evaluated in sequence from left to right with respect to (1) the current lexical environment and (2) the environment extending the current dynamic environment to bind, in the exit-point namespace, the variable $\mlvar{exit-tag}$ to <code>#v</code> (the value is unimportant). If the evaluation of any serial-form completes abruptly for any reason, then the following serial-forms are not evaluated and the evaluation of the catch-form proceeds as follows:
-        <blockquote>Let $\mlvar{reason}$ be the reason for the abrupt completion of the serial-form. If $\mlvar{reason}$ is of type <code>nonlocal-exit</code> and carries an exit tag <code>eq?</code> to $\mlvar{exit-tag}$, then the evaluation of the catch-form completes normally and produces the values carried by $\mlvar{reason}$. Otherwise, the evaluation of the catch-form completes abruptly for the reason $\mlvar{reason}$.</blockquote>
-        Otherwise, the evaluations of the serial-forms all complete normally and the evaluation of the catch-form completes normally and produces the values of the last serial-form or <code>#v</code> if there are no serial-forms.</dd>
+      <dd>The exit-tag form is evaluated. If the evaluation of the exit-tag form completes abruptly for any reason, then the evaluation of the <code>catch</code> form completes abruptly for the same reason. Otherwise, let $\mlvar{exit-tag}$ be the primary value of the exit-tag form. If $\mlvar{exit-tag}$ is not a variable, then the evaluation of the <code>catch</code> form completes abruptly for a reason of type <code>error</code>. Otherwise, the serial forms are evaluated in sequence from left to right with respect to (1) the current lexical environment and (2) the environment extending the current dynamic environment to bind, in the exit-point namespace, the variable $\mlvar{exit-tag}$ to <code>#v</code> (the value is unimportant). If the evaluation of any serial form completes abruptly for any reason, then the following serial forms are not evaluated and the evaluation of the <code>catch</code> form proceeds as follows:
+        <blockquote>Let $\mlvar{reason}$ be the reason for the abrupt completion of the serial form. If $\mlvar{reason}$ is of type <code>nonlocal-exit</code> and carries an exit tag <code>eq?</code> to $\mlvar{exit-tag}$, then the evaluation of the <code>catch</code> form completes normally and produces the values carried by $\mlvar{reason}$. Otherwise, the evaluation of the <code>catch</code> form completes abruptly for the reason $\mlvar{reason}$.</blockquote>
+        Otherwise, the evaluations of the serial forms all complete normally and the evaluation of the <code>catch</code> form completes normally and produces the values of the last serial form or <code>#v</code> if there are no serial forms.</dd>
       <dt><code>(throw $\metavar{exit-tag-form}$ $\metavar{values-form}$)</code></dt>
-      <dd>The exit-tag-form is evaluated. If the evaluation of the exit-tag-form completes abruptly for any reason, then the evaluation of the throw-form completes abruptly for the same reason. Otherwise, let $\mlvar{exit-tag}$ be the primary value of the exit-tag-form. If $\mlvar{exit-tag}$ is not a variable, then the evaluation of the throw-form completes abruptly for a reason of type <code>error</code>. Otherwise, if there exists no binding for the variable $\mlvar{exit-tag}$ in the exit-point namespace of the current dynamic environment, then the evaluation of the throw-form completes abruptly for a reason of type <code>error</code>. Otherwise, the values-form is evaluated. If the evaluation of the values-form completes abruptly for any reason, then the evaluation of the throw-form completes abruptly for the same reason. Otherwise, the evaluation of the throw-form completes abruptly for a reason of type <code>nonlocal-exit</code> carrying $\mlvar{exit-tag}$ and the values of the values-form.</dd>
+      <dd>The exit-tag form is evaluated. If the evaluation of the exit-tag form completes abruptly for any reason, then the evaluation of the <code>throw</code> form completes abruptly for the same reason. Otherwise, let $\mlvar{exit-tag}$ be the primary value of the exit-tag form. If $\mlvar{exit-tag}$ is not a variable, then the evaluation of the <code>throw</code> form completes abruptly for a reason of type <code>error</code>. Otherwise, if there exists no binding for the variable $\mlvar{exit-tag}$ in the exit-point namespace of the current dynamic environment, then the evaluation of the <code>throw</code> form completes abruptly for a reason of type <code>error</code>. Otherwise, the values form is evaluated. If the evaluation of the values form completes abruptly for any reason, then the evaluation of the <code>throw</code> form completes abruptly for the same reason. Otherwise, the evaluation of the <code>throw</code> form completes abruptly for a reason of type <code>nonlocal-exit</code> carrying $\mlvar{exit-tag}$ and the values of the values form.</dd>
     </dl>
     <h5>Special Form <code>_handler-bind</code></h5>
     <p>The special form <code>_handler-bind</code> is evaluated as follows:</p>
     <dl>
       <dt><code>(_handler-bind $\metavar{handler-form}$ $\metavar{serial-form}$*)</code></dt>
-      <dd>The handler-form is evaluated. If the evaluation of the handler-form completes abruptly for any reason, then the evaluation of the _handler-bind-form completes abruptly for the same reason. Otherwise, let $\mlvar{handler}$ be the primary value of the handler-form. If $\mlvar{handler}$ is not a function, then the evaluation of the _handler-bind-form completes abruptly for a reason of type <code>error</code>. Otherwise, the serial-forms are evaluated in sequence from left to right. If the evaluation of any serial-form completes abruptly for any reason, then the following serial-forms are not evaluated and the evaluation of the _handler-bind-form proceeds as follows:
-        <blockquote>Let $\mlvar{reason}$ be the reason for the abrupt completion of the serial-form. If $\mlvar{reason}$ is of type <code>nonlocal-exit</code>, then the evaluation of the _handler-bind-form completes abruptly for the reason $\mlvar{reason}$. Otherwise, $\mlvar{handler}$ is invoked on the payload of $\mlvar{reason}$. If the invocation completes abruptly for any reason, then the evaluation of the _handler-bind-form also completes abruptly for the same reason. Otherwise, if the invocation does not complete, then the evaluation of the _handler-bind-form does not complete either. Otherwise, the _handler-bind-form evaluates to the values of the invocation.</blockquote>
-        Otherwise, the evaluations of the serial-forms all complete normally and the evaluation of the _handler-bind-form completes normally and produces the values of the last serial-form or <code>#v</code> if there are no serial-forms.</dd>
+      <dd>The handler form is evaluated. If the evaluation of the handler form completes abruptly for any reason, then the evaluation of the <code>_handler-bind</code> form completes abruptly for the same reason. Otherwise, let $\mlvar{handler}$ be the primary value of the handler form. If $\mlvar{handler}$ is not a function, then the evaluation of the <code>_handler-bind</code> form completes abruptly for a reason of type <code>error</code>. Otherwise, the serial forms are evaluated in sequence from left to right. If the evaluation of any serial form completes abruptly for any reason, then the following serial forms are not evaluated and the evaluation of the <code>_handler-bind</code> form proceeds as follows:
+        <blockquote>Let $\mlvar{reason}$ be the reason for the abrupt completion of the serial form. If $\mlvar{reason}$ is of type <code>nonlocal-exit</code>, then the evaluation of the <code>_handler-bind</code> form completes abruptly for the reason $\mlvar{reason}$. Otherwise, $\mlvar{reason}$ is necessarily of type <code>error</code> and $\mlvar{handler}$ is invoked on the category and description carried by $\mlvar{reason}$. If the invocation completes abruptly for any reason, then the evaluation of the <code>_handler-bind</code> form also completes abruptly for the same reason. Otherwise, if the invocation does not complete, then the evaluation of the <code>_handler-bind</code> form does not complete either. Otherwise, the evaluation of the <code>_handler-bind</code> form completes abruptly for the reason $\mlvar{reason}$.</blockquote>
+        Otherwise, the evaluations of the serial forms all complete normally and the evaluation of the <code>_handler-bind</code> form completes normally and produces the values of the last serial form or <code>#v</code> if there are no serial forms.</dd>
     </dl>
     <h5>Special Form <code>unwind-protect</code></h5>
     <p>The special form <code>unwind-protect</code> is evaluated as follows:</p>
     <dl>
       <dt><code>(unwind-protect $\metavar{protected-form}$ $\metavar{cleanup-form}$*)</code></dt>
-      <dd>The protected-form is evaluated. If the evaluation of the protected-form completes abruptly for any reason, then the evaluation of the unwind-protect-form proceeds as follows:
-        <blockquote>Let $\mlvar{reason}$ be the reason for the abrupt completion of the protected-form. The cleanup-forms are evaluated in sequence from left to right. If the evaluation of any cleanup-form completes abruptly for any reason, then the following serial-forms are not evaluated and the evaluation of the unwind-protect-form completes abruptly for the same reason. Otherwise, the evaluations of the cleanup-forms all complete normally and the evaluation of the unwind-protect-form completes abruptly for the reason $\mlvar{reason}$.</blockquote>
-        Otherwise, the evaluation of the protected-form completes normally and the evaluation of the unwind-protect-form proceeds as follows:
-        <blockquote>The cleanup-forms are evaluated in sequence from left to right. If the evaluation of any cleanup-form completes abruptly for any reason, then the following serial-forms are not evaluated and the evaluation of the unwind-protect-form completes abruptly for the same reason. Otherwise, the evaluations of the cleanup-forms all complete normally and the evaluation of the unwind-protect-form completes normally and produces the values of the protected-form.</blockquote>
+      <dd>The protected form is evaluated. If the evaluation of the protected form completes abruptly for any reason, then the evaluation of the <code>unwind-protect</code> form proceeds as follows:
+        <blockquote>Let $\mlvar{reason}$ be the reason for the abrupt completion of the protected form. The cleanup forms are evaluated in sequence from left to right. If the evaluation of any cleanup form completes abruptly for any reason, then the following cleanup forms are not evaluated and the evaluation of the <code>unwind-protect</code> form completes abruptly for the same reason. Otherwise, the evaluations of the cleanup forms all complete normally and the evaluation of the <code>unwind-protect</code> form completes abruptly for the reason $\mlvar{reason}$.</blockquote>
+        Otherwise, the evaluation of the protected form completes normally and the evaluation of the <code>unwind-protect</code> form proceeds as follows:
+        <blockquote>The cleanup forms are evaluated in sequence from left to right. If the evaluation of any cleanup form completes abruptly for any reason, then the following cleanup forms are not evaluated and the evaluation of the <code>unwind-protect</code> form completes abruptly for the same reason. Otherwise, the evaluations of the cleanup forms all complete normally and the evaluation of the <code>unwind-protect</code> form completes normally and produces the values of the protected form.</blockquote>
       </dd>
-    </dl>
-    <h4>Special Form <code>_for-each</code></h4>
-    <p>The special form <code>_for-each</code> is evaluated as follows:</p>
-    <dl>
-      <dt><code>(_for-each $\metavar{function-form}$ $\metavar{list-form}$)</code></dt>
-      <dd>The function-form is evaluated. Let $\mlvar{function}$ be the primary value of the function-form. If $\mlvar{function}$ is not a function, then the evaluation of the _for-each-form completes abruptly for a reason of type <code>error</code>. Otherwise, the list-form is evaluated. Let $\mlvar{list}$ be the primary value of the list-form. If $\mlvar{list}$ is not a proper list, then the evaluation of the _for-each-form completes abruptly for a reason of type <code>error</code>. Otherwise, the function $\mlvar{function}$ is invoked in sequence on each element of the list $\mlvar{list}$, from the first element to the last element. If any invocation completes abruptly for any reason or does not complete, then the evaluation of the _for-each-form also completes abruptly for the same reason or does not complete either. Otherwise, the _for-each-form evaluates to <code>#v</code>.</dd>
     </dl>
     <h4>Function Calls</h4>
     <p>A spreadable sequence of objects is a nonempty sequence of objects such that the last element of the sequence is a proper list of objects. Let $\mlvar{seq}=[\obj_1,\ldots,\obj_n,\code{(}\obj'_1\ldots\obj'_m\code{)}]$, where $n$ and $m$ are nonnegative integers, be a spreadable sequence of objects. We will denote by $\spread(\mlvar{seq})$ the sequence of objects $[\obj_1,\ldots,\obj_n,\obj'_1,\ldots,\obj'_m]$.</p>
     <p>The function calls are evaluated as follows (the differences in behavior between the different types of function calls are highlighted with a gray background):</p>
     <dl>
       <dt><code>($\metavar{operator-form}$ $\metavar{operand-forms}$)</code></dt>
-      <dd>The operator-form is evaluated. Let $\mlvar{operator}$ be the primary value of the operator-form. If $\mlvar{operator}$ is not a function, then the evaluation of the plain function call completes abruptly for a reason of type <code>error</code>. <span class="bg">Otherwise, the operand-forms are evaluated in sequence from left to right, the primary values of the operand-forms are collected into a sequence $\mlvar{seq}$, and $\mlvar{operator}$ is invoked on $\mlvar{seq}$.</span> If the invocation completes abruptly for any reason, then the evaluation of the plain function call also completes abruptly for the same reason. Otherwise, if the invocation does not complete, then the evaluation of the plain function call does not complete either. Otherwise, the plain function call evaluates to the values of the invocation. (The behavior described here is identical to the behavior described in the user manual.)</dd>
+      <dd>The operator form is evaluated. Let $\mlvar{operator}$ be the primary value of the operator form. If $\mlvar{operator}$ is not a function, then the evaluation of the plain function call completes abruptly for a reason of type <code>error</code>. <span class="bg">Otherwise, the operand forms are evaluated in sequence from left to right, the primary values of the operand forms are collected into a sequence $\mlvar{seq}$, and $\mlvar{operator}$ is invoked on $\mlvar{seq}$.</span> If the invocation completes abruptly for any reason, then the evaluation of the plain function call also completes abruptly for the same reason. Otherwise, if the invocation does not complete, then the evaluation of the plain function call does not complete either. Otherwise, the plain function call evaluates to the values of the invocation. (The behavior described here is identical to the behavior described in the user manual.)</dd>
       <dt><code>(apply $\metavar{operator-form}$ $\metavar{operand-forms}$)</code></dt>
-      <dd>The operator-form is evaluated. Let $\mlvar{operator}$ be the primary value of the operator-form. If $\mlvar{operator}$ is not a function, then the evaluation of the apply-form completes abruptly for a reason of type <code>error</code>. <span class="bg">Otherwise, the operand-forms are evaluated in sequence from left to right, the primary values of the operand-forms are collected into a sequence $\mlvar{seq}$, and $\mlvar{operator}$ is invoked on $\spread(\mlvar{seq})$. (The evaluation of the apply-form completes abruptly for a reason of type <code>error</code> if $\mlvar{seq}$ is not a spreadable sequence of objects.)</span> If the invocation completes abruptly for any reason, then the evaluation of the apply-form also completes abruptly for the same reason. Otherwise, if the invocation does not complete, then the evaluation of the apply-form does not complete either. Otherwise, the apply-form evaluates to the values of the invocation.</dd>
+      <dd>The operator form is evaluated. Let $\mlvar{operator}$ be the primary value of the operator form. If $\mlvar{operator}$ is not a function, then the evaluation of the <code>apply</code> form completes abruptly for a reason of type <code>error</code>. <span class="bg">Otherwise, the operand forms are evaluated in sequence from left to right, the primary values of the operand forms are collected into a sequence $\mlvar{seq}$, and $\mlvar{operator}$ is invoked on $\spread(\mlvar{seq})$. (The evaluation of the <code>apply</code> form completes abruptly for a reason of type <code>error</code> if $\mlvar{seq}$ is not a spreadable sequence of objects.)</span> If the invocation completes abruptly for any reason, then the evaluation of the <code>apply</code> form also completes abruptly for the same reason. Otherwise, if the invocation does not complete, then the evaluation of the <code>apply</code> form does not complete either. Otherwise, the <code>apply</code> form evaluates to the values of the invocation.</dd>
       <dt><code>(multiple-value-call $\metavar{operator-form}$ $\metavar{operand-forms}$)</code></dt>
-      <dd>The operator-form is evaluated. Let $\mlvar{operator}$ be the primary value of the operator-form. If $\mlvar{operator}$ is not a function, then the evaluation of the multiple-value-call-form completes abruptly for a reason of type <code>error</code>. <span class="bg">Otherwise, the operand-forms are evaluated in sequence from left to right, all the values of the operand-forms are collected into a sequence $\mlvar{seq}$, and $\mlvar{operator}$ is invoked on the sequence $\mlvar{seq}$.</span> If the invocation completes abruptly for any reason, then the evaluation of the multiple-value-call-form also completes abruptly for the same reason. Otherwise, if the invocation does not complete, then the evaluation of the multiple-value-call-form does not complete either. Otherwise, the multiple-value-call-form evaluates to the values of the invocation.</dd>
+      <dd>The operator form is evaluated. Let $\mlvar{operator}$ be the primary value of the operator form. If $\mlvar{operator}$ is not a function, then the evaluation of the <code>multiple-value-call</code> form completes abruptly for a reason of type <code>error</code>. <span class="bg">Otherwise, the operand forms are evaluated in sequence from left to right, all the values of the operand forms are collected into a sequence $\mlvar{seq}$, and $\mlvar{operator}$ is invoked on the sequence $\mlvar{seq}$.</span> If the invocation completes abruptly for any reason, then the evaluation of the <code>multiple-value-call</code> form also completes abruptly for the same reason. Otherwise, if the invocation does not complete, then the evaluation of the <code>multiple-value-call</code> form does not complete either. Otherwise, the <code>multiple-value-call</code> form evaluates to the values of the invocation.</dd>
       <dt><code>(multiple-value-apply $\metavar{operator-form}$ $\metavar{operand-forms}$)</code></dt>
-      <dd>The operator-form is evaluated. Let $\mlvar{operator}$ be the primary value of the operator-form. If $\mlvar{operator}$ is not a function, then the evaluation of the multiple-value-apply-form completes abruptly for a reason of type <code>error</code>. <span class="bg">Otherwise, the operand-forms are evaluated in sequence from left to right, all the values of the operand-forms are collected into a sequence $\mlvar{seq}$, and $\mlvar{operator}$ is invoked on $\spread(\mlvar{seq})$. (The evaluation of the multiple-value-apply-form completes abruptly for a reason of type <code>error</code> if $\mlvar{seq}$ is not a spreadable sequence of objects.)</span> If the invocation completes abruptly for any reason, then the evaluation of the multiple-value-apply-form also completes abruptly for the same reason. Otherwise, if the invocation does not complete, then the evaluation of the multiple-value-apply-form does not complete either. Otherwise, the multiple-value-apply-form evaluates to the values of the invocation.</dd>
+      <dd>The operator form is evaluated. Let $\mlvar{operator}$ be the primary value of the operator form. If $\mlvar{operator}$ is not a function, then the evaluation of the <code>multiple-value-apply</code> form completes abruptly for a reason of type <code>error</code>. <span class="bg">Otherwise, the operand forms are evaluated in sequence from left to right, all the values of the operand forms are collected into a sequence $\mlvar{seq}$, and $\mlvar{operator}$ is invoked on $\spread(\mlvar{seq})$. (The evaluation of the <code>multiple-value-apply</code> form completes abruptly for a reason of type <code>error</code> if $\mlvar{seq}$ is not a spreadable sequence of objects.)</span> If the invocation completes abruptly for any reason, then the evaluation of the <code>multiple-value-apply</code> form also completes abruptly for the same reason. Otherwise, if the invocation does not complete, then the evaluation of the <code>multiple-value-apply</code> form does not complete either. Otherwise, the <code>multiple-value-apply</code> form evaluates to the values of the invocation.</dd>
     </dl>
-    <p>A primitive function is invoked as described in the user manual. A closure is invoked as described in the user manual except for the way the parameters are paired with the arguments in order to extend the value namespace of the lexical environment captured by the closure (when the corresponding lambda abstraction is a _vlambda-form or an _mlambda-form), the function namespace of the lexical environment captured by the closure (when the corresponding lambda abstraction is an _flambda-form), or the value namespace of the current dynamic environment (when the corresponding lambda abstraction is a _dlambda-form). Let $\arg_1,\ldots,\arg_n$ be the arguments and $var_1,\ldots,\var_m$ be the required parameters. The way the parameters are paired with the arguments depends on the absence or presence of a rest parameter:</p>
+    <p>A primitive function is invoked as described in the user manual. A closure is invoked as described in the user manual except for the way the parameters are paired with the arguments in order to extend the value namespace of the lexical environment captured by the closure (when the corresponding lambda abstraction is a <code>_vlambda</code> form or an <code>_mlambda</code> form), the function namespace of the lexical environment captured by the closure (when the corresponding lambda abstraction is an <code>_flambda</code> form), or the value namespace of the current dynamic environment (when the corresponding lambda abstraction is a <code>_dlambda</code> form). Let $var_1,\ldots,\var_n$ be the required parameters and $\arg_1,\ldots,\arg_m$ be the arguments. The way the parameters are paired with the arguments depends on the absence or presence of a rest parameter:</p>
     <dl>
       <dt>Case 1, there is no rest parameter:</dt>
-      <dd>If $n\neq m$, then the invocation completes abruptly for a reason of type <code>error</code>. Otherwise, the appropriate namespace of the appropriate environment is extended to bind $\var_i$ to $\arg_i$ for all $i$ from $1$ to $m$. (This is the behavior described in the user manual.)</dd>
-      <dt>Case 2, there is a rest parameter $\var_{m+1}$:</dt>
-      <dd>If $n\lt m$, then the invocation completes abruptly for a reason of type <code>error</code>. Otherwise, the appropriate namespace of the appropriate environment is extended to bind $\var_i$ to $\arg_i$ for all $i$ from $1$ to $m$ and $\var_{m+1}$ to a proper list whose elements are $\arg_{m+1},\ldots,arg_{n}$. The conses used to build the proper list are not necessarily new conses. When the function call is an apply-form or a multiple-value-apply-form, the proper list and the last element of the spreadable sequence of objects can share conses.</dd>
+      <dd>If $n\ne m$, then the invocation completes abruptly for a reason of type <code>error</code>. Otherwise, the appropriate namespace of the appropriate environment is extended to bind $\var_i$ to $\arg_i$ for all $i$ from $1$ to $n$. (This is the behavior described in the user manual.)</dd>
+      <dt>Case 2, there is a rest parameter $\var_{n+1}$:</dt>
+      <dd>If $m\lt n$, then the invocation completes abruptly for a reason of type <code>error</code>. Otherwise, the appropriate namespace of the appropriate environment is extended to bind $\var_i$ to $\arg_i$ for all $i$ from $1$ to $n$ and $\var_{n+1}$ to a proper list whose elements are $\arg_{n+1},\ldots,arg_{m}$. The conses used to build the proper list are not necessarily new conses. When the function call is an <code>apply</code> form or a <code>multiple-value-apply</code> form, the proper list and the last element of the spreadable sequence of objects can share conses.</dd>
     </dl>
     <p>Here are some examples, where the bindings are assumed to belong to the value namespace:</p>
     <table class="plain">
@@ -1383,13 +1415,16 @@
       <tr><td><code>(a b c . d)</code></td><td>$[\code{1},\code{2},\code{3}]$</td><td>$[\vbinding{a}{1},\vbinding{b}{2},\vbinding{c}{3},\vbinding{d}{()}]$</td></tr>
       <tr><td><code>(a b c d . e)</code></td><td>$[\code{1},\code{2},\code{3}]$</td><td>N/A (error: too few arguments)</td></tr>
     </table>
-    <p>Here is one way to reproduce the preceding examples using plain function calls and _vlambda-forms:</p>
-    <pre class="repl">&gt; ((_vlambda (a b) (list a b)) 1 2 3)<br>ERROR: Too many arguments.<br><br>&gt; ((_vlambda (a b c) (list a b c)) 1 2 3)<br>(1 2 3)<br><br>&gt; ((_vlambda (a b c d) (list a b c d)) 1 2 3)<br>ERROR: Too few arguments.<br><br>&gt; ((_vlambda a (list a)) 1 2 3)<br>((1 2 3))<br><br>&gt; ((_vlambda (a . b) (list a b)) 1 2 3)<br>(1 (2 3))<br><br>&gt; ((_vlambda (a b . c) (list a b c)) 1 2 3)<br>(1 2 (3))<br><br>&gt; ((_vlambda (a b c . d) (list a b c d)) 1 2 3)<br>(1 2 3 ())<br><br>&gt; ((_vlambda (a b c d . e) (list a b c d e)) 1 2 3)<br>ERROR: Too few arguments.</pre>
+    <p>Here is one way to reproduce the preceding examples using plain function calls and <code>_vlambda</code> forms:</p>
+    <pre class="repl">&gt; ((_vlambda (a b) (list a b)) 1 2 3)<br>EvaluatorError: too-many-arguments: Too many arguments.<br><br>&gt; ((_vlambda (a b c) (list a b c)) 1 2 3)<br>(1 2 3)<br><br>&gt; ((_vlambda (a b c d) (list a b c d)) 1 2 3)<br>EvaluatorError: too-few-arguments: Too few arguments.<br><br>&gt; ((_vlambda a (list a)) 1 2 3)<br>((1 2 3))<br><br>&gt; ((_vlambda (a . b) (list a b)) 1 2 3)<br>(1 (2 3))<br><br>&gt; ((_vlambda (a b . c) (list a b c)) 1 2 3)<br>(1 2 (3))<br><br>&gt; ((_vlambda (a b c . d) (list a b c d)) 1 2 3)<br>(1 2 3 ())<br><br>&gt; ((_vlambda (a b c d . e) (list a b c d e)) 1 2 3)<br>EvaluatorError: too-few-arguments: Too few arguments.</pre>
     <h3>Evaluation Rules in Continuation-Passing Style</h3>
     <p>Elementary continuations:</p>
     <ul>
       <li>$\serialform$</li>
       <li>$\iftestform$</li>
+      <li>$\foreachfunctionform$</li>
+      <li>$\foreachlistform$</li>
+      <li>$\foreachinvocation$</li>
       <li>$\setvalueform$</li>
       <li>$\blockserialforms$</li>
       <li>$\returnfromvaluesform$</li>
@@ -1399,11 +1434,9 @@
       <li>$\throwvaluesform$</li>
       <li>$\handlerbindhandlerform$</li>
       <li>$\handlerbindserialforms$</li>
+      <li>$\handlerbindinvocation$</li>
       <li>$\unwindprotectprotectedform$</li>
       <li>$\unwindprotectcleanupforms$</li>
-      <li>$\foreachfunctionform$</li>
-      <li>$\foreachlistform$</li>
-      <li>$\foreachelement$</li>
       <li>$\functioncalloperatorform$</li>
       <li>$\functioncalloperandform$</li>
       <li>$\macro$</li>
@@ -1426,14 +1459,25 @@
       <dt>To invoke the auxiliary function $\evalserialforms$ on $\mlvar{serial-forms}$, $\lexenv$, $\dynenv$, and $k$, do the following:</dt>
       <dd>If $\mlvar{serial-forms}$ is empty, then invoke $k$ on <code>#v</code>. Otherwise, invoke the auxiliary function $\evalserialformforms$ on $\mlvar{serial-forms}$, $\lexenv$, $\dynenv$, and $k$.</dd>
       <dt>To invoke the auxiliary function $\evalserialformforms$ on $\mlvar{serial-forms}$, $\lexenv$, $\dynenv$, and $k$, do the following:</dt>
-      <dd>If $\mlvar{serial-forms}$ contains exactly one element, then evaluate the single element of $\mlvar{serial-forms}$ with respect to $\lexenv$, $\dynenv$, and $k$. Otherwise, evaluate the first element of $\mlvar{serial-forms}$ with respect to $\lexenv$, $\dynenv$, and a $\serialform$ continuation capturing $\mlvar{serial-forms}$ minus its first element, $\lexenv$, $\dynenv$, and $k$.</dd>
+      <dd>If $\mlvar{serial-forms}$ contains exactly one element, then evaluate the single element of $\mlvar{serial-forms}$ with respect to $\lexenv$, $\dynenv$, and $k$. Otherwise, evaluate the first element of $\mlvar{serial-forms}$ with respect to $\lexenv$, $\dynenv$, and a $\serialform$ continuation capturing $\mlvar{serial-forms}$, $\lexenv$, $\dynenv$, and $k$.</dd>
       <dt>To invoke the continuation $\serialform(\mlvar{serial-forms},\lexenv,\dynenv,k)$ on $\outcome$, do the following:</dt>
-      <dd>If $\outcome$ is an abrupt completion reason, then invoke $k$ on $\outcome$. Otherwise, invoke the auxiliary function $\evalserialformforms$ on $\mlvar{serial-forms}$, $\lexenv$, $\dynenv$, and $k$.</dd>
+      <dd>If $\outcome$ is an abrupt completion reason, then invoke $k$ on $\outcome$. Otherwise, invoke the auxiliary function $\evalserialformforms$ on $\mlvar{serial-forms}$ minus its first element, $\lexenv$, $\dynenv$, and $k$.</dd>
       <!-- if-form -->
       <dt>To evaluate <code class="bg">(if $\mlvar{test-form}$ $\mlvar{then-form}$ $\mlvar{else-form}$)</code> with respect to $\lexenv$, $\dynenv$, and $k$, do the following:</dt>
-      <dd>Evaluate $\mlvar{test-form}$ with respect to an $\iftestform$ continuation capturing $\mlvar{then-form}$, $\mlvar{else-form}$, $\lexenv$, $\dynenv$, and $k$.</dd>
+      <dd>Evaluate $\mlvar{test-form}$ with respect to $\lexenv$, $\dynenv$, and an $\iftestform$ continuation capturing $\mlvar{then-form}$, $\mlvar{else-form}$, $\lexenv$, $\dynenv$, and $k$.</dd>
       <dt>To invoke the continuation $\iftestform(\mlvar{then-form},\mlvar{else-form},\lexenv,\dynenv,k)$ on $\outcome$, do the following:</dt>
       <dd>If $\outcome$ is an abrupt completion reason, then invoke $k$ on $\outcome$. Otherwise, let $\mlvar{test}$ be the primary value of $\outcome$. If $\mlvar{test}$ is not a boolean, then invoke $k$ on an abrupt completion reason of type <code>error</code>. If $\mlvar{test}$ is the boolean <code>#t</code>, then evaluate $\mlvar{then-form}$ with respect to $\lexenv$, $\dynenv$, and $k$. If $\mlvar{test}$ is the boolean <code>#f</code>, then evaluate $\mlvar{else-form}$ with respect to $\lexenv$, $\dynenv$, and $k$.</dd>
+      <!-- _for-each-form -->
+      <dt>To evaluate <code class="bg">(_for-each $\mlvar{function-form}$ $\mlvar{list-form}$)</code> with respect to $\lexenv$, $\dynenv$, and $k$, do the following:</dt>
+      <dd>Evaluate $\mlvar{function-form}$ with respect to $\lexenv$, $\dynenv$, and a $\foreachfunctionform$ continuation capturing $\mlvar{list-form}$, $\lexenv$, $\dynenv$, and $k$.</dd>
+      <dt>To invoke the continuation $\foreachfunctionform(\mlvar{list-form},\lexenv,\dynenv,k)$ on $\outcome$, do the following:</dt>
+      <dd>If $\outcome$ is an abrupt completion reason, then invoke $k$ on $\outcome$. Otherwise, let $\mlvar{function}$ be the primary value of $\outcome$. If $\mlvar{function}$ is not a function, then invoke $k$ on an abrupt completion reason of type <code>error</code>. Otherwise, evaluate $\mlvar{list-form}$ with respect to $\lexenv$, $\dynenv$, and a $\foreachlistform$ continuation capturing $\mlvar{function}$, $\dynenv$, and $k$.</dd>
+      <dt>To invoke the continuation $\foreachlistform(\mlvar{function},\dynenv,k)$ on $\outcome$, do the following:</dt>
+      <dd>If $\outcome$ is an abrupt completion reason, then invoke $k$ on $\outcome$. Otherwise, let $\mlvar{list}$ be the primary value of $\outcome$. If $\mlvar{list}$ is not a proper list, then invoke $k$ on an abrupt completion reason of type <code>error</code>. Otherwise, invoke the auxiliary function $\foreach$ on $\mlvar{function}$, $\mlvar{list}$, $\dynenv$, and $k$.</dd>
+      <dt>To invoke the auxiliary function $\foreach$ on $\mlvar{function}$, $\mlvar{list}$, $\dynenv$, and $k$, do the following:</dt>
+      <dd>If $\mlvar{list}$ is empty, then invoke $k$ on <code>#v</code>. Otherwise, invoke the auxiliary function $\invoke$ on $\mlvar{function}$, the car of $\mlvar{list}$, $\dynenv$, and a $\foreachinvocation$ continuation capturing $\mlvar{function}$, $\mlvar{list}$, $\dynenv$, and $k$.</dd>
+      <dt>To invoke the continuation $\foreachinvocation(\mlvar{function},\mlvar{list},\dynenv,k)$ on $\outcome$, do the following:</dt>
+      <dd>If $\outcome$ is an abrupt completion reason, then invoke $k$ on $\outcome$. Otherwise, invoke the auxiliary function $\foreach$ on $\mlvar{function}$, the cdr of $\mlvar{list}$, $\dynenv$, and $k$.</dd>
       <!-- lambda abstractions -->
       <dt>To evaluate <code class="bg">(_vlambda $\mlvar{parameter-list}$ $\mlvar{body}$)</code> with respect to $\lexenv$, $\dynenv$, and $k$, do the following:</dt>
       <dt>To evaluate <code class="bg">(_mlambda $\mlvar{parameter-list}$ $\mlvar{body}$)</code> with respect to $\lexenv$, $\dynenv$, and $k$, do the following:</dt>
@@ -1444,75 +1488,66 @@
       <dt>To evaluate <code class="bg">(vref $\mlvar{variable}$)</code> with respect to $\lexenv$, $\dynenv$, and $k$, do the following:</dt>
       <dt>To evaluate <code class="bg">(fref $\mlvar{variable}$)</code> with respect to $\lexenv$, $\dynenv$, and $k$, do the following:</dt>
       <dt>To evaluate <code class="bg">(dref $\mlvar{variable}$)</code> with respect to $\lexenv$, $\dynenv$, and $k$, do the following:</dt>
-      <dd>If a binding exists for $\mlvar{variable}$, then invoke $k$ on its value. Otherwise, invoke $k$ on an abrupt completion reason of type <code>error</code>.</dd>
+      <dd>If there exists a binding for $\mlvar{variable}$, then invoke $k$ on the value of that binding. Otherwise, invoke $k$ on an abrupt completion reason of type <code>error</code>.</dd>
       <!-- variable assignments -->
       <dt>To evaluate <code class="bg">(vset! $\mlvar{variable}$ $\mlvar{value-form}$)</code> with respect to $\lexenv$, $\dynenv$, and $k$, do the following:</dt>
       <dt>To evaluate <code class="bg">(fset! $\mlvar{variable}$ $\mlvar{value-form}$)</code> with respect to $\lexenv$, $\dynenv$, and $k$, do the following:</dt>
       <dt>To evaluate <code class="bg">(dset! $\mlvar{variable}$ $\mlvar{value-form}$)</code> with respect to $\lexenv$, $\dynenv$, and $k$, do the following:</dt>
-      <dd>Evaluate $\mlvar{value-form}$ with respect to a $\setvalueform$ continuation capturing $\mlvar{variable}$, $\lexenv$, $\dynenv$, and $k$.</dd>
+      <dd>Evaluate $\mlvar{value-form}$ with respect to $\lexenv$, $\dynenv$, and a $\setvalueform$ continuation capturing $\mlvar{variable}$, $\lexenv$, $\dynenv$, and $k$.</dd>
       <dt>To invoke the continuation $\setvalueform(\mlvar{variable},\lexenv,\dynenv,k)$ on $\outcome$, do the following:</dt>
-      <dd>If $\outcome$ is an abrupt completion reason, then invoke $k$ on $\outcome$. Otherwise, let $\mlvar{value}$ be the primary value of $\outcome$. If a binding exists for $\mlvar{variable}$, then set its value to $\mlvar{value}$ and invoke $k$ on $\mlvar{value}$. Otherwise, create a binding between $\mlvar{variable}$ and $\mlvar{value}$ and invoke $k$ on $\mlvar{value}$.</dd>
+      <dd>If $\outcome$ is an abrupt completion reason, then invoke $k$ on $\outcome$. Otherwise, let $\mlvar{value}$ be the primary value of $\outcome$. If there exists a binding for $\mlvar{variable}$, then replace the value of that binding by $\mlvar{value}$ and invoke $k$ on $\mlvar{value}$. Otherwise, create a new binding between $\mlvar{variable}$ and $\mlvar{value}$ and invoke $k$ on $\mlvar{value}$.</dd>
       <!-- block-form -->
       <dt>To evaluate <code class="bg">(block $\mlvar{block-name}$ $\mlvar{serial-forms}$)</code> with respect to $\lexenv$, $\dynenv$, and $k$, do the following:</dt>
-      <dd>Let $\mlvar{exit-tag}$ be a new uninterned variable. Invoke the auxiliary function $\evalserialforms$ on $\mlvar{serial-forms}$ and a $\blockserialforms$ continuation capturing $\mlvar{exit-tag}$, the environment extending $\lexenv$ to bind, in the block namespace, the variable $\mlvar{block-name}$ to $\mlvar{exit-tag}$, the environment extending $\dynenv$ to bind, in the exit-point namespace, the variable $\mlvar{exit-tag}$ to <code>#v</code>, and $k$.</dd>
-      <dt>To invoke the continuation $\blockserialforms(\mlvar{exit-tag},\lexenv,\dynenv,k)$ on $\outcome$, do the following:</dt>
+      <dd>Let $\mlvar{exit-tag}$ be a new uninterned variable. Invoke the auxiliary function $\evalserialforms$ on $\mlvar{serial-forms}$, the environment extending $\lexenv$ to bind, in the block namespace, the variable $\mlvar{block-name}$ to $\mlvar{exit-tag}$, the environment extending $\dynenv$ to bind, in the exit-point namespace, the variable $\mlvar{exit-tag}$ to <code>#v</code>, and a $\blockserialforms$ continuation capturing $\mlvar{exit-tag}$ and $k$.</dd>
+      <dt>To invoke the continuation $\blockserialforms(\mlvar{exit-tag},k)$ on $\outcome$, do the following:</dt>
       <dd>If $result$ is an abrupt completion reason of type <code>nonlocal-exit</code> carrying an exit tag <code>eq?</code> to $\mlvar{exit-tag}$, then invoke $k$ on the values carried by $\outcome$. Otherwise, invoke $k$ on $\outcome$.</dd>
       <!-- return-from-form -->
       <dt>To evaluate <code class="bg">(return-from $\mlvar{block-name}$ $\mlvar{values-form}$)</code> with respect to $\lexenv$, $\dynenv$, and $k$, do the following:</dt>
-      <dd>If there exists no binding for the variable $\mlvar{block-name}$ in the block namespace of $\lexenv$, then invoke $k$ on an abrupt completion reason of type <code>error</code>. Otherwise, let $\mlvar{exit-tag}$ be the value of the binding for the variable $\mlvar{block-name}$ in the block namespace of $\lexenv$. If there exists no binding for the variable $\mlvar{exit-tag}$ in the exit-point namespace of $\dynenv$, then invoke $k$ on an abrupt completion reason of type <code>error</code>. Otherwise, evaluate $\mlvar{values-form}$ with respect to $\lexenv$, $\dynenv$, and a $\returnfromvaluesform$ continuation capturing $\mlvar{exit-tag}$, $\lexenv$, $\dynenv$, and $k$.</dd>
-      <dt>To invoke the continuation $\returnfromvaluesform(\mlvar{exit-tag},\lexenv,\dynenv,k)$ on $\outcome$, do the following:</dt>
+      <dd>If there exists no binding for the variable $\mlvar{block-name}$ in the block namespace of $\lexenv$, then invoke $k$ on an abrupt completion reason of type <code>error</code>. Otherwise, let $\mlvar{exit-tag}$ be the value of the binding for the variable $\mlvar{block-name}$ in the block namespace of $\lexenv$. If there exists no binding for the variable $\mlvar{exit-tag}$ in the exit-point namespace of $\dynenv$, then invoke $k$ on an abrupt completion reason of type <code>error</code>. Otherwise, evaluate $\mlvar{values-form}$ with respect to $\lexenv$, $\dynenv$, and a $\returnfromvaluesform$ continuation capturing $\mlvar{exit-tag}$ and $k$.</dd>
+      <dt>To invoke the continuation $\returnfromvaluesform(\mlvar{exit-tag},k)$ on $\outcome$, do the following:</dt>
       <dd>If $\outcome$ is an abrupt completion reason, then invoke $k$ on $\outcome$. Otherwise, invoke $k$ on an abrupt completion reason of type <code>nonlocal-exit</code> carrying $\mlvar{exit-tag}$ and $\outcome$.</dd>
       <!-- catch-form -->
       <dt>To evaluate <code class="bg">(catch $\mlvar{exit-tag-form}$ $\mlvar{serial-forms}$)</code> with respect to $\lexenv$, $\dynenv$, and $k$, do the following:</dt>
-      <dd>Evaluate $\mlvar{exit-tag-form}$ with respect to a $\catchexittagform$ continuation capturing $\mlvar{serial-forms}$, $\lexenv$, $\dynenv$, and $k$.</dd>
+      <dd>Evaluate $\mlvar{exit-tag-form}$ with respect to $\lexenv$, $\dynenv$, and a $\catchexittagform$ continuation capturing $\mlvar{serial-forms}$, $\lexenv$, $\dynenv$, and $k$.</dd>
       <dt>To invoke the continuation $\catchexittagform(\mlvar{serial-forms},\lexenv,\dynenv,k)$ on $\outcome$, do the following:</dt>
-      <dd>If $\outcome$ is an abrupt completion reason, then invoke $k$ on $\outcome$. Otherwise, let $\mlvar{exit-tag}$ be the primary value of $\outcome$. If $\mlvar{exit-tag}$ is not a variable, then invoke $k$ on an abrupt completion reason of type <code>error</code>. Otherwise, invoke the auxiliary function $\evalserialforms$ on $\mlvar{serial-forms}$ and a $\catchserialforms$ continuation capturing $\mlvar{exit-tag}$, $\lexenv$, the environment extending $\dynenv$ to bind, in the exit-point namespace, the variable $\mlvar{exit-tag}$ to <code>#v</code>, and $k$.</dd>
-      <dt>To invoke the continuation $\catchserialforms(\mlvar{exit-tag},\lexenv,\dynenv,k)$ on $\outcome$, do the following:</dt>
+      <dd>If $\outcome$ is an abrupt completion reason, then invoke $k$ on $\outcome$. Otherwise, let $\mlvar{exit-tag}$ be the primary value of $\outcome$. If $\mlvar{exit-tag}$ is not a variable, then invoke $k$ on an abrupt completion reason of type <code>error</code>. Otherwise, invoke the auxiliary function $\evalserialforms$ on $\mlvar{serial-forms}$, $\lexenv$, the environment extending $\dynenv$ to bind, in the exit-point namespace, the variable $\mlvar{exit-tag}$ to <code>#v</code>, and a $\catchserialforms$ continuation capturing $\mlvar{exit-tag}$ and $k$.</dd>
+      <dt>To invoke the continuation $\catchserialforms(\mlvar{exit-tag},k)$ on $\outcome$, do the following:</dt>
       <dd>If $result$ is an abrupt completion reason of type <code>nonlocal-exit</code> carrying an exit tag <code>eq?</code> to $\mlvar{exit-tag}$, then invoke $k$ on the values carried by $\outcome$. Otherwise, invoke $k$ on $\outcome$.</dd>
       <!-- throw-form -->
       <dt>To evaluate <code class="bg">(throw $\mlvar{exit-tag-form}$ $\mlvar{values-form}$)</code> with respect to $\lexenv$, $\dynenv$, and $k$, do the following:</dt>
-      <dd>Evaluate $\mlvar{exit-tag-form}$ with respect to a $\throwexittagform$ continuation capturing $\mlvar{values-form}$, $\lexenv$, $\dynenv$, and $k$.</dd>
+      <dd>Evaluate $\mlvar{exit-tag-form}$ with respect to $\lexenv$, $\dynenv$, and a $\throwexittagform$ continuation capturing $\mlvar{values-form}$, $\lexenv$, $\dynenv$, and $k$.</dd>
       <dt>To invoke the continuation $\throwexittagform(\mlvar{values-form},\lexenv,\dynenv,k)$ on $\outcome$, do the following:</dt>
-      <dd>If $\outcome$ is an abrupt completion reason, then invoke $k$ $\outcome$. Otherwise, let $\mlvar{exit-tag}$ be the primary value of $\outcome$. If $\mlvar{exit-tag}$ is not a variable, then invoke $k$ on an abrupt completion reason of type <code>error</code>. Otherwise, if there exists no binding for the variable $\mlvar{exit-tag}$ in the exit-point namespace of $\dynenv$, then invoke $k$ on an abrupt completion reason of type <code>error</code>. Otherwise, evaluate $\mlvar{values-form}$ with respect to a $\throwvaluesform$ continuation capturing $\mlvar{exit-tag}$, $\lexenv$, $\dynenv$, and $k$.</dd>
-      <dt>To invoke the continuation $\throwvaluesform(\mlvar{exit-tag},\lexenv,\dynenv,k)$ on $\outcome$, do the following:</dt>
+      <dd>If $\outcome$ is an abrupt completion reason, then invoke $k$ $\outcome$. Otherwise, let $\mlvar{exit-tag}$ be the primary value of $\outcome$. If $\mlvar{exit-tag}$ is not a variable, then invoke $k$ on an abrupt completion reason of type <code>error</code>. Otherwise, if there exists no binding for the variable $\mlvar{exit-tag}$ in the exit-point namespace of $\dynenv$, then invoke $k$ on an abrupt completion reason of type <code>error</code>. Otherwise, evaluate $\mlvar{values-form}$ with respect to $\lexenv$, $\dynenv$, and a $\throwvaluesform$ continuation capturing $\mlvar{exit-tag}$ and $k$.</dd>
+      <dt>To invoke the continuation $\throwvaluesform(\mlvar{exit-tag},k)$ on $\outcome$, do the following:</dt>
       <dd>If $\outcome$ is an abrupt completion reason, then invoke $k$ on $\outcome$. Otherwise, invoke $k$ on an abrupt completion reason of type <code>nonlocal-exit</code> carrying $\mlvar{exit-tag}$ and $\outcome$.</dd>
       <!-- _handler-bind-form -->
       <dt>To evaluate <code class="bg">(_handler-bind $\mlvar{handler-form}$ $\mlvar{serial-forms}$)</code> with respect to $\lexenv$, $\dynenv$, and $k$, do the following:</dt>
-      <dd>Evaluate $\mlvar{handler-form}$ with respect to a $\handlerbindhandlerform$ continuation capturing $\mlvar{serial-forms}$, $\lexenv$, $\dynenv$, and $k$.</dd>
+      <dd>Evaluate $\mlvar{handler-form}$ with respect to $\lexenv$, $\dynenv$, and a $\handlerbindhandlerform$ continuation capturing $\mlvar{serial-forms}$, $\lexenv$, $\dynenv$, and $k$.</dd>
       <dt>To invoke the continuation $\handlerbindhandlerform(\mlvar{serial-forms},\lexenv,\dynenv,k)$ on $\outcome$, do the following:</dt>
-      <dd>If $\outcome$ is an abrupt completion reason, then invoke $k$ on $\outcome$. Otherwise, let $\mlvar{handler}$ be the primary value of $\outcome$. If $\mlvar{handler}$ is not a function, then invoke $k$ on an abrupt completion reason of type <code>error</code>. Otherwise, invoke the auxiliary function $\evalserialforms$ on $\mlvar{serial-forms}$ and a $\handlerbindserialforms$ continuation capturing $\mlvar{handler}$, $\lexenv$, $\dynenv$, and $k$.</dd>
-      <dt>To invoke the continuation $\handlerbindserialforms(\mlvar{handler},\lexenv,\dynenv,k)$ on $\outcome$, do the following:</dt>
-      <dd>If $\outcome$ is an abrupt completion reason of type <code>error</code>, then invoke the auxiliary function $\invoke$ on $\mlvar{handler}$, the string carried by $\outcome$, $\dynenv$, and $k$. Otherwise, invoke $k$ on $\outcome$.</dd>
+      <dd>If $\outcome$ is an abrupt completion reason, then invoke $k$ on $\outcome$. Otherwise, let $\mlvar{handler}$ be the primary value of $\outcome$. If $\mlvar{handler}$ is not a function, then invoke $k$ on an abrupt completion reason of type <code>error</code>. Otherwise, invoke the auxiliary function $\evalserialforms$ on $\mlvar{serial-forms}$, $\lexenv$, $\dynenv$, and a $\handlerbindserialforms$ continuation capturing $\mlvar{handler}$, $\dynenv$, and $k$.</dd>
+      <dt>To invoke the continuation $\handlerbindserialforms(\mlvar{handler},\dynenv,k)$ on $\outcome$, do the following:</dt>
+      <dd>If $\outcome$ is an abrupt completion reason of type <code>error</code>, then invoke the auxiliary function $\invoke$ on $\mlvar{handler}$, the category and description carried by $\outcome$, $\dynenv$, and a $\handlerbindinvocation$ continuation capturing $\mlvar{outcome}$ and $k$. Otherwise, invoke $k$ on $\outcome$.</dd>
+      <dt>To invoke the continuation $\handlerbindinvocation(\mlvar{serial-forms-outcome},k)$ on $\outcome$, do the following:</dt>
+      <dd>If $\outcome$ is an abrupt completion reason, then invoke $k$ on $\mlvar{outcome}$. Otherwise, invoke $k$ on $\mlvar{serial-forms-outcome}$.</dd>
       <!-- unwind-protect-form -->
       <dt>To evaluate <code class="bg">(unwind-protect $\mlvar{protected-form}$ $\mlvar{cleanup-forms}$)</code> with respect to $\lexenv$, $\dynenv$, and $k$, do the following:</dt>
-      <dd>Evaluate $\mlvar{protected-form}$ with respect to an $\unwindprotectprotectedform$ continuation capturing $\mlvar{cleanup-forms}$, $\lexenv$, $\dynenv$, and $k$.</dd>
+      <dd>Evaluate $\mlvar{protected-form}$ with respect to $\lexenv$, $\dynenv$, and an $\unwindprotectprotectedform$ continuation capturing $\mlvar{cleanup-forms}$, $\lexenv$, $\dynenv$, and $k$.</dd>
       <dt>To invoke the continuation $\unwindprotectprotectedform(\mlvar{cleanup-forms},\lexenv,\dynenv,k)$ on $\outcome$, do the following:</dt>
-      <dd>Invoke the auxiliary function $\evalserialforms$ on $\mlvar{cleanup-forms}$ and an $\unwindprotectcleanupforms$ continuation capturing $\outcome$, $\lexenv$, $\dynenv$, and $k$.</dd>
-      <dt>To invoke the continuation $\unwindprotectcleanupforms(\mlvar{protected-form-outcome},\lexenv,\dynenv,k)$ on $\outcome$, do the following:</dt>
+      <dd>Invoke the auxiliary function $\evalserialforms$ on $\mlvar{cleanup-forms}$, $\lexenv$, $\dynenv$, and an $\unwindprotectcleanupforms$ continuation capturing $\outcome$ and $k$.</dd>
+      <dt>To invoke the continuation $\unwindprotectcleanupforms(\mlvar{protected-form-outcome},k)$ on $\outcome$, do the following:</dt>
       <dd>If $\outcome$ is an abrupt completion reason, then invoke $k$ on $\outcome$. Otherwise, invoke $k$ on $\mlvar{protected-form-outcome}$.</dd>
-      <!-- _for-each-form -->
-      <dt>To evaluate <code class="bg">(_for-each $\mlvar{function-form}$ $\mlvar{list-form}$)</code> with respect to $\lexenv$, $\dynenv$, and $k$, do the following:</dt>
-      <dd>Evaluate $\mlvar{function-form}$ with respect to a $\foreachfunctionform$ continuation capturing $\mlvar{list-form}$, $\lexenv$, $\dynenv$, and $k$.</dd>
-      <dt>To invoke the continuation $\foreachfunctionform(\mlvar{list-form},\lexenv,\dynenv,k)$ on $\outcome$, do the following:</dt>
-      <dd>If $\outcome$ is an abrupt completion reason, then invoke $k$ on $\outcome$. Otherwise, let $\mlvar{function}$ be the primary value of $\outcome$. If $\mlvar{function}$ is not a function, then invoke $k$ on an abrupt completion reason of type <code>error</code>. Otherwise, evaluate $\mlvar{list-form}$ with respect to a $\foreachlistform$ continuation capturing $\mlvar{function}$, $\lexenv$, $\dynenv$, and $k$.</dd>
-      <dt>To invoke the continuation $\foreachlistform(\mlvar{function},\lexenv,\dynenv,k)$ on $\outcome$, do the following:</dt>
-      <dd>If $\outcome$ is an abrupt completion reason, then invoke $k$ on $\outcome$. Otherwise, let $\mlvar{list}$ be the primary value of $\outcome$. If $\mlvar{list}$ is not a proper list, then invoke $k$ on an abrupt completion reason of type <code>error</code>. Otherwise, invoke the auxiliary function $\foreach$ on $\mlvar{function}$, $\mlvar{list}$, $\lexenv$, $\dynenv$, and $k$.</dd>
-      <dt>To invoke the auxiliary function $\foreach$ on $\mlvar{function}$, $\mlvar{list}$, $\lexenv$, $\dynenv$, and $k$, do the following:</dt>
-      <dd>If $\mlvar{list}$ is empty, then invoke $k$ on <code>#v</code>. Otherwise, invoke the auxiliary function $\invoke$ on $\mlvar{function}$, the car of $\mlvar{list}$, $\dynenv$, and a $\foreachelement$ continuation capturing $\mlvar{function}$, the cdr of $\mlvar{list}$, $\lexenv$, $\dynenv$, and $k$.</dd>
-      <dt>To invoke the continuation $\foreachelement(\mlvar{function},\mlvar{list},\lexenv,\dynenv,k)$ on $\outcome$, do the following:</dt>
-      <dd>If $\outcome$ is an abrupt completion reason, then invoke $k$ on $\outcome$. Otherwise, invoke the auxiliary function $\foreach$ on $\mlvar{function}$, $\mlvar{list}$, $\lexenv$, $\dynenv$, and $k$.</dd>
       <!-- function calls -->
       <dt>To evaluate <code class="bg">($\mlvar{operator-form}$ $\mlvar{operand-forms}$)</code> with respect to $\lexenv$, $\dynenv$, and $k$, do the following:</dt>
       <dt>To evaluate <code class="bg">(apply $\mlvar{operator-form}$ $\mlvar{operand-forms}$)</code> with respect to $\lexenv$, $\dynenv$, and $k$, do the following:</dt>
       <dt>To evaluate <code class="bg">(multiple-value-call $\mlvar{operator-form}$ $\mlvar{operand-forms}$)</code> with respect to $\lexenv$, $\dynenv$, and $k$, do the following:</dt>
       <dt>To evaluate <code class="bg">(multiple-value-apply $\mlvar{operator-form}$ $\mlvar{operand-forms}$)</code> with respect to $\lexenv$, $\dynenv$, and $k$, do the following:</dt>
-      <dd>Evaluate $\mlvar{operator-form}$ with respect to a $\functioncalloperatorform$ continuation capturing $\mlvar{operand-forms}$, $\lexenv$, $\dynenv$, and $k$.</dd>
+      <dd>Evaluate $\mlvar{operator-form}$ with respect to $\lexenv$, $\dynenv$, and a $\functioncalloperatorform$ continuation capturing $\mlvar{operand-forms}$, $\lexenv$, $\dynenv$, and $k$.</dd>
       <dt>To invoke the continuation $\functioncalloperatorform(\mlvar{operand-forms},\lexenv,\dynenv,k)$ on $\outcome$, do the following:</dt>
-      <dd>If $\outcome$ is an abrupt completion reason, then invoke $k$ on $\outcome$. Otherwise, let $\mlvar{operator}$ be the primary value of $\outcome$. If $\mlvar{operator}$ is not a function, then invoke $k$ on an abrupt completion reason of type <code>error</code>. Otherwise, invoke the auxiliary function $\evaloperandforms$ on $\mlvar{operator}$, $\mlvar{operand-forms}$, $[]$, $\lexenv$, $\dynenv$, and $k$.</dd>
-      <dt>To invoke the auxiliary function $\evaloperandforms$ on $\mlvar{operator}$, $\mlvar{operand-forms}$, $\mlvar{arguments}$, $\lexenv$, $\dynenv$, and $k$, do the following:</dt>
-      <dd>If $\mlvar{operand-forms}$ is not empty, then evaluate the first element of $\mlvar{operand-forms}$ with respect to a $\functioncalloperandform$ continuation capturing $\mlvar{operator}$, $\mlvar{operand-forms}$ minus its first element, $\mlvar{arguments}$, $\lexenv$, $\dynenv$, and $k$. Otherwise, invoke the auxiliary function $\invoke$ on $\mlvar{operator}$, $\mlvar{arguments}$, $\dynenv$, and $k$.</dd>
-      <dt>To invoke the continuation $\functioncalloperandform(\mlvar{operator},\mlvar{operand-forms},\mlvar{arguments},\lexenv,\dynenv,k)$ on $\outcome$, do the following:</dt>
-      <dd>If $\outcome$ is an abrupt completion reason, then invoke $k$ on $\outcome$. Otherwise, let $\mlvar{augmented-arguments}$ be the result of appending the primary value of $\outcome$ or all the values of $\outcome$ to $\mlvar{arguments}$. Invoke the auxiliary function $\evaloperandforms$ on $\mlvar{operator}$, $\mlvar{operand-forms}$, $\mlvar{augmented-arguments}$, $\lexenv$, $\dynenv$, and $k$.</dd>
+      <dd>If $\outcome$ is an abrupt completion reason, then invoke $k$ on $\outcome$. Otherwise, let $\mlvar{function}$ be the primary value of $\outcome$. If $\mlvar{function}$ is not a function, then invoke $k$ on an abrupt completion reason of type <code>error</code>. Otherwise, invoke the auxiliary function $\evaloperandforms$ on $\mlvar{function}$, $\mlvar{operand-forms}$, $[]$, $\lexenv$, $\dynenv$, and $k$.</dd>
+      <dt>To invoke the auxiliary function $\evaloperandforms$ on $\mlvar{function}$, $\mlvar{operand-forms}$, $\mlvar{arguments}$, $\lexenv$, $\dynenv$, and $k$, do the following:</dt>
+      <dd>If $\mlvar{operand-forms}$ is empty, then invoke the auxiliary function $\invoke$ on $\mlvar{function}$, $\mlvar{arguments}$, $\dynenv$, and $k$. Otherwise, evaluate the first element of $\mlvar{operand-forms}$ with respect to $\lexenv$, $\dynenv$, and a $\functioncalloperandform$ continuation capturing $\mlvar{function}$, $\mlvar{operand-forms}$, $\mlvar{arguments}$, $\lexenv$, $\dynenv$, and $k$.</dd>
+      <dt>To invoke the continuation $\functioncalloperandform(\mlvar{function},\mlvar{operand-forms},\mlvar{arguments},\lexenv,\dynenv,k)$ on $\outcome$, do the following:</dt>
+      <dd>If $\outcome$ is an abrupt completion reason, then invoke $k$ on $\outcome$. Otherwise, let $\mlvar{augmented-arguments}$ be the result of appending the primary value of $\outcome$ or all the values of $\outcome$ to $\mlvar{arguments}$. Invoke the auxiliary function $\evaloperandforms$ on $\mlvar{function}$, $\mlvar{operand-forms}$ minus its first element, $\mlvar{augmented-arguments}$, $\lexenv$, $\dynenv$, and $k$.</dd>
       <dt>To invoke the auxiliary function $\invoke$ on $\mlvar{function}$, $\mlvar{arguments}$, $\dynenv$, and $k$, do the following:</dt>
       <dd>If $\mlvar{function}$ is a primitive function, then invoke $k$ on the outcome of the invocation of the JavaScript function implementing $\mlvar{function}$ on $\mlvar{arguments}$. If $\mlvar{function}$ is a closure, then invoke the auxiliary function $\evalserialforms$ on the body of the lambda abstraction recorded by the closure, the lexical environment recorded by the closure or an extension thereof, $\dynenv$ or an extension thereof, and $k$.</dd>
       <!-- macro call -->

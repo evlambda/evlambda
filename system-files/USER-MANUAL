@@ -29,31 +29,31 @@
       <dt><code>void</code></dt>
       <dd>There is exactly one object of type <code>void</code>. Its readable representation is <code class="bg">#v</code> and its purpose is to represent missing or undefined objects.</dd>
       <dt><code>boolean</code></dt>
-      <dd>Booleans represent truth values. There are exactly two objects of type <code>boolean</code>: <code class="bg">#t</code> (representing true) and <code class="bg">#f</code> (representing false).</dd>
+      <dd>Objects of type <code>boolean</code> represent truth values. There are exactly two objects of type <code>boolean</code>: <code class="bg">#t</code> (representing true) and <code class="bg">#f</code> (representing false). An object of type <code>boolean</code> is often simply called a boolean when there is no risk of confusion.</dd>
       <dt><code>number</code></dt>
-      <dd>Numbers represent mathematical numbers: <code class="bg">123</code>, <code class="bg">-123</code>, <code class="bg">123.456</code>, <code class="bg">-123.456</code>, &hellip; The representation of a mathematical number by an object of type <code>number</code> can be exact or approximate.</dd>
+      <dd>Objects of type <code>number</code> represent mathematical numbers: <code class="bg">123</code>, <code class="bg">-123</code>, <code class="bg">123.456</code>, <code class="bg">-123.456</code>, &hellip; The representation of a mathematical number by an object of type <code>number</code> can be exact or approximate. An object of type <code>number</code> is often simply called a number when there is no risk of confusion.</dd>
       <dt><code>character</code></dt>
-      <dd>Characters represent Unicode characters: <code class="bg">#"a"</code>, <code class="bg">#"b"</code>, <code class="bg">#"c"</code>, <code class="bg">#"你"</code>, <code class="bg">#"好"</code>, &hellip; Most of the characters used in the world have a corresponding <a href="https://home.unicode.org/" target="_blank">Unicode</a> character.</dd>
+      <dd>Objects of type <code>character</code> represent Unicode characters: <code class="bg">#"a"</code>, <code class="bg">#"b"</code>, <code class="bg">#"c"</code>, <code class="bg">#"你"</code>, <code class="bg">#"好"</code>, &hellip; Most of the characters used in the world have a corresponding <a href="https://en.wikipedia.org/wiki/Unicode" target="_blank">Unicode</a> character. An object of type <code>character</code> is often simply called a character when there is no risk of confusion.</dd>
       <dt><code>string</code></dt>
-      <dd>Strings represent indexed sequences of Unicode characters: <code class="bg">"abc"</code>, <code class="bg">"你好"</code>, &hellip;</dd>
+      <dd>Objects of type <code>string</code> represents indexed sequences of Unicode characters: <code class="bg">"abc"</code>, <code class="bg">"你好"</code>, &hellip; An object of type <code>string</code> is often simply called a string when there is no risk of confusion.</dd>
       <dt><code>keyword</code></dt>
-      <dd>Keywords can, among other uses, represent named values: <code class="bg">:red</code>, <code class="bg">:green</code>, <code class="bg">:blue</code>, &hellip;</dd>
+      <dd>Objects of type <code>keyword</code> can, among other uses, represent named values: <code class="bg">:red</code>, <code class="bg">:green</code>, <code class="bg">:blue</code>, &hellip; An object of type <code>keyword</code> is often simply called a keyword when there is no risk of confusion.</dd>
       <dt><code>variable</code></dt>
-      <dd>Variables are primarily used to name objects and various other entities. For example, the names of the types are variables: <code class="bg">object</code>, <code class="bg">void</code>, &hellip;</dd>
+      <dd>Objects of type <code>variable</code> are commonly used to name objects and other kinds of entities. For example, the names of the types are objects of type <code>variable</code>: <code class="bg">object</code>, <code class="bg">void</code>, &hellip; An object of type <code>variable</code> is often simply called a variable when there is no risk of confusion.</dd>
       <dt><code>empty-list</code></dt>
-      <dd>There is exactly one object of type <code>empty-list</code>. Its readable representation is <code class="bg">()</code> and its purpose is to represent empty lists of objects.</dd>
+      <dd>There is exactly one object of type <code>empty-list</code>. Its readable representation is <code class="bg">()</code> and its purpose is to represent empty lists of objects. The single object of type <code>empty-list</code> is often simply called the empty list when there is no risk of confusion.</dd>
       <dt><code>cons</code></dt>
-      <dd>A cons is an ordered pair of objects. The first element is called the car of the cons and the second element is called the cdr of the cons. Conses are the building blocks of many data structures. In particular, conses can be chained together to represent nonempty lists of objects. A nonempty list of objects is represented by a cons whose car is the first element of the list and whose cdr is the sublist of the list obtained by omitting its first element. For example, the list <code class="bg">(1 2 3)</code> is represented by a chain of three conses: a first cons whose car is the number <code class="bg">1</code> and whose cdr is the second cons, a second cons whose car is the number <code class="bg">2</code> and whose cdr is the third cons, and a third cons whose car is the number <code class="bg">3</code> and whose cdr is the empty list.</dd>
+      <dd>Objects of type <code>cons</code> are ordered pairs of objects. The first/second element of an object of type <code>cons</code> is called its <a href="https://en.wikipedia.org/wiki/CAR_and_CDR" target="_blank">car/cdr</a>. An object of type <code>cons</code> is often simply called a cons when there is no risk of confusion. Conses are the building blocks of many data structures. In particular, conses can be chained together to represent nonempty lists of objects. A nonempty list of objects is represented by a cons whose car is the first element of the list and whose cdr is the sublist of the list obtained by omitting its first element. For example, the list <code class="bg">(1 2 3)</code> is represented by a chain of three conses: a first cons whose car is the number <code class="bg">1</code> and whose cdr is the second cons, a second cons whose car is the number <code class="bg">2</code> and whose cdr is the third cons, and a third cons whose car is the number <code class="bg">3</code> and whose cdr is the empty list.</dd>
       <dt><code>vector</code></dt>
-      <dd>Vectors represent indexed sequences of objects: <code class="bg">#()</code>, <code class="bg">#(1 2 3)</code>, &hellip;</dd>
+      <dd>Objects of type <code>vector</code> represent indexed sequences of objects: <code class="bg">#()</code>, <code class="bg">#(1 2 3)</code>, &hellip; An object of type <code>vector</code> is often simply called a vector when there is no risk of confusion.</dd>
       <dt><code>primitive-function</code></dt>
-      <dd>Primitive functions are input/output mappings implemented in a programming language other than EVLambda. Primitive functions have no readable representations and their printable representation is <code class="bg">#&lt;primitive-function&gt;</code>.</dd>
+      <dd>Objects of type <code>primitive-function</code> are input/output mappings implemented in a programming language other than EVLambda. Objects of type <code>primitive-function</code> have no readable representations and their printable representation is <code class="bg">#&lt;primitive-function&gt;</code>. An object of type <code>primitive-function</code> is often simply called a primitive function when there is no risk of confusion.</dd>
       <dt><code>closure</code></dt>
-      <dd>Closures are input/output mappings implemented in EVLambda. Some closures are tagged as being a macro. Macros are code to code mappings used to create new language constructs. Closures have no readable representations and their printable representation is <code class="bg">#&lt;closure&gt;</code>.</dd>
+      <dd>Objects of type <code>closure</code> are input/output mappings implemented in EVLambda. Some objects of type <code>closure</code> are tagged as being macros. Macros are code to code mappings used to create new language constructs. Objects of type <code>closure</code> have no readable representations and their printable representation is <code class="bg">#&lt;closure&gt;</code>. An object of type <code>closure</code> is often simply called a closure when there is no risk of confusion.</dd>
     </dl>
-    <p>Each symbol has an associated sequence of characters called the name of the symbol. The readable representation of a keyword is its name preceded by a semicolon. The readable representation of a variable is its name. The reader always converts the same readable representation of a symbol into the same symbol. To that end, the reader maintains two mappings from names to symbols called packages: one package mapping the names of the previously encountered variables to the corresponding variables and one package mapping the names of the previously encountered keywords to the corresponding keywords. Adding a symbol to its package is called interning the symbol.</p>
-    <p>The printable representation of a list consists of a left parenthesis followed by the printable representations of the elements of the list separated by a single space followed by a right parenthesis. The printable representation of a list is just one of its infinitely many readable representations. In particular, other readable representations can be obtained by using sequences of at least one whitespace character instead of single spaces to separate the elements of the list.</p>
-    <p>Although a macro is technically a function (because a macro is an object of type <code>closure</code> and type <code>closure</code> is a subtype of type <code>function</code>), the word &ldquo;function&rdquo; is often used to denote specifically a function other than a macro (that is, a primitive function or a closure not tagged as being a macro).</p>
+    <p>Each symbol has an associated sequence of (Unicode) characters called the name of the symbol. The readable representation of a keyword is its name preceded by a colon. The readable representation of a variable is its name. The reader always converts the same readable representation of a symbol into the same symbol. To that end, the reader maintains two mappings from names to symbols called packages: one package mapping the names of the previously encountered keywords to the corresponding keywords and one package mapping the names of the previously encountered variables to the corresponding variables. Adding a symbol to its package is called interning the symbol.</p>
+    <p>The printable representation of a list consists of a left parenthesis followed by the printable representations of the elements of the list separated by a single space followed by a right parenthesis. The printable representation of a list is just one of its infinitely many readable representations. In particular, other readable representations can be obtained by using arbitrary sequences of at least one whitespace character instead of single spaces to separate the elements of the list.</p>
+    <p>Although a macro is technically a function (because a macro is an object of type <code>closure</code> and the type <code>closure</code> is a subtype of the type <code>function</code>), the word &ldquo;function&rdquo; is often used to denote specifically a function other than a macro (that is, a primitive function or a closure not tagged as being a macro).</p>
     <p>Variables name objects through the use of namespaces, bindings, environments, and lookup rules:</p>
     <ul>
       <li>Namespaces are a general mechanism allowing the same name to have different meanings in different contexts. EVLambda uses namespaces to allow the same variable to name two objects: one object that is used by default in contexts requiring an object of type <code>function</code> and another object that is used by default in all other contexts.</li>
@@ -73,14 +73,14 @@
       <li>An environment references its bindings.</li>
     </ul>
     <p>The references embedded into the representation of an object, binding, or environment can be thought of as occupying memory locations denoted by the object, binding, or environment. For example, a cons can be thought of as denoting two memory locations: one containing a reference to the car of the cons and one containing a reference to the cdr of the cons. By abuse of language, we often say that a memory location contains an object, binding, or environment when in reality the memory location contains a reference to the object, binding, or environment.</p>
-    <p>Multiple objects, bindings, and environments can reference a common object, binding, or environment, leading to the sharing of the common object, binding, or environment. An object, binding, or environment can reference itself directly ($X\rightarrow X$) or indirectly ($X\rightarrow Y\rightarrow\cdots\rightarrow X$), leading to the existence of a cycle.</p>
+    <p>Multiple objects, bindings, and/or environments can reference a common object, binding, or environment, leading to the sharing of the common object, binding, or environment. An object, binding, or environment can reference itself directly ($X\rightarrow X$) or indirectly ($X\rightarrow Y\rightarrow\cdots\rightarrow X$), leading to the existence of a cycle.</p>
     <p>Objects of type <code>void</code>, <code>boolean</code>, <code>keyword</code>, <code>symbol</code>, and <code>empty-list</code> have the following uniqueness properties:</p>
     <ul>
       <li>There exists in the heap exactly one object of type <code>void</code>.</li>
       <li>There exists in the heap exactly one object of type <code>boolean</code> representing true.</li>
       <li>There exists in the heap exactly one object of type <code>boolean</code> representing false.</li>
-      <li>There cannot exist in the heap more than one object of type <code>keyword</code> with the same name. (This property is enforced by the reader.)</li>
-      <li>There cannot exist in the heap more than one object of type <code>variable</code> with the same name. (This property is enforced by the reader.)</li>
+      <li>There cannot exist in the heap more than one interned object of type <code>keyword</code> with the same name. (This property is enforced by the reader.)</li>
+      <li>There cannot exist in the heap more than one interned object of type <code>variable</code> with the same name. (This property is enforced by the reader.)</li>
       <li>There exists in the heap exactly one object of type <code>empty-list</code>.</li>
     </ul>
     <p>Objects of type <code>integer</code>, <code>character</code>, and <code>string</code> do not have similar uniqueness properties:</p>
@@ -91,12 +91,12 @@
     </ul>
     <p>Objects of type <code>void</code>, <code>boolean</code>, <code>number</code>, <code>character</code>, <code>string</code>, <code>keyword</code>, <code>symbol</code>, <code>empty-list</code>, <code>primitive-function</code>, and <code>closure</code> are immutable and cannot be altered. Objects of type <code>cons</code> and <code>vector</code>, bindings, and environments are mutable and can be altered in the following ways:</p>
     <ul>
-      <li>The car and the cdr of a cons can be replaced by another object.</li>
+      <li>The car or the cdr of a cons can be replaced by another object.</li>
       <li>Any element of a vector can be replaced by another object.</li>
       <li>The value of a binding can be replaced by another object.</li>
       <li>A binding can be added to or deleted from an environment.</li>
     </ul>
-    <p>(As explained above, what replacing an object by another object really means is replacing a reference to an object by a reference to another object.)</p>
+    <p>As explained above, what replacing an object by another object really means is replacing a reference to an object by a reference to another object.</p>
     <p>The life cycle of an object, binding, or environment consists of the following events: a creation (which consists of an allocation followed by an initialization) followed by any number of alterations followed by a destruction (which consists of a deallocation). Alterations are possible only if the object, binding, or environment is mutable.</p>
     <p>The destruction of an object, binding, or environment occurs automatically if and when the object, binding, or environment becomes unreachable. The rules used to determine if an object, binding, or environment is reachable are as follows (the concepts of global environment and control stack will be introduced later in this section):</p>
     <ul>
@@ -112,8 +112,8 @@
       <li>The evaluation can complete abruptly because of an error or because of a nonlocal exit. An evaluation that completes abruptly does not produce any result.</li>
       <li>The evaluation can get caught in an infinite loop and never complete.</li>
     </ul>
-    <p>The primary value of a form whose evaluation completed normally is defined as follows: If the result consists of one or more objects, then the primary value of the form is the first object. Otherwise, the primary value of the form is <code>#v</code>.</p>
-    <p>The abrupt completion of an evaluation has an associated reason, which has a type and carries a payload. An abrupt completion caused by an error has an associated reason of type <code>error</code>, which carries a payload consisting of a string describing the error. An abrupt completion caused by a nonlocal exit has an associated reason of type <code>nonlocal-exit</code>, which carries a payload consisting of a variable (the exit tag identifying the exit point) and a sequence of zero or more objects (the values to propagate to the exit point).</p>
+    <p>The primary value of a form whose evaluation has completed normally is defined as follows: If the result consists of one or more objects, then the primary value of the form is the first object. Otherwise, the primary value of the form is <code>#v</code>.</p>
+    <p>The abrupt completion of an evaluation has an associated reason, which has a type and carries a payload. An abrupt completion caused by an error has an associated reason of type <code>error</code>, which carries a payload consisting of two strings: the category of the error and a human-readable description of the error. An abrupt completion caused by a nonlocal exit has an associated reason of type <code>nonlocal-exit</code>, which carries a payload consisting of a variable (the exit tag identifying the exit point of the nonlocal exit) and a sequence of zero or more objects (the values to propagate to the exit point of the nonlocal exit).</p>
     <p>Forms submitted to the evaluator through a <a href="#listener-buffers">listener buffer</a>, through the <a href="#evaluate-form">Evaluate Form</a> command, or through the <a href="#load-buffer">Load Buffer</a> command are called top-level forms. A consequence of the evaluation rules stated later in this section is that the evaluation of a top-level form usually entails the evaluation of other non-top-level forms.</p>
     <p>Execution of EVLambda code is achieved through interpretation or compilation.</p>
     <p>An interpreter for a language $X$ is a program capable of directly executing code written in language $X$. Language $X$ is called the source language of the interpreter. A compiler for a language $X$ is a program capable of translating code written in language $X$ into code written in a language $Y$. Language $X$ is called the source language of the compiler and language $Y$ is called the target language of the compiler. Code handed to an interpreter or compiler is called source code. A file containing source code is called a source file. Code produced by a compiler is called compiled code. A file containing compiled code is called a compiled file.</p>
@@ -173,11 +173,12 @@
     <p>A consequence of the lookup rules is that a binding in the value/function namespace of the current lexical/dynamic environment will effectively shadow a binding for the same variable in the value/function namespace of the global environment.</p>
     <p>A global variable is a binding between a variable and an object (of any type) in the value namespace of the global environment, or the name or value of such binding. A global function is a binding between a variable and a function other than a macro in the function namespace of the global environment, or the name or value of such binding. A global macro is a binding between a variable and a macro in the function namespace of the global environment, or the name or value of such binding. Global variables, global functions, and global macros are created and altered using language constructs called global definitions.</p>
     <p>A local variable is a binding between a variable and an object (of any type) in the value namespace of a lexical environment, or the name or value of such binding. A local function is a binding between a variable and a function other than a macro in the function namespace of a lexical environment, or the name or value of such binding. A local macro is a binding between a variable and a macro in the function namespace of a lexical environment, or the name or value of such binding. A dynamic variable is a binding between a variable and an object (of any type) in the value namespace of a dynamic environment, or the name or value of such binding. Local variables, local functions, local macros, and dynamic variables are created (but not altered) using language constructs called binding constructs.</p>
-    <p>When a form is submitted to the evaluator, the evaluator analyzes the form to determine how to evaluate it. If the form is the empty list, then the evaluation completes abruptly for a reason of type <code>error</code>. Otherwise, if the form is neither a variable nor a cons, then the result of the evaluation is the form itself. (Objects that are neither the empty list, nor a variable, nor a cons are said to be self-evaluating.) Otherwise, if the form is a variable $\var$, then the variable is treated as an abbreviation for either <code>(vref $\var$)</code> or <code>(fref $\var$)</code>, depending on the context of its occurrence. Otherwise, the form is necessarily a cons and the evaluation completes abruptly for a reason of type <code>error</code> unless the form matches one of the following patterns:</p>
+    <p>When a form is submitted to the evaluator, the evaluator analyzes the form to determine how to evaluate it. If the form is the empty list, then the evaluation completes abruptly for a reason of type <code>error</code>. Otherwise, if the form is neither a variable nor a cons, then the result of the evaluation is the form itself. (Objects that are neither the empty list, nor a variable, nor a cons are said to be self-evaluating.) Otherwise, if the form is a variable $\variable$, then the variable is treated as an abbreviation for either <code>(vref $\variable$)</code> or <code>(fref $\variable$)</code>, depending on the context of its occurrence. Otherwise, the form is necessarily a cons and the evaluation completes abruptly for a reason of type <code>error</code> unless the form matches one of the following patterns:</p>
     <ol>
       <li><code>(quote $\metavar{literal}$)</code></li>
       <li><code>(progn $\metavar{serial-forms}$)</code></li>
       <li><code>(if $\metavar{test-form}$ $\metavar{then-form}$ $\metavar{else-form}$)</code></li>
+      <li><code>(_for-each $\metavar{function-form}$ $\metavar{list-form}$)</code></li>
       <li><code>(_vlambda $\metavar{parameter-list}$ $\metavar{body}$)</code></li>
       <li><code>(_mlambda $\metavar{parameter-list}$ $\metavar{body}$)</code></li>
       <li><code>(_flambda $\metavar{parameter-list}$ $\metavar{body}$)</code></li>
@@ -194,7 +195,6 @@
       <li><code>(throw $\metavar{exit-tag-form}$ $\metavar{values-form}$)</code></li>
       <li><code>(_handler-bind $\metavar{handler-form}$ $\metavar{serial-forms}$)</code></li>
       <li><code>(unwind-protect $\metavar{protected-form}$ $\metavar{cleanup-forms}$)</code></li>
-      <li><code>(_for-each $\metavar{function-form}$ $\metavar{list-form}$)</code></li>
       <li><code>(apply $\metavar{operator-form}$ $\metavar{operand-forms}$)</code></li>
       <li><code>(multiple-value-call $\metavar{operator-form}$ $\metavar{operand-forms}$)</code></li>
       <li><code>(multiple-value-apply $\metavar{operator-form}$ $\metavar{operand-forms}$)</code></li>
@@ -208,6 +208,8 @@
       <li>$\metavar{test-form}$ matches any object</li>
       <li>$\metavar{then-form}$ matches any object</li>
       <li>$\metavar{else-form}$ matches any object</li>
+      <li>$\metavar{function-form}$ matches any object</li>
+      <li>$\metavar{list-form}$ matches any object</li>
       <li>$\metavar{parameter-list}$ matches any list of distinct variables (as we will see in the reference manual, a parameter list can actually take two other forms)</li>
       <li>$\metavar{body}$ matches any sequence of zero or more objects</li>
       <li>$\metavar{variable}$ matches any variable</li>
@@ -218,8 +220,6 @@
       <li>$\metavar{handler-form}$ matches any object</li>
       <li>$\metavar{protected-form}$ matches any object</li>
       <li>$\metavar{cleanup-forms}$ matches any sequence of zero or more objects</li>
-      <li>$\metavar{function-form}$ matches any object</li>
-      <li>$\metavar{list-form}$ matches any object</li>
       <li>$\metavar{macro-operator}$ matches any variable naming a macro according to the lookup rule used by <code>fref</code></li>
       <li>$\metavar{macro-operands}$ matches any sequence of zero or more objects</li>
       <li>$\metavar{operator-form}$ matches any object</li>
@@ -227,10 +227,10 @@
     </ul>
     <p>By way of example, a form matches the first pattern if and only if it is a list of two elements whose first element is the variable <code>quote</code>.</p>
     <p>The patterns are tried in sequence and the first matching pattern wins.</p>
-    <p>A form matching one of the first twenty-three patterns is called a special form and the variables <code>quote</code>, <code>progn</code>, <code>if</code>, <code>_vlambda</code>, <code>_mlambda</code>, <code>_flambda</code>, <code>_dlambda</code>, <code>vref</code>, <code>vset!</code>, <code>fref</code>, <code>fset!</code>, <code>dref</code>, <code>dset!</code>, <code>block</code>, <code>return-from</code>, <code>catch</code>, <code>throw</code>, <code>_handler-bind</code>, <code>unwind-protect</code>, <code>_for-each</code>, <code>apply</code>, <code>multiple-value-call</code>, and <code>multiple-value-apply</code> are called special operators.</p>
-    <p>Special forms matching patterns 4 (<code>_vlambda</code>), 5 (<code>_mlambda</code>), 6 (<code>_flambda</code>), and 7 (<code>_dlambda</code>) are called lambda abstractions. Lambda abstractions are the fundamental binding constructs from which all other binding constructs are built. Forms consisting of a variable and special forms matching patterns 8 (<code>vref</code>), 10 (<code>fref</code>), and 12 (<code>dref</code>) are called variable references. Special forms matching patterns 9 (<code>vset!</code>), 11 (<code>fset!</code>), and 13 (<code>dset!</code>) are called variable assignments. Forms matching pattern 24 are called macro calls. Forms matching pattern 25 are called plain function calls.</p>
-    <p>The rule regarding forms consisting of a variable is the following: If a variable $\var$ occurs in operator position, then the variable is treated as an abbreviation for <code>(fref $\var$)</code> and the function namespace is used. Otherwise, the variable is treated as an abbreviation for <code>(vref $\var$)</code> and the value namespace is used. For example, the plain function call <code>(f x)</code> would be treated as an abbreviation for <code>((fref f) (vref x))</code>. The full forms <code>(fref $\var$)</code> and <code>(vref $\var$)</code> can always be used to force the use of a specific namespace.</p>
-    <p>As we will see below, the evaluation of a form entails the evaluation of some or all of the forms directly contained inside the form. When a direct subform is evaluated, the following rules apply:</p>
+    <p>A form matching one of the first twenty-three patterns is called a special form and the variables <code>quote</code>, <code>progn</code>, <code>if</code>, <code>_for-each</code>, <code>_vlambda</code>, <code>_mlambda</code>, <code>_flambda</code>, <code>_dlambda</code>, <code>vref</code>, <code>vset!</code>, <code>fref</code>, <code>fset!</code>, <code>dref</code>, <code>dset!</code>, <code>block</code>, <code>return-from</code>, <code>catch</code>, <code>throw</code>, <code>_handler-bind</code>, <code>unwind-protect</code>, <code>apply</code>, <code>multiple-value-call</code>, and <code>multiple-value-apply</code> are called special operators.</p>
+    <p>Special forms matching patterns 5 (<code>_vlambda</code>), 6 (<code>_mlambda</code>), 7 (<code>_flambda</code>), and 8 (<code>_dlambda</code>) are called lambda abstractions. Lambda abstractions are the fundamental binding constructs from which all other binding constructs are built. Forms consisting of a variable and special forms matching patterns 9 (<code>vref</code>), 11 (<code>fref</code>), and 13 (<code>dref</code>) are called variable references. Special forms matching patterns 10 (<code>vset!</code>), 12 (<code>fset!</code>), and 14 (<code>dset!</code>) are called variable assignments. Forms matching pattern 24 are called macro calls. Forms matching pattern 25 are called plain function calls.</p>
+    <p>The rule regarding forms consisting of a variable is the following: If a variable $\variable$ occurs in operator position, then the variable is treated as an abbreviation for <code>(fref $\variable$)</code> and the function namespace is used. Otherwise, the variable is treated as an abbreviation for <code>(vref $\variable$)</code> and the value namespace is used. For example, the plain function call <code>(f x)</code> would be treated as an abbreviation for <code>((fref f) (vref x))</code>. The full forms <code>(fref $\variable$)</code> and <code>(vref $\variable$)</code> can always be used to force the use of a specific namespace.</p>
+    <p>As we will see below, the evaluation of a form entails the evaluation of some or all of the direct components of the form that are identified as forms by the form's pattern. When a direct subform is evaluated, the following rules apply:</p>
     <ul>
       <li>The direct subform is evaluated with respect to the same lexical and dynamic environments as the containing form. (But see below how closures are invoked.)</li>
       <li>Generally, if the evaluation of the direct subform completes abruptly for any reason, then the evaluation of the containing form immediately completes abruptly for the same reason. The only forms that can behave differently are the special forms <code>block</code>, <code>catch</code>, <code>_handler-bind</code>, and <code>unwind-protect</code>, which are described in the reference manual.</li>
@@ -239,28 +239,30 @@
     <p>Special forms, macro calls, and plain function calls are evaluated as follows:</p>
     <dl>
       <dt><code>(quote $\metavar{literal}$)</code></dt>
-      <dd>The quote-form evaluates to the unevaluated literal. Using a quote-form, any object can be treated as data. For any object $\obj$, <code>(quote $\obj$)</code> can be abbreviated to <code>'$\obj$</code>.</dd>
+      <dd>The <code>quote</code> form evaluates to the unevaluated literal. Using a <code>quote</code> form, any object can be treated as data. For any object $\object$, <code>(quote $\object$)</code> can be abbreviated to <code>'$\object$</code>.</dd>
       <dt><code>(progn $\metavar{serial-forms}$)</code></dt>
-      <dd>The serial-forms are evaluated in sequence from left to right. If there is at least one serial-form, then the progn-form evaluates to the values of the last serial-form. Otherwise, the progn-form evaluates to <code>#v</code>.</dd>
+      <dd>The serial forms are evaluated in sequence from left to right. If there is at least one serial form, then the <code>progn</code> form evaluates to the values of the last serial form. Otherwise, the <code>progn</code> form evaluates to <code>#v</code>.</dd>
       <dt><code>(if $\metavar{test-form}$ $\metavar{then-form}$ $\metavar{else-form}$)</code></dt>
-      <dd>The test-form is evaluated. Let $\mlvar{test}$ be the primary value of the test-form. If $\mlvar{test}$ is not a boolean, then the evaluation of the if-form completes abruptly for a reason of type <code>error</code>. If $\mlvar{test}$ is the boolean <code>#t</code>, then the then-form is evaluated and the if-form evaluates to the values of the then-form. If $\mlvar{test}$ is the boolean <code>#f</code>, then the else-form is evaluated and the if-form evaluates to the values of the else-form.</dd>
+      <dd>The test form is evaluated. Let $\mlvar{test}$ be the primary value of the test form. If $\mlvar{test}$ is not a boolean, then the evaluation of the <code>if</code> form completes abruptly for a reason of type <code>error</code>. If $\mlvar{test}$ is the boolean <code>#t</code>, then the then form is evaluated (but not the else form) and the <code>if</code> form evaluates to the values of the then form. If $\mlvar{test}$ is the boolean <code>#f</code>, then the else form is evaluated (but not the then form) and the <code>if</code> form evaluates to the values of the else form.</dd>
+      <dt><code>(_for-each $\metavar{function-form}$ $\metavar{list-form}$)</code></dt>
+      <dd>This special form, which is a hack only needed and implemented by some of the interpreters, is described in the reference manual.</dd>
       <dt><code>(_vlambda $\metavar{parameter-list}$ $\metavar{body}$)</code></dt>
       <dt><code>(_mlambda $\metavar{parameter-list}$ $\metavar{body}$)</code></dt>
       <dt><code>(_flambda $\metavar{parameter-list}$ $\metavar{body}$)</code></dt>
       <dt><code>(_dlambda $\metavar{parameter-list}$ $\metavar{body}$)</code></dt>
-      <dd>A lambda abstraction evaluates to a closure recording the following two pieces of information: the lambda abstraction and the current lexical environment (which is said to be captured by the closure). A closure resulting from the evaluation of an _mlambda-form is tagged as being a macro.</dd>
+      <dd>A lambda abstraction evaluates to a closure recording the following two pieces of information: the lambda abstraction and the current lexical environment (which is said to be captured by the closure). A closure resulting from the evaluation of an <code>_mlambda</code> form is tagged as being a macro. Note that the body of a lambda abstraction is not considered to be a direct subform of the lambda abstraction as the evaluation of a lambda abstraction does not entail the evaluation of its body.</dd>
       <dt><code>(vref $\metavar{variable}$)</code></dt>
-      <dd>If there exists a binding for the variable in the value namespace of the current lexical environment, then the vref-form evaluates to the value of that binding. Otherwise, if there exists a binding for the variable in the value namespace of the global environment, then the vref-form evaluates to the value of that binding. Otherwise, the evaluation of the vref-form completes abruptly for a reason of type <code>error</code>.</dd>
+      <dd>If there exists a binding for the variable in the value namespace of the current lexical environment, then the <code>vref</code> form evaluates to the value of that binding. Otherwise, if there exists a binding for the variable in the value namespace of the global environment, then the <code>vref</code> form evaluates to the value of that binding. Otherwise, the evaluation of the <code>vref</code> form completes abruptly for a reason of type <code>error</code>.</dd>
       <dt><code>(vset! $\metavar{variable}$ $\metavar{value-form}$)</code></dt>
-      <dd>The value-form is evaluated. Let $\mlvar{value}$ be the primary value of the value-form. If there exists a binding for the variable in the value namespace of the current lexical environment, then the value of that binding is replaced by $\mlvar{value}$. Otherwise, if there exists a binding for the variable in the value namespace of the global environment, then the value of that binding is replaced by $\mlvar{value}$. Otherwise, a new binding between the variable and $\mlvar{value}$ is added to the value namespace of the global environment. In all three cases, the vset-form evaluates to $\mlvar{value}$.</dd>
+      <dd>The value form is evaluated. Let $\mlvar{value}$ be the primary value of the value form. If there exists a binding for the variable in the value namespace of the current lexical environment, then the value of that binding is replaced by $\mlvar{value}$. Otherwise, if there exists a binding for the variable in the value namespace of the global environment, then the value of that binding is replaced by $\mlvar{value}$. Otherwise, a new binding between the variable and $\mlvar{value}$ is added to the value namespace of the global environment. In all three cases, the <code>vset</code> form evaluates to $\mlvar{value}$.</dd>
       <dt><code>(fref $\metavar{variable}$)</code></dt>
-      <dd>If there exists a binding for the variable in the function namespace of the current lexical environment, then the fref-form evaluates to the value of that binding. Otherwise, if there exists a binding for the variable in the function namespace of the global environment, then the fref-form evaluates to the value of that binding. Otherwise, the evaluation of the fref-form completes abruptly for a reason of type <code>error</code>.</dd>
+      <dd>If there exists a binding for the variable in the function namespace of the current lexical environment, then the <code>fref</code> form evaluates to the value of that binding. Otherwise, if there exists a binding for the variable in the function namespace of the global environment, then the <code>fref</code> form evaluates to the value of that binding. Otherwise, the evaluation of the <code>fref</code> form completes abruptly for a reason of type <code>error</code>.</dd>
       <dt><code>(fset! $\metavar{variable}$ $\metavar{value-form}$)</code></dt>
-      <dd>The value-form is evaluated. Let $\mlvar{value}$ be the primary value of the value-form. If there exists a binding for the variable in the function namespace of the current lexical environment, then the value of that binding is replaced by $\mlvar{value}$. Otherwise, if there exists a binding for the variable in the function namespace of the global environment, then the value of that binding is replaced by $\mlvar{value}$. Otherwise, a new binding between the variable and $\mlvar{value}$ is added to the function namespace of the global environment. In all three cases, the fset-form evaluates to $\mlvar{value}$.</dd>
+      <dd>The value form is evaluated. Let $\mlvar{value}$ be the primary value of the value form. If there exists a binding for the variable in the function namespace of the current lexical environment, then the value of that binding is replaced by $\mlvar{value}$. Otherwise, if there exists a binding for the variable in the function namespace of the global environment, then the value of that binding is replaced by $\mlvar{value}$. Otherwise, a new binding between the variable and $\mlvar{value}$ is added to the function namespace of the global environment. In all three cases, the <code>fset</code> form evaluates to $\mlvar{value}$.</dd>
       <dt><code>(dref $\metavar{variable}$)</code></dt>
-      <dd>If there exists a binding for the variable in the value namespace of the current dynamic environment, then the dref-form evaluates to the value of that binding. Otherwise, if there exists a binding for the variable in the value namespace of the global environment, then the dref-form evaluates to the value of that binding. Otherwise, the evaluation of the dref-form completes abruptly for a reason of type <code>error</code>.</dd>
+      <dd>If there exists a binding for the variable in the value namespace of the current dynamic environment, then the <code>dref</code> form evaluates to the value of that binding. Otherwise, if there exists a binding for the variable in the value namespace of the global environment, then the <code>dref</code> form evaluates to the value of that binding. Otherwise, the evaluation of the <code>dref</code> form completes abruptly for a reason of type <code>error</code>.</dd>
       <dt><code>(dset! $\metavar{variable}$ $\metavar{value-form}$)</code></dt>
-      <dd>The value-form is evaluated. Let $\mlvar{value}$ be the primary value of the value-form. If there exists a binding for the variable in the value namespace of the current dynamic environment, then the value of that binding is replaced by $\mlvar{value}$. Otherwise, if there exists a binding for the variable in the value namespace of the global environment, then the value of that binding is replaced by $\mlvar{value}$. Otherwise, a new binding between the variable and $\mlvar{value}$ is added to the value namespace of the global environment. In all three cases, the dset-form evaluates to $\mlvar{value}$.</dd>
+      <dd>The value form is evaluated. Let $\mlvar{value}$ be the primary value of the value form. If there exists a binding for the variable in the value namespace of the current dynamic environment, then the value of that binding is replaced by $\mlvar{value}$. Otherwise, if there exists a binding for the variable in the value namespace of the global environment, then the value of that binding is replaced by $\mlvar{value}$. Otherwise, a new binding between the variable and $\mlvar{value}$ is added to the value namespace of the global environment. In all three cases, the <code>dset</code> form evaluates to $\mlvar{value}$.</dd>
       <dt><code>(block $\metavar{block-name}$ $\metavar{serial-forms}$)</code></dt>
       <dt><code>(return-from $\metavar{block-name}$ $\metavar{values-form}$)</code></dt>
       <dt><code>(catch $\metavar{exit-tag-form}$ $\metavar{serial-forms}$)</code></dt>
@@ -268,16 +270,14 @@
       <dt><code>(_handler-bind $\metavar{handler-form}$ $\metavar{serial-forms}$)</code></dt>
       <dt><code>(unwind-protect $\metavar{protected-form}$ $\metavar{cleanup-forms}$)</code></dt>
       <dd>These special forms, which implement advanced control structures, are described in the reference manual.</dd>
-      <dt><code>(_for-each $\metavar{function-form}$ $\metavar{list-form}$)</code></dt>
-      <dd>This special form, which is a hack only needed and implemented by some of the interpreters, is described in the reference manual.</dd>
       <dt><code>(apply $\metavar{operator-form}$ $\metavar{operand-forms}$)</code></dt>
       <dt><code>(multiple-value-call $\metavar{operator-form}$ $\metavar{operand-forms}$)</code></dt>
       <dt><code>(multiple-value-apply $\metavar{operator-form}$ $\metavar{operand-forms}$)</code></dt>
       <dd>These special forms, which are variants of the plain function call, are described in the reference manual.</dd>
       <dt><code>($\metavar{macro-operator}$ $\metavar{macro-operands}$)</code></dt>
-      <dd>Following the definition of a macro call, the macro-operator matches a variable naming a macro according to the lookup rule used by <code>fref</code>. That macro is invoked on the unevaluated macro-operands. If the invocation completes abruptly for any reason, then the evaluation of the macro call also completes abruptly for the same reason. Otherwise, if the invocation does not complete, then the evaluation of the macro call does not complete either. Otherwise, the primary value of the invocation, which is called the expansion of the macro call, is evaluated with respect to the current lexical and dynamic environments. If the evaluation of the expansion completes abruptly for any reason, then the evaluation of the macro call also completes abruptly for the same reason. Otherwise, if the evaluation of the expansion does not complete, then the evaluation of the macro call does not complete either. Otherwise, the macro call evaluates to the values of the expansion.</dd>
+      <dd>Following the definition of a macro call, the macro operator matches a variable naming a macro according to the lookup rule used by <code>fref</code>. That macro is invoked on the unevaluated macro operands. If the invocation completes abruptly for any reason, then the evaluation of the macro call also completes abruptly for the same reason. Otherwise, if the invocation does not complete, then the evaluation of the macro call does not complete either. Otherwise, the primary value of the invocation, which is called the expansion of the macro call, is evaluated with respect to the current lexical and dynamic environments. If the evaluation of the expansion completes abruptly for any reason, then the evaluation of the macro call also completes abruptly for the same reason. Otherwise, if the evaluation of the expansion does not complete, then the evaluation of the macro call does not complete either. Otherwise, the macro call evaluates to the values of the expansion.</dd>
       <dt><code>($\metavar{operator-form}$ $\metavar{operand-forms}$)</code></dt>
-      <dd>The operator-form is evaluated. Let $\mlvar{operator}$ be the primary value of the operator-form. If $\mlvar{operator}$ is not a function, then the evaluation of the plain function call completes abruptly for a reason of type <code>error</code>. Otherwise, the operand-forms are evaluated in sequence from left to right and $\mlvar{operator}$ is invoked on the primary values of the operand-forms. If the invocation completes abruptly for any reason, then the evaluation of the plain function call also completes abruptly for the same reason. Otherwise, if the invocation does not complete, then the evaluation of the plain function call does not complete either. Otherwise, the plain function call evaluates to the values of the invocation.</dd>
+      <dd>The operator form is evaluated. Let $\mlvar{operator}$ be the primary value of the operator form. If $\mlvar{operator}$ is not a function, then the evaluation of the plain function call completes abruptly for a reason of type <code>error</code>. Otherwise, the operand forms are evaluated in sequence from left to right and $\mlvar{operator}$ is invoked on the primary values of the operand forms. If the invocation completes abruptly for any reason, then the evaluation of the plain function call also completes abruptly for the same reason. Otherwise, if the invocation does not complete, then the evaluation of the plain function call does not complete either. Otherwise, the plain function call evaluates to the values of the invocation.</dd>
     </dl>
     <p>Invoking a function is what causes the function to compute the output corresponding to an input. The input of an invocation consists of zero or more objects&mdash;object references actually&mdash;called the arguments of the invocation. (The function is said to be invoked on the arguments and the arguments are said to be passed to the function.) The invocation of a function has three possible outcomes:</p>
     <ul>
@@ -285,20 +285,20 @@
       <li>The invocation can complete abruptly because of an error or because of a nonlocal exit. An invocation that completes abruptly does not produce any output.</li>
       <li>The invocation can get caught in an infinite loop and never complete.</li>
     </ul>
-    <p>The primary value of an invocation that completed normally is defined as follows: If the output consists of one or more objects, then the primary value of the invocation is the first object. Otherwise, the primary value of the invocation is <code>#v</code>.</p>
+    <p>The primary value of an invocation that has completed normally is defined as follows: If the output consists of one or more objects, then the primary value of the invocation is the first object. Otherwise, the primary value of the invocation is <code>#v</code>.</p>
     <p>The abrupt completion of an invocation has an associated reason, which has a type and carries a payload. The types and payloads for invocations are the same as for evaluations.</p>
-    <p>The verbs &ldquo;accept&rdquo; and &ldquo;return&rdquo; are often used to describe the input/output mapping implemented by a function. For example, we could describe a function by saying that the function accepts two numbers and returns the sum of their squares.</p>
+    <p>The verbs &ldquo;accept&rdquo; and &ldquo;return&rdquo; are often used to describe the input/output mapping implemented by a function. For example, one could describe a function by saying that the function accepts two numbers and returns the sum of their squares.</p>
     <p>A primitive function is invoked as follows:</p>
-    <blockquote>Let us assume that, as is the case with all the evaluators currently available, the primitive function is implemented by a JavaScript function accepting (an encoding of) the arguments of the invocation of the primitive function and returning (an encoding of) the values of the invocation of the primitive function. The JavaScript function is invoked on the arguments. If the invocation of the JavaScript function completes abruptly for any reason, then the invocation of the primitive function also completes abruptly for the same reason. Otherwise, if the invocation of the JavaScript function does not complete, then the invocation of the primitive function does not complete either. Otherwise, the primitive function returns the values returned by the JavaScript function.</blockquote>
+    <blockquote>Let us assume that, as is the case with all the evaluators currently available, the primitive function is implemented by a JavaScript function accepting (an encoding of) the arguments of an invocation of the primitive function and returning (an encoding of) the values of the invocation of the primitive function. The JavaScript function is invoked on the arguments. If the invocation of the JavaScript function completes abruptly for any reason, then the invocation of the primitive function also completes abruptly for the same reason. Otherwise, if the invocation of the JavaScript function does not complete, then the invocation of the primitive function does not complete either. Otherwise, the primitive function returns the values returned by the JavaScript function.</blockquote>
     <p>A closure is invoked as follows:</p>
     <blockquote>
       <p>If the number of variables in the parameter list of the lambda abstraction recorded by the closure and the number of arguments are different, then the invocation completes abruptly for a reason of type <code>error</code>. (As we will see in the reference manual, it is actually possible to create closures accepting a variable number of arguments.) Otherwise, let $\var_1,\ldots,\var_n$ be the variables composing the parameter list of the lambda abstraction recorded by the closure, $\arg_1,\ldots,\arg_n$ be the arguments, and $\lexenv$ and $\dynenv$ be the following environments:</p>
       <ul>
-        <li>If the closure results from the evaluation of a _vlambda-form or an _mlambda-form, then $\lexenv$ is the environment extending the lexical environment recorded by the closure to bind, in the value namespace, the variable $\var_i$ to the argument $\arg_i$ (for all $i$ from $1$ to $n$) and $\dynenv$ is the current dynamic environment.</li>
-        <li>If the closure results from the evaluation of an _flambda-form, then $\lexenv$ is the environment extending the lexical environment recorded by the closure to bind, in the function namespace, the variable $\var_i$ to the argument $\arg_i$ (for all $i$ from $1$ to $n$) and $\dynenv$ is the current dynamic environment.</li>
-        <li>If the closure results from the evaluation of a _dlambda-form, then $\lexenv$ is the lexical environment recorded by the closure and $\dynenv$ is the environment extending the current dynamic environment to bind, in the value namespace, the variable $\var_i$ to the argument $\arg_i$ (for all $i$ from $1$ to $n$).</li>
+        <li>If the closure results from the evaluation of a <code>_vlambda</code> form or an <code>_mlambda</code> form, then $\lexenv$ is the environment extending the lexical environment recorded by the closure to bind, in the value namespace, the variable $\var_i$ to the argument $\arg_i$ (for all $i$ from $1$ to $n$) and $\dynenv$ is the current dynamic environment.</li>
+        <li>If the closure results from the evaluation of an <code>_flambda</code> form, then $\lexenv$ is the environment extending the lexical environment recorded by the closure to bind, in the function namespace, the variable $\var_i$ to the argument $\arg_i$ (for all $i$ from $1$ to $n$) and $\dynenv$ is the current dynamic environment.</li>
+        <li>If the closure results from the evaluation of a <code>_dlambda</code> form, then $\lexenv$ is the lexical environment recorded by the closure and $\dynenv$ is the environment extending the current dynamic environment to bind, in the value namespace, the variable $\var_i$ to the argument $\arg_i$ (for all $i$ from $1$ to $n$).</li>
       </ul>
-      <p>The objects composing the body of the lambda abstraction recorded by the closure are evaluated with respect to $\lexenv$ and $\dynenv$ as if they were the serial-forms of a progn-form. (The serial-forms are said to belong to an implicit progn-form.) If the evaluation of the progn-form completes abruptly for any reason, then the invocation also completes abruptly for the same reason. Otherwise, if the evaluation of the progn-form does not complete, then the invocation does not complete either. Otherwise, the closure returns the values of the progn-form.</p>
+      <p>The objects composing the body of the lambda abstraction recorded by the closure are evaluated with respect to $\lexenv$ and $\dynenv$ as if they were the serial forms of a <code>progn</code> form. (The objects composing the body are said to belong to an implicit <code>progn</code> form.) If the evaluation of the <code>progn</code> form completes abruptly for any reason, then the invocation also completes abruptly for the same reason. Otherwise, if the evaluation of the <code>progn</code> form does not complete, then the invocation does not complete either. Otherwise, the closure returns the values of the <code>progn</code> form.</p>
     </blockquote>
     <p>As we will see in the reference manual, the evaluation of a top-level form cannot complete abruptly for a reason of type <code>nonlocal-exit</code>. The three possible outcomes of the evaluation of a top-level form are thus the following:</p>
     <ul>
@@ -306,8 +306,8 @@
       <li>The evaluation of the top-level form completes abruptly for a reason of type <code>error</code>.</li>
       <li>The evaluation of the top-level form does not complete.</li>
     </ul>
-    <p>The special operators <code>_vlambda</code>, <code>_mlambda</code>, <code>_flambda</code>, and <code>_dlambda</code> have an underscore at the beginning of their names to distinguish them from the similarly named macros <code>vlambda</code>, <code>mlambda</code>, <code>flambda</code>, and <code>dlambda</code>. The purpose of those macros is to facilitate the creation of closures accepting a variable number of arguments. The special operator <code>_handler-bind</code> has an underscore at the beginning of its name to distinguish it from the similarly named macro <code>handler-bind</code>. The special operator <code>_for-each</code> has an underscore at the beginning of its name because it is a hack only needed and implemented by some of the interpreters.</p>
-    <p>The evaluator uses a data structure called the control stack to coordinate its activities. Each time a top-level form is submitted to the evaluator, a new control stack is created that will be used throughout the evaluation of the form. The same control stack is used to evaluate the top-level form and all non-top-level forms whose evaluations are entailed by the evaluation of the top-level form.</p>
+    <p>The special operator <code>_for-each</code> has an underscore at the beginning of its name because it is a hack only needed and implemented by some of the interpreters. The special operators <code>_vlambda</code>, <code>_mlambda</code>, <code>_flambda</code>, and <code>_dlambda</code> have an underscore at the beginning of their names to distinguish them from the similarly named macros <code>vlambda</code>, <code>mlambda</code>, <code>flambda</code>, and <code>dlambda</code>. The purpose of those macros is to facilitate the creation of closures accepting a variable number of arguments. The special operator <code>_handler-bind</code> has an underscore at the beginning of its name to distinguish it from the similarly named macro <code>handler-bind</code>.</p>
+    <p>The evaluator uses a data structure called a control stack to coordinate its activities. Each time a top-level form is submitted to the evaluator, a new control stack is created that will be used throughout the evaluation of the top-level form. The same control stack is used to evaluate the top-level form and all the non-top-level forms whose evaluations are entailed by the evaluation of the top-level form.</p>
     <p>An evaluation/invocation that completes normally produces a result/output consisting of zero or more objects. The production of that result/output, which only occurs if the evaluation/invocation completes normally, is the primary effect of the evaluation/invocation. In addition to or in place of its primary effect, an evaluation/invocation can also have secondary effects called side effects. Examples of side effects are:</p>
     <ul>
       <li>The abrupt completion of the evaluation/invocation.</li>
@@ -321,52 +321,53 @@
       <li>The transfer of information from the form/function to the outside world (an output operation).</li>
     </ul>
     <p>A consequence of the existence of side effects is that the repeated evaluations of the same form or the repeated invocations of the same function on the same arguments do not necessarily have the same outcome and, if they complete normally, do not necessarily produce the same result/output.</p>
-    <p>It is customary for a special operator, function, or macro that can alter an object, binding, or environment to have a name ending with an exclamation mark. This explains the exclamation mark in the names of the special operators <code>vset!</code>, <code>fset!</code>, and <code>dset!</code>.</p>
+    <p>It is customary for a special operator, function, or macro that can alter objects, bindings, and/or environments to have a name ending with an exclamation mark. This explains the exclamation mark in the names of the special operators <code>vset!</code>, <code>fset!</code>, and <code>dset!</code>.</p>
     <h2>Integrated Development Environment</h2>
-    <p>The integrated development environment (IDE) is a web application that can run either from the EVLambda web server (online mode) or from a web server running on your machine (offline mode). The code running in the web browser is exactly the same in both modes but the behavior of the IDE is slightly different because the backends have different capabilities.</p>
+    <p>The integrated development environment (IDE) is a web application that can run either from the EVLambda web server (online mode) or from a web server running on the user's machine (offline mode). The code running in the web browser is exactly the same in both modes but the behavior of the IDE is slightly different because the backends have different capabilities.</p>
     <p>The IDE's graphical user interface consists of a menu bar at the top left, an info bar at the top right, a minibuffer at the bottom, and a set of windows in the main area. Each window consists of a contents area and a status bar. At any given time, a window displays the contents of a buffer, of which there are two types: the file buffers and the listener buffers. A given buffer can be displayed in any number of windows (including zero) and any buffer can be displayed in any window. This organization around buffers and windows is borrowed from the <a href="https://www.gnu.org/software/emacs/" target="_blank">Emacs</a> text editor.</p>
     <p>A file buffer is a buffer whose contents reflects the contents of a file. The contents of the buffer is read from the file through open and revert operations and written into the file through save operations. When a window displays the contents of a file buffer, its status bar displays the name of the file, followed by a star when the current contents of the buffer differs from the contents that was last read from or written into the file.</p>
-    <p>When the IDE starts, it automatically opens a predefined set of files. In online mode, the files are located in a directory on the machine hosting the EVLambda web server. In offline mode, the files are located in the directory <code>&lt;EVLAMBDA_HOME&gt;/system-files</code> on your machine.</p>
-    <p>A listener buffer is a buffer that allows you to evaluate forms interactively. When a window displays the contents of a listener buffer, its status bar displays the name of the buffer. Currently, the IDE has exactly one listener buffer whose name is &ldquo;Listener&nbsp;1&rdquo;.</p>
+    <p>When the IDE starts, it automatically opens a predefined set of files. In online mode, the files are located in a directory on the machine hosting the EVLambda web server. In offline mode, the files are located in the directory <code>&lt;EVLAMBDA_HOME&gt;/system-files</code> on the user's machine.</p>
+    <p>A listener buffer is a buffer that allows the user to evaluate forms interactively. When a window displays the contents of a listener buffer, its status bar displays the name of the buffer. Currently, the IDE has exactly one listener buffer whose name is &ldquo;Listener&nbsp;1&rdquo;.</p>
     <p>At any given time, there is exactly one selected window and, by extension, exactly one selected buffer. The status bar of the selected window is darker than the status bar of the nonselected windows. A window becomes the selected window when it receives the focus, which happens for instance when it receives a click event.</p>
     <p>Currently, the only function of the minibuffer is to display messages and evaluation results.</p>
     <h2>File Buffers</h2>
     <p>A window can display the contents of a file buffer in one of two modes: raw mode or HTML mode. In raw mode, the contents of the buffer is displayed in the <a href="https://codemirror.net/" target="_blank">CodeMirror</a> text editor. In HTML mode, the contents of the buffer, or some HTML contents derived from the contents of the buffer, is displayed in an HTML viewer.</p>
     <p>The all-caps files (USER-MANUAL, &hellip;), which are actually HTML files, can be displayed in raw mode or HTML mode. The EVLambda source files (extension <code>.evl</code>), which contain a mix of EVLambda source code and documentation in XML format, can be displayed in raw mode or HTML mode. The other types of files are always displayed in raw mode.</p>
     <h2 id="listener-buffers">Listener Buffers</h2>
-    <p>A listener buffer allows you to evaluate forms interactively. To evaluate a form in a listener buffer, you type in a readable representation of the form after the prompt and press the Return or Enter key when the cursor is at the very end of the buffer. In response, the form is evaluated, the printable representations of the resulting values are printed separated by a newline, and a new prompt is printed, allowing you to evaluate another form. This sequence of operations is called a read-eval-print loop (REPL).</p>
+    <p>A listener buffer allows the user to evaluate forms interactively. To evaluate a form in a listener buffer, the user types in a readable representation of the form after the prompt and presses the Return or Enter key when the cursor is at the very end of the buffer. In response, the form is evaluated, the printable representations of the resulting values are printed separated by a newline, and a new prompt is printed, allowing the user to evaluate another form. This sequence of operations is called a read-eval-print loop (REPL).</p>
     <p>Notes:</p>
     <ul>
-      <li>The prompt is the greater-than sign printed at the beginning of a line to inform you that the listener buffer is waiting for a form to be typed in.</li>
-      <li>If you press the Return or Enter key when (1) the cursor is not at the very end of the buffer or (2) the form is missing or incomplete, then a newline is simply inserted into the buffer and no evaluation takes place.</li>
-      <li>If the evaluation completes abruptly, then the reason of the abrupt completion is necessarily of type <code>error</code> and the payload of the reason (a string describing the error) is printed in place of the printable representations of the (nonexisting) resulting values.</li>
-      <li>If the evaluation does not complete, then you must abort the evaluation or restart the evaluator in order to get a new prompt.</li>
+      <li>The prompt is the greater-than sign printed at the beginning of a line to inform the user that the listener buffer is waiting for a form to be typed in.</li>
+      <li>If the user presses the Return or Enter key when (1) the cursor is not at the very end of the buffer or (2) the form is missing or incomplete, then a newline is simply inserted into the buffer and no evaluation takes place.</li>
+      <li>If the evaluation completes abruptly, then the reason for the abrupt completion is necessarily of type <code>error</code> and a message combining the category and the description carried by the reason is printed in place of the printable representations of the (nonexisting) resulting values.</li>
+      <li>If the evaluation does not complete, then the user must abort the evaluation or restart the evaluator in order to get a new prompt.</li>
     </ul>
-    <p>We will now illustrate some of the concepts introduced in the section <a href="#programming-language">Programming Language</a> by providing a commented transcript of a sequence of evaluations conducted in a listener buffer. If you want to reproduce the evaluations, be sure to start with a fresh Trampoline++ evaluator. To get a fresh Trampoline++ evaluator, restart the evaluator (using the Restart Evaluator&hellip; command from the Eval menu) with Trampoline++ selected as the evaluator name.</p>
-    <p>The global functions used in the evaluations are listed below. For each function, a template function call and a description of the function's behavior are provided. The variable in operator position is the name of the function (i.e., the variable bound to the function in the function namespace of the global environment).</p>
+    <p>Some of the concepts introduced in the section <a href="#programming-language">Programming Language</a> will now be illustrated by providing a commented transcript of a sequence of evaluations conducted in a listener buffer. If you want to reproduce the evaluations, be sure to start with a fresh trampoline++ evaluator. To get a fresh trampoline++ evaluator, restart the evaluator (using the Restart Evaluator&hellip; command from the Eval menu) with Trampoline++ selected.</p>
+    <p>The global functions used in the evaluations are listed below. For each function, a template function call, an indication of the outcome of the invocation, and a description of the function's behavior are provided. The variable in operator position is the name of the function (i.e., the variable bound to the function in the function namespace of the global environment). The arguments named after a type must be of that type, otherwise the invocation completes abruptly for a reason of type <code>error</code>.</p>
     <dl>
-      <dt><code>(car $\cons$)</code></dt>
-      <dd>The function <code>car</code> returns the first element of $\cons$, which must be of type <code>cons</code>.</dd>
-      <dt><code>(cdr $\cons$)</code></dt>
-      <dd>The function <code>cdr</code> returns the second element of $\cons$, which must be of type <code>cons</code>.</dd>
-      <dt><code>(list $\object_1\ldots\object_n$)</code></dt>
-      <dd>The function <code>list</code> collects its arguments, which can be of any types, into a list: when invoked on the arguments $\object_1,\ldots,\object_n$, the function returns a list whose elements are $\object_1,\ldots,\object_n$.</dd>
-      <dt><code>(+ $\number_1\ldots\number_n$)</code></dt>
-      <dd>The function <code>+</code> returns the sum of its arguments, which must be of type <code>number</code>.</dd>
-      <dt><code>(* $\number_1\ldots\number_n$)</code></dt>
-      <dd>The function <code>*</code> returns the product of its arguments, which must be of type <code>number</code>.</dd>
-      <dt><code>(values $\object_1\ldots\object_n$)</code></dt>
-      <dd>The function <code>values</code> converts its arguments, which can be of any types, into values: when invoked on the arguments $\object_1,\ldots,\object_n$, the function returns the values $\object_1,\ldots,\object_n$.</dd>
+      <dt><code>(car $\cons$)</code> &DoubleRightArrow; $\object$</dt>
+      <dd>The function returns the first element of $\cons$.</dd>
+      <dt><code>(cdr $\cons$)</code> &DoubleRightArrow; $\object$</dt>
+      <dd>The function returns the second element of $\cons$.</dd>
+      <dt><code>(list $\object_1\ldots\object_n$)</code> &DoubleRightArrow; $\list$</dt>
+      <dd>The function collects its arguments into a list: when invoked on the arguments $\object_1,\ldots,\object_n$, the function returns a list whose elements are $\object_1,\ldots,\object_n$.</dd>
+      <dt><code>(+ $\number_1\ldots\number_n$)</code> &DoubleRightArrow; $\number$</dt>
+      <dd>The function returns the sum of its arguments.</dd>
+      <dt><code>(* $\number_1\ldots\number_n$)</code> &DoubleRightArrow; $\number$</dt>
+      <dd>The function returns the product of its arguments.</dd>
+      <dt><code>(values $\object_1\ldots\object_n$)</code> &DoubleRightArrow; $\object_1,\ldots,\object_n$</dt>
+      <dd>The function converts its arguments into values: when invoked on the arguments $\object_1,\ldots,\object_n$, the function returns the values $\object_1,\ldots,\object_n$.</dd>
     </dl>
     <p>The global macros used in the evaluations are listed below. For each macro, a template macro call and a description of the macro's behavior are provided. The variable in operator position is the name of the macro (i.e., the variable bound to the macro in the function namespace of the global environment).</p>
     <dl>
       <dt><code>(vdef $\metavar{variable}$ $\metavar{value-form}$)</code></dt>
-      <dd>The purpose of the macro <code>vdef</code> is to define a global variable by ensuring that the variable is bound in the value namespace of the global environment to the primary value of the value-form. The macro call evaluates to the variable.</dd>
+      <dd>The macro defines a global variable by ensuring that the variable is bound in the value namespace of the global environment to the primary value of the value form. The macro call evaluates to the variable.</dd>
       <dt><code>(fdef $\metavar{variable}$ $\metavar{parameter-list}$ $\metavar{body}$)</code></dt>
-      <dd>The purpose of the macro <code>fdef</code> is to define a global function by ensuring that the variable is bound in the function namespace of the global environment to the closure resulting from the evaluation of the _vlambda-form <code>(_vlambda $\metavar{parameter-list}$ $\metavar{body}$)</code>. The macro call evaluates to the variable.</dd>
+      <dd>The macro defines a global function by ensuring that the variable is bound in the function namespace of the global environment to the closure resulting from the evaluation of the <code>_vlambda</code> form <code>(_vlambda $\metavar{parameter-list}$ $\metavar{body}$)</code>. The macro call evaluates to the variable.</dd>
       <dt><code>(loop $\metavar{serial-forms}$)</code></dt>
-      <dd>The purpose of the macro <code>loop</code> is to create an infinite loop repeatedly evaluating the serial-forms in sequence from left to right. For example, the macro call <code>(loop)</code> endlessly does nothing. The evaluation of the macro call normally does not complete but there are ways to exit an infinite loop.</dd>
+      <dd>The macro creates an infinite loop repeatedly evaluating the serial forms in sequence from left to right. For example, the macro call <code>(loop)</code> endlessly does nothing. The evaluation of the macro call normally does not complete but there are ways to exit an infinite loop.</dd>
     </dl>
+    <p>For any object $\object$, <code>'$\object$</code> is an abbreviation for <code>(quote $\object$)</code>.</p>
     <p>Here is the commented transcript, where each gray box contains a form and its values. The character &#x23CE; marks the places where the Return or Enter key should be pressed.</p>
     <pre class="repl">&gt; (+ 1 2)&#x23CE;<br>3</pre>
     <p>The evaluation produces a result consisting of the sum of the two numbers <code>1</code> and <code>2</code>. Because numbers are self-evaluating, quoting the numbers is not necessary.</p>
@@ -374,8 +375,8 @@
     <p>The evaluation produces the same result if the numbers are quoted. Quoting self-evaluating objects is unidiomatic, though.</p>
     <pre class="repl">&gt; (car '(1 2 3))&#x23CE;<br>1</pre>
     <p>The evaluation produces a result consisting of the first element of the list <code>(1 2 3)</code>. Because lists are not self-evaluating, quoting the list is necessary.</p>
-    <pre class="repl">&gt; (car (1 2 3))&#x23CE;<br>ERROR: The operator-form does not evaluate to a function.</pre>
-    <p>The evaluation completes abruptly for a reason of type <code>error</code> if the list is not quoted. The explanation for this behavior is as follows: The evaluator treats the list <code>(1 2 3)</code> as a plain function call and the operator-form, the number <code>1</code>, does not evaluate to a function.</p>
+    <pre class="repl">&gt; (car (1 2 3))&#x23CE;<br>EvaluatorError: form-type-error:<br>The operator form does not evaluate to a function.</pre>
+    <p>The evaluation completes abruptly for a reason of type <code>error</code> if the list is not quoted. The explanation for this behavior is as follows: The evaluator treats the list <code>(1 2 3)</code> as a plain function call and the operator form, the number <code>1</code>, does not evaluate to a function.</p>
     <pre class="repl">&gt; (cdr '(1 2 3))&#x23CE;<br>(2 3)</pre>
     <p>The evaluation produces a result consisting of the sublist of the list <code>(1 2 3)</code> obtained by omitting its first element.</p>
     <pre class="repl">&gt; (car (cdr '(1 2 3)))&#x23CE;<br>2</pre>
@@ -386,9 +387,9 @@
     <p>The evaluation produces a result consisting of the third element of the list <code>(1 2 3)</code>.</p>
     <pre class="repl">&gt; (cdr (cdr (cdr '(1 2 3))))&#x23CE;<br>()</pre>
     <p>The evaluation produces a result consisting of the sublist of the list <code>(1 2 3)</code> obtained by omitting its first three elements.</p>
-    <pre class="repl">&gt; (car (cdr (cdr (cdr '(1 2 3)))))&#x23CE;<br>ERROR: The 1st argument is not of type EVLCons.</pre>
+    <pre class="repl">&gt; (car (cdr (cdr (cdr '(1 2 3)))))&#x23CE;<br>EvaluatorError: argument-type-error:<br>The 1st argument is not of type EVLCons.</pre>
     <p>The evaluation completes abruptly for a reason of type <code>error</code> because the empty list is not a cons.</p>
-    <pre class="repl">&gt; (disk-area 2)&#x23CE;<br>ERROR: The variable 'disk-area' is unbound in the FUNCTION namespace.</pre>
+    <pre class="repl">&gt; (disk-area 2)&#x23CE;<br>EvaluatorError: unbound-variable:<br>The variable 'disk-area' is unbound in the function namespace.</pre>
     <p>The evaluation completes abruptly for a reason of type <code>error</code> because the global function <code>disk-area</code> is undefined.</p>
     <pre class="repl">&gt; (fdef disk-area (r) (* 3.14 r r))&#x23CE;<br>disk-area</pre>
     <p>The evaluation produces a result consisting of the variable <code>disk-area</code>. More importantly, the evaluation has the side effect of defining the global function <code>disk-area</code>. In its intended usage, the function accepts the radius of a disk and returns the area of the disk computed using <code>3.14</code> as the value of pi. When the function is invoked, its body is evaluated with respect to a lexical environment binding, in the value namespace, the variable <code>r</code> to the argument of the invocation (that is, the radius of the disk).</p>
@@ -400,7 +401,7 @@
     <p>The evaluation produces the expected result.</p>
     <pre class="repl">&gt; (fdef disk-area (r) (* *pi* r r))&#x23CE;<br>disk-area</pre>
     <p>The evaluation has the side effect of redefining the global function <code>disk-area</code> to compute the area of the disk using the value of the global variable <code>*pi*</code> as the value of pi. It is customary for a global or dynamic variable to have a name starting and ending with an asterisk.</p>
-    <pre class="repl">&gt; (disk-area 2)&#x23CE;<br>ERROR: The variable '*pi*' is unbound in the VALUE namespace.</pre>
+    <pre class="repl">&gt; (disk-area 2)&#x23CE;<br>EvaluatorError: unbound-variable:<br>The variable '*pi*' is unbound in the value namespace.</pre>
     <p>The evaluation completes abruptly for a reason of type <code>error</code> because the global variable <code>*pi*</code> is undefined.</p>
     <pre class="repl">&gt; (vdef *pi* 3.141593)&#x23CE;<br>*pi*</pre>
     <p>The evaluation produces a result consisting of the variable <code>*pi*</code>. More importantly, the evaluation has the side effect of defining the global variable <code>*pi*</code>.</p>
@@ -425,31 +426,31 @@
     <pre class="repl">&gt; (list (values) (values 1) 1 (values 1 2))&#x23CE;<br>(#v 1 1 1)</pre>
     <p>The primary values of the forms <code>(values)</code>, <code>(values 1)</code>, <code>1</code>, and <code>(values 1 2)</code> are <code>#v</code>, <code>1</code>, <code>1</code>, and <code>1</code>, respectively.</p>
     <pre class="repl">&gt; (loop)&#x23CE;<br>ABORTED</pre>
-    <p>The evaluation is caught in an infinite loop. You can use the Abort Evaluation command from the Eval menu to stop the evaluation and get a new prompt.</p>
+    <p>The evaluation is caught in an infinite loop. The Abort Evaluation command from the Eval menu is one way to stop the evaluation and get a new prompt.</p>
     <pre class="repl">&gt; (disk-area 2)&#x23CE;<br>12.5663706</pre>
     <p>Aborting an evaluation has no effect on the global definitions.</p>
     <pre class="repl">&gt; (loop)&#x23CE;<br>TERMINATED</pre>
-    <p>The evaluation is caught in an infinite loop. You can use the Restart Evaluator&hellip; command from the Eval menu to stop the evaluation and get a new prompt.</p>
-    <pre class="repl">&gt; (disk-area 2)&#x23CE;<br>ERROR: The variable 'disk-area' is unbound in the FUNCTION namespace.</pre>
+    <p>The evaluation is caught in an infinite loop. The Restart Evaluator&hellip; command from the Eval menu is another way to stop the evaluation and get a new prompt.</p>
+    <pre class="repl">&gt; (disk-area 2)&#x23CE;<br>EvaluatorError: unbound-variable:<br>The variable 'disk-area' is unbound in the function namespace.</pre>
     <p>Restarting the evaluator erases all global definitions.</p>
     <h2>Menu Bar</h2>
     <h3>File Menu</h3>
     <h4>Save Buffer</h4>
-    <p>Writes the contents of the selected file buffer into its associated file.</p>
-    <p>This command is not available in online mode.</p>
+    <p>The command writes the contents of the selected file buffer into its associated file.</p>
+    <p>The command is not available in online mode.</p>
     <h4>Revert Buffer&hellip;</h4>
-    <p>Reverts the contents of the selected file buffer to the contents of its associated file.</p>
+    <p>The command reverts the contents of the selected file buffer to the contents of its associated file.</p>
     <h3>Edit Menu</h3>
     <h4>Toggle HTML Mode</h4>
-    <p>Toggles the selected window between raw and HTML modes.</p>
-    <p>This command is only available when the selected window displays the contents of an all-caps file or an EVLambda source file.</p>
+    <p>The command toggles the selected window between raw and HTML modes.</p>
+    <p>The command is only available when the selected window displays the contents of an all-caps file or an EVLambda source file.</p>
     <h4>Clear Listener&hellip;</h4>
-    <p>Clears the selected listener buffer.</p>
+    <p>The command clears the selected listener buffer.</p>
     <p>All contents before the last prompt is deleted.</p>
     <h3>Eval Menu</h3>
     <h4 id="evaluate-form">Evaluate Form</h4>
-    <p>Evaluates a top-level form contained inside the selected file buffer.</p>
-    <p>This command is only available when the selected window displays the contents of an EVLambda source file.</p>
+    <p>The command evaluates a top-level form contained inside the selected file buffer.</p>
+    <p>The command is only available when the selected window displays the contents of an EVLambda source file.</p>
     <p>A top-level form is a form that is not contained inside another form.</p>
     <p>The top-level form to evaluate is selected as follows:</p>
     <ul>
@@ -458,35 +459,35 @@
       <li>Otherwise, if the first nonblank character before the cursor position is the last character of a top-level form, then that form is selected for evaluation.</li>
       <li>Otherwise, no form is selected for evaluation and no evaluation takes place.</li>
     </ul>
-    <p>If the evaluation of the top-level form completes normally, then the printable representations of the resulting values are printed in the minibuffer, separated by a comma. If the evaluation of the top-level form completes abruptly, then the reason of the abrupt completion is necessarily of type <code>error</code> and the payload of the reason is printed in the minibuffer. If the evaluation of the top-level form does not complete, then no new evaluation is possible until the evaluation is aborted or the evaluator is restarted.</p>
+    <p>If the evaluation of the top-level form completes normally, then the printable representations of the resulting values are printed in the minibuffer, separated by a comma. If the evaluation of the top-level form completes abruptly, then the reason for the abrupt completion is necessarily of type <code>error</code> and a message combining the category and the description carried by the reason is printed in the minibuffer. If the evaluation of the top-level form does not complete, then no new evaluation is possible until the evaluation is aborted or the evaluator is restarted.</p>
     <h4 id="load-buffer">Load Buffer</h4>
-    <p>Evaluates the top-level forms contained inside the selected file buffer.</p>
-    <p>This command is only available when the selected window displays the contents of an EVLambda source file.</p>
-    <p>The top-level forms contained inside the selected file buffer are evaluated as if they were part of a progn-form.</p>
-    <p>If the evaluation of the progn-form completes normally, then the printable representations of the resulting values are printed in the minibuffer, separated by a comma. If the evaluation of the progn-form completes abruptly, then the reason of the abrupt completion is necessarily of type <code>error</code> and the payload of the reason is printed in the minibuffer. If the evaluation of the progn-form does not complete, then no new evaluation is possible until the evaluation is aborted or the evaluator is restarted.</p>
+    <p>The command evaluates the top-level forms contained inside the selected file buffer.</p>
+    <p>The command is only available when the selected window displays the contents of an EVLambda source file.</p>
+    <p>The top-level forms contained inside the selected file buffer are evaluated as if they were part of a <code>progn</code> form.</p>
+    <p>If the evaluation of the <code>progn</code> form completes normally, then the printable representations of the resulting values are printed in the minibuffer, separated by a comma. If the evaluation of the <code>progn</code> form completes abruptly, then the reason for the abrupt completion is necessarily of type <code>error</code> and a message combining the category and the description carried by the reason is printed in the minibuffer. If the evaluation of the <code>progn</code> form does not complete, then no new evaluation is possible until the evaluation is aborted or the evaluator is restarted.</p>
     <h4>Abort Evaluation</h4>
-    <p>Aborts the current evaluation.</p>
+    <p>The command aborts the current evaluation.</p>
     <h4>Restart Evaluator&hellip;</h4>
-    <p>Terminates the current evaluator and starts a new one.</p>
+    <p>The command terminates the current evaluator and starts a new one.</p>
     <p>Warning: All global definitions are lost.</p>
-    <p>The following evaluators are available:</p>
+    <p>The following interpreter-based evaluators are available:</p>
     <ul>
-      <li>Plain Recursive (plainrec)</li>
+      <li>Direct Style (directstyle)</li>
       <li>Continuation Passing Style (cps)</li>
       <li>Object-Oriented CPS (oocps)</li>
       <li>Stack-Based Object-Oriented CPS (sboocps)</li>
       <li>Trampoline (trampoline)</li>
       <li>Trampoline++ (trampolinepp)</li>
     </ul>
-    <p>Only the Trampoline and Trampoline++ evaluators allow unbounded iterations through tail-recursive calls. The other evaluators are only useful as stepping stones to understand the Trampoline and Trampoline++ evaluators. The Trampoline++ evaluator is an optimized version of the Trampoline evaluator.</p>
+    <p>Only the trampoline and trampoline++ evaluators allow unbounded iterations through tail-recursive calls. The other evaluators are only useful as stepping stones to understand the trampoline and trampoline++ evaluators. The trampoline++ evaluator is an optimized version of the trampoline evaluator.</p>
     <h3>View Menu</h3>
     <h4>Select Other Window</h4>
-    <p>Selects one of the nonselected windows.</p>
-    <p>This command is not available when the selected window is maximized.</p>
+    <p>The command selects one of the nonselected windows.</p>
+    <p>The command is not available when the selected window is maximized.</p>
     <h4>Toggle Maximized State</h4>
-    <p>Toggles the selected window between unmaximized and maximized states.</p>
+    <p>The command toggles the selected window between unmaximized and maximized states.</p>
     <h3>Buffer Menu</h3>
-    <p>The buffer menu allows you to select the buffer displayed in the selected window.</p>
+    <p>The buffer menu allows the user to select the buffer displayed in the selected window.</p>
     <p>The buffer menu contains the following entries:</p>
     <ul>
       <li><code>/system/USER-MANUAL</code>: the user manual (this file)</li>
@@ -495,17 +496,15 @@
       <li><code>/system/IMPLEMENTATION-NOTES</code>: the implementation notes</li>
       <li><code>/system/BIBLIOGRAPHY</code>: the bibliography</li>
       <li><code>/system/LICENSE</code>: the license</li>
-      <li><code>/system/all-caps.css</code>: the CSS file styling the all-caps files</li>
-      <li><code>/system/all-caps.js</code>: the JavaScript file loaded by the all-caps files</li>
-      <li><code>/system/core.js</code>: the JavaScript file implementing the evaluators, the primitive data types, the primitive functions, etc., constituting the &ldquo;core&rdquo; of the EVLambda programming language</li>
-      <li><code>/system/evl2html.xslt</code>: the XSLT file used to convert the EVLambda source files to HTML</li>
-      <li><code>/system/evl2html.css</code>: the CSS file styling the EVLambda source files converted to HTML</li>
-      <li><code>/system/evl2html.js</code>: the JavaScript file loaded by the EVLambda source files converted to HTML</li>
+      <li><code>/system/core.js</code>: the JavaScript file implementing the interpreters, the primitive data types, the primitive functions, etc., constituting the &ldquo;core&rdquo; of the EVLambda programming language</li>
       <li><code>/system/mantle.evl</code>: the EVLambda source file implementing the nonprimitive data types, the nonprimitive functions, the macros, etc., constituting the &ldquo;mantle&rdquo; of the EVLambda programming language</li>
+      <li><code>/system/evl2html.xslt</code>: the XSLT file used to convert the EVLambda source files to HTML</li>
+      <li><code>/system/common.css</code>: the CSS file styling the all-caps files and the EVLambda source files converted to HTML</li>
+      <li><code>/system/common.js</code>: the JavaScript file loaded by the all-caps files and the EVLambda source files converted to HTML</li>
       <li><code>Listener 1</code>: the initial listener</li>
     </ul>
     <h3>Help Menu</h3>
-    <p>The help menu allows you to quickly navigate to various parts of the EVLambda website.</p>
+    <p>The help menu allows the user to quickly navigate to various parts of the EVLambda website.</p>
     <p>The help menu contains the following entries:</p>
     <ul>
       <li>Home: link to the home page</li>
@@ -522,7 +521,7 @@
       <li>Bill of Materials: link to a list of the libraries used by the IDE</li>
     </ul>
     <h2>Info Bar</h2>
-    <p>The info bar displays the type of the current evaluator.</p>
+    <p>The info bar displays the name of the current evaluator.</p>
     <h2>Keyboard Shortcuts</h2>
     <table class="ks">
       <tr><th>Linux</th><th>Windows</th><th>macOS</th><th>Command</th></tr>

@@ -37,7 +37,6 @@ window.MathJax = {
       code: ['<tex-html><code>#1</code></tex-html>', 1],
       mlvar: ['\\textit{#1}', 1],
       metavar: ['\\langle\\textrm{#1}\\rangle', 1],
-      metavarn: ['\\langle\\textrm{#1}_{#2}\\rangle', 2],
       var: '\\mlvar{var}',
       obj: '\\mlvar{obj}',
       arg: '\\mlvar{arg}',
